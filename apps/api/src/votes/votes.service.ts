@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReportsService } from '../reports/reports.service';
-import { CreateVoteDto } from './dto/create-vote.dto';
 
 @Injectable()
 export class VotesService {
@@ -11,11 +10,14 @@ export class VotesService {
     private readonly reports: ReportsService,
   ) {}
 
-  async vote(reportId: string, dto: CreateVoteDto): Promise<{ helpfulCount: number; alreadyVoted: boolean }> {
-    await this.reports.findOrThrow(reportId);
+  async vote(reportId: string, userId: string): Promise<{ helpfulCount: number; alreadyVoted: boolean }> {
+    const report = await this.reports.findOrThrow(reportId);
+    if (report.authorId === userId) {
+      throw new BadRequestException('Kendi şikayetine oy veremezsin.');
+    }
     try {
       await this.prisma.vote.create({
-        data: { reportId, voterKey: dto.voterKey },
+        data: { reportId, userId },
       });
       const helpfulCount = await this.prisma.vote.count({ where: { reportId } });
       return { helpfulCount, alreadyVoted: false };

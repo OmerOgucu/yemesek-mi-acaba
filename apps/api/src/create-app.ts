@@ -4,7 +4,12 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { createValidationPipe } from './common/validation';
 
-const LOCAL_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+const LOCAL_ORIGINS = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:8081',
+  'http://127.0.0.1:8081',
+];
 
 export async function createApp(): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -15,8 +20,8 @@ export async function createApp(): Promise<NestExpressApplication> {
   app.useBodyParser('json', { limit: '32kb' });
   app.enableCors({
     origin: LOCAL_ORIGINS,
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Accept'],
+    methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
   });
   app.useGlobalPipes(createValidationPipe());
   app.useGlobalFilters(new AllExceptionsFilter());

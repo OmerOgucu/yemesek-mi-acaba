@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AuthMenu } from '@/features/auth/AuthMenu/AuthMenu';
 
 export function SiteHeader() {
   return (
@@ -10,9 +11,7 @@ export function SiteHeader() {
             Yemesek mi acaba?
           </Link>
         </div>
-        <Link href="/restoran/yeni" className="btn btn-primary text-sm">
-          Mekan ekle
-        </Link>
+        <AuthMenu />
       </div>
     </header>
   );

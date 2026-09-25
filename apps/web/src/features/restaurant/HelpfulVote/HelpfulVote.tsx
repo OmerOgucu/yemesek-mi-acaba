@@ -1,18 +1,23 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { readSession } from '@/features/auth/session/session';
 import { ApiError, postJson } from '@/lib/api/client';
-import { getVoterKey, hasVoted, rememberVote } from '@/lib/voter/voter-key';
 
 export function HelpfulVote({ reportId, initialCount }: { reportId: string; initialCount: number }) {
   const [count, setCount] = useState(initialCount);
   const [voted, setVoted] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    setVoted(hasVoted(reportId));
-  }, [reportId]);
+    const sync = () => setSignedIn(Boolean(readSession()));
+    sync();
+    window.addEventListener('yemesek-auth', sync);
+    return () => window.removeEventListener('yemesek-auth', sync);
+  }, []);
 
   async function onVote() {
     setPending(true);
@@ -20,16 +25,24 @@ export function HelpfulVote({ reportId, initialCount }: { reportId: string; init
     try {
       const result = await postJson<{ helpfulCount: number; alreadyVoted: boolean }>(
         `/reports/${reportId}/votes`,
-        { voterKey: getVoterKey() },
+        {},
+        true,
       );
       setCount(result.helpfulCount);
       setVoted(true);
-      rememberVote(reportId);
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Oy kaydedilemedi.');
     } finally {
       setPending(false);
     }
+  }
+
+  if (!signedIn) {
+    return (
+      <Link href="/giris" className="text-sm underline">
+        Oy için giriş yap · {count}
+      </Link>
+    );
   }
 
   return (

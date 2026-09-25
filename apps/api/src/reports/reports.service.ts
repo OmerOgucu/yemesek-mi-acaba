@@ -12,7 +12,11 @@ export class ReportsService {
     private readonly restaurants: RestaurantsService,
   ) {}
 
-  async create(restaurantId: string, dto: CreateReportDto): Promise<ReportView> {
+  async create(
+    restaurantId: string,
+    dto: CreateReportDto,
+    author: { id: string; displayName: string },
+  ): Promise<ReportView> {
     await this.restaurants.findRow(restaurantId);
     const issues = collectPolicyIssues([
       { value: dto.title },
@@ -26,11 +30,12 @@ export class ReportsService {
     const created = await this.prisma.report.create({
       data: {
         restaurantId,
+        authorId: author.id,
         category: dto.category,
         severity: dto.severity,
         title: dto.title,
         body: dto.body,
-        nickname: dto.nickname || 'anonim',
+        nickname: dto.nickname || author.displayName,
       },
       include: { _count: { select: { votes: true } } },
     });

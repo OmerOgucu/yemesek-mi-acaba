@@ -7,6 +7,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                  String         @id @default(cuid())
+  email               String         @unique
+  passwordHash        String
+  displayName         String
+  kvkkAcceptedAt      DateTime
+  termsAcceptedAt     DateTime
+  marketingAcceptedAt DateTime?
+  createdAt           DateTime       @default(now())
+  reports             Report[]
+  votes               Vote[]
+  refreshTokens       RefreshToken[]
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
 model Restaurant {
   id          String   @id @default(cuid())
   name        String
@@ -21,28 +47,32 @@ model Restaurant {
 }
 
 model Report {
-  id           String       @id @default(cuid())
+  id           String         @id @default(cuid())
   restaurantId String
-  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   category     ReportCategory
   severity     Int
   title        String
   body         String
-  nickname     String       @default("anonim")
-  createdAt    DateTime     @default(now())
+  nickname     String         @default("anonim")
+  createdAt    DateTime       @default(now())
   votes        Vote[]
 
   @@index([restaurantId, createdAt])
+  @@index([authorId])
 }
 
 model Vote {
   id        String   @id @default(cuid())
   reportId  String
   report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  voterKey  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
-  @@unique([reportId, voterKey])
+  @@unique([reportId, userId])
   @@index([reportId])
 }
 

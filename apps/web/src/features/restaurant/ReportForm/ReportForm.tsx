@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { CATEGORIES, SEVERITY_OPTIONS } from '@/lib/categories/categories';
 import { ApiError, postJson } from '@/lib/api/client';
+import { readSession } from '@/features/auth/session/session';
 
 const EMPTY = {
   category: 'HYGIENE',
@@ -20,6 +22,14 @@ export function ReportForm({ restaurantId }: { restaurantId: string }) {
   const [error, setError] = useState('');
   const [details, setDetails] = useState<string[]>([]);
   const [done, setDone] = useState(false);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const sync = () => setSignedIn(Boolean(readSession()));
+    sync();
+    window.addEventListener('yemesek-auth', sync);
+    return () => window.removeEventListener('yemesek-auth', sync);
+  }, []);
 
   function update(key: keyof typeof EMPTY, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -32,13 +42,17 @@ export function ReportForm({ restaurantId }: { restaurantId: string }) {
     setDetails([]);
     setDone(false);
     try {
-      await postJson(`/restaurants/${restaurantId}/reports`, {
-        category: form.category,
-        severity: Number(form.severity),
-        title: form.title,
-        body: form.body,
-        nickname: form.nickname || undefined,
-      });
+      await postJson(
+        `/restaurants/${restaurantId}/reports`,
+        {
+          category: form.category,
+          severity: Number(form.severity),
+          title: form.title,
+          body: form.body,
+          nickname: form.nickname || undefined,
+        },
+        true,
+      );
       setForm(EMPTY);
       setDone(true);
       router.refresh();
@@ -52,6 +66,26 @@ export function ReportForm({ restaurantId }: { restaurantId: string }) {
     } finally {
       setPending(false);
     }
+  }
+
+  if (signedIn === null) return null;
+
+  if (signedIn === false) {
+    const next = encodeURIComponent(`/restoran/${restaurantId}`);
+    return (
+      <div className="rounded-2xl border border-ink bg-card p-5">
+        <h2 className="font-display text-3xl">Şikayet için giriş</h2>
+        <p className="mt-2 text-sm text-muted">Liste herkese açık. Yazmak için hesabın olmalı.</p>
+        <div className="mt-4 flex gap-2">
+          <Link href={`/giris?donus=${next}`} className="btn btn-primary text-sm">
+            Giriş
+          </Link>
+          <Link href={`/kayit?donus=${next}`} className="btn btn-ghost text-sm">
+            Kayıt
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -1,5 +1,7 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
-import { CreateVoteDto } from './dto/create-vote.dto';
+import { Controller, Param, Post, UseGuards } from '@nestjs/common';
+import type { AuthUser } from '../auth/auth.types';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { VotesService } from './votes.service';
 
 @Controller('reports')
@@ -7,7 +9,8 @@ export class VotesController {
   constructor(private readonly votes: VotesService) {}
 
   @Post(':id/votes')
-  vote(@Param('id') id: string, @Body() dto: CreateVoteDto) {
-    return this.votes.vote(id, dto);
+  @UseGuards(JwtAuthGuard)
+  vote(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.votes.vote(id, user.id);
   }
 }

@@ -1,5 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import { SEED_RESTAURANTS } from './seed-data';
+
+export const DEMO_EMAIL = 'demo@yemesek.local';
+export const DEMO_PASSWORD = 'Demo1234!';
 
 async function main(): Promise<void> {
   if (!process.env.DATABASE_URL) {
@@ -16,9 +21,39 @@ async function main(): Promise<void> {
 
   await prisma.vote.deleteMany();
   await prisma.report.deleteMany();
+  await prisma.refreshToken.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.restaurant.deleteMany();
 
-  for (const [restaurantIndex, restaurant] of SEED_RESTAURANTS.entries()) {
+  const demo = await prisma.user.create({
+    data: {
+      email: DEMO_EMAIL,
+      passwordHash: await bcrypt.hash(DEMO_PASSWORD, 12),
+      displayName: 'Demo',
+      kvkkAcceptedAt: now,
+      termsAcceptedAt: now,
+      createdAt: daysAgo(60),
+    },
+  });
+
+  const voterHash = await bcrypt.hash(randomBytes(24).toString('hex'), 4);
+  const voters: { id: string }[] = [];
+  for (let index = 0; index < 4; index += 1) {
+    voters.push(
+      await prisma.user.create({
+        data: {
+          email: `seed-voter-${index}@yemesek.local`,
+          passwordHash: voterHash,
+          displayName: `Okur ${index + 1}`,
+          kvkkAcceptedAt: now,
+          termsAcceptedAt: now,
+          createdAt: daysAgo(50),
+        },
+      }),
+    );
+  }
+
+  for (const restaurant of SEED_RESTAURANTS) {
     await prisma.restaurant.create({
       data: {
         name: restaurant.name,
@@ -28,7 +63,8 @@ async function main(): Promise<void> {
         cuisine: restaurant.cuisine,
         createdAt: daysAgo(restaurant.daysAgo),
         reports: {
-          create: restaurant.reports.map((report, reportIndex) => ({
+          create: restaurant.reports.map((report) => ({
+            authorId: demo.id,
             category: report.category,
             severity: report.severity,
             title: report.title,
@@ -36,8 +72,8 @@ async function main(): Promise<void> {
             nickname: report.nickname,
             createdAt: daysAgo(report.daysAgo),
             votes: {
-              create: Array.from({ length: report.votes }, (_, voteIndex) => ({
-                voterKey: `seed-${restaurantIndex}-${reportIndex}-${voteIndex}`,
+              create: voters.slice(0, report.votes).map((voter) => ({
+                userId: voter.id,
                 createdAt: daysAgo(Math.max(report.daysAgo - 1, 0)),
               })),
             },
@@ -48,11 +84,11 @@ async function main(): Promise<void> {
   }
 
   const count = await prisma.restaurant.count();
-  console.log(`Seed tamam: ${count} mekan.`);
+  console.log(`Seed tamam: ${count} mekan. Demo: ${DEMO_EMAIL}`);
   await prisma.$disconnect();
 }
 
-main().catch(async (error: unknown) => {
+main().catch((error: unknown) => {
   console.error(error);
   process.exit(1);
 });

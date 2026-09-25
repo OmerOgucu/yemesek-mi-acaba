@@ -1,4 +1,7 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import type { AuthUser } from '../auth/auth.types';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ReportsService } from './reports.service';
 
@@ -7,7 +10,12 @@ export class ReportsController {
   constructor(private readonly reports: ReportsService) {}
 
   @Post()
-  create(@Param('restaurantId') restaurantId: string, @Body() dto: CreateReportDto) {
-    return this.reports.create(restaurantId, dto);
+  @UseGuards(JwtAuthGuard)
+  create(
+    @Param('restaurantId') restaurantId: string,
+    @Body() dto: CreateReportDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reports.create(restaurantId, dto, user);
   }
 }

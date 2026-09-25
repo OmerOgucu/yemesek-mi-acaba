@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Fraunces, Outfit } from 'next/font/google';
+import { CookieNotice } from '@/features/site/CookieNotice/CookieNotice';
 import { SiteFooter } from '@/features/site/SiteFooter/SiteFooter';
 import { SiteHeader } from '@/features/site/SiteHeader/SiteHeader';
 import './globals.css';
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
         <SiteFooter />
+        <CookieNotice />
       </body>
     </html>
   );
