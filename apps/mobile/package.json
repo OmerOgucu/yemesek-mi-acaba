@@ -11,10 +11,11 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.5",
+    "@expo/vector-icons": "~14.1.0",
     "@yemesek/legal": "workspace:*",
     "expo": "~53.0.22",
-    "expo-image-picker": "~16.1.4",
     "expo-constants": "~17.1.7",
+    "expo-image-picker": "~16.1.4",
     "expo-linking": "~7.1.7",
     "expo-router": "~5.1.5",
     "expo-secure-store": "~14.2.4",
