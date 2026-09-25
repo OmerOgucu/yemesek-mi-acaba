@@ -10,6 +10,7 @@
     "build": "expo export --platform web --output-dir dist"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~5.0.5",
     "@yemesek/legal": "workspace:*",
     "expo": "~53.0.22",
     "expo-image-picker": "~16.1.4",

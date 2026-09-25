@@ -48,3 +48,38 @@ export function readConfig(): AppConfig {
     emailVerificationTtlMinutes,
   };
 }
+
+const PLACEHOLDER_SECRETS = new Set([
+  'change-me',
+  'change-me-to-a-long-random-string',
+  'secret',
+  'test-access-secret-not-for-production',
+]);
+
+type LaunchEnv = {
+  NODE_ENV?: string;
+  JWT_ACCESS_SECRET?: string;
+  DATABASE_URL?: string;
+  CORS_ORIGINS?: string;
+  APP_PUBLIC_URL?: string;
+};
+
+/** Production refuses to boot until the operator fills real env values. Dev and test are unchanged. */
+export function assertLaunchConfig(env: LaunchEnv = process.env): void {
+  if (env.NODE_ENV !== 'production') return;
+  const secret = env.JWT_ACCESS_SECRET?.trim() ?? '';
+  if (secret.length < 32 || PLACEHOLDER_SECRETS.has(secret)) {
+    throw new Error('JWT_ACCESS_SECRET production için en az 32 karakterlik rastgele bir değer olmalı.');
+  }
+  const databaseUrl = env.DATABASE_URL?.trim() ?? '';
+  if (!databaseUrl || databaseUrl.startsWith('file:')) {
+    throw new Error('Production DATABASE_URL SQLite olamaz. Postgres bağlantısı yaz.');
+  }
+  if (!env.CORS_ORIGINS?.trim()) {
+    throw new Error('CORS_ORIGINS production için zorunlu. Örnek: https://yemesekmiacaba.com');
+  }
+  const publicUrl = env.APP_PUBLIC_URL?.trim() ?? '';
+  if (!publicUrl.startsWith('https://')) {
+    throw new Error('APP_PUBLIC_URL production için https olmalı.');
+  }
+}

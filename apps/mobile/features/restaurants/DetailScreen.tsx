@@ -71,8 +71,8 @@ export default function DetailScreen() {
         {detail.evilScore} · {detail.scoreLabel} · {detail.reportCount} şikayet
       </Text>
       {detail.cuisine ? <Text style={styles.meta}>{detail.cuisine}</Text> : null}
-      {detail.reports.length === 0 ? <Text style={styles.meta}>Henüz şikayet yok.</Text> : null}
-      {detail.reports.map((report) => (
+      {(detail.reports ?? []).length === 0 ? <Text style={styles.meta}>Henüz şikayet yok.</Text> : null}
+      {(detail.reports ?? []).map((report) => (
         <View key={report.id} style={styles.card}>
           <Text style={styles.cardTitle}>{report.title}</Text>
           <Text style={styles.meta}>
@@ -84,7 +84,7 @@ export default function DetailScreen() {
             <Text style={styles.meta}>Kanıt kullanıcı tarafından yüklendi, henüz incelenmedi.</Text>
           )}
           <View style={styles.row}>
-            {report.photoUrls.map((url) => (
+            {(report.photoUrls ?? []).map((url) => (
               <Image key={url} source={{ uri: mediaUrl(url) }} style={styles.thumb} />
             ))}
             {report.receiptUrl ? <Image source={{ uri: mediaUrl(report.receiptUrl) }} style={styles.thumb} /> : null}

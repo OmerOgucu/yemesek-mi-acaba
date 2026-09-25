@@ -16,4 +16,13 @@ describe('MemoryRateLimiter', () => {
     expect(limiter.allow('b', 500)).toBe(true);
     expect(limiter.allow('a', 1_000)).toBe(true);
   });
+
+  it('reports a block without consuming another hit', () => {
+    const limiter = new MemoryRateLimiter(1, 1_000);
+    expect(limiter.blocked('a', 0)).toBe(false);
+    expect(limiter.allow('a', 0)).toBe(true);
+    expect(limiter.blocked('a', 10)).toBe(true);
+    limiter.clear('a');
+    expect(limiter.blocked('a', 10)).toBe(false);
+  });
 });

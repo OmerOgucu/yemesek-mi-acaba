@@ -30,6 +30,14 @@ async function readError(response: Response): Promise<ApiError> {
   }
 }
 
+async function readJson<T>(response: Response): Promise<T> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new ApiError('Sunucu beklenmeyen bir cevap verdi.', response.status);
+  }
+}
+
 export async function getRestaurants(params: {
   q?: string;
   city?: string;
@@ -39,9 +47,15 @@ export async function getRestaurants(params: {
   if (params.q) url.searchParams.set('q', params.q);
   if (params.city) url.searchParams.set('city', params.city);
   if (params.district) url.searchParams.set('district', params.district);
-  const response = await fetch(url, { cache: 'no-store' });
-  if (!response.ok) throw await readError(response);
-  return (await response.json()) as RestaurantListResponse;
+  try {
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) throw await readError(response);
+    const body = await readJson<RestaurantListResponse>(response);
+    return { ...body, items: body.items ?? [], locations: body.locations ?? [] };
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError('Listeye şu an ulaşılamıyor.', 0);
+  }
 }
 
 export async function getPublicSettings(): Promise<{ key: string; value: string }[]> {
@@ -51,30 +65,44 @@ export async function getPublicSettings(): Promise<{ key: string; value: string 
 }
 
 export async function getRestaurant(id: string): Promise<RestaurantDetail> {
-  const response = await fetch(new URL(`/restaurants/${id}`, apiBaseUrl()), { cache: 'no-store' });
-  if (!response.ok) throw await readError(response);
-  return (await response.json()) as RestaurantDetail;
+  try {
+    const response = await fetch(new URL(`/restaurants/${id}`, apiBaseUrl()), { cache: 'no-store' });
+    if (!response.ok) throw await readError(response);
+    return await readJson<RestaurantDetail>(response);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError('Mekana şu an ulaşılamıyor.', 0);
+  }
 }
 
 async function refreshSession(): Promise<boolean> {
-  const current = readSession();
-  if (!current) return false;
-  const response = await fetch(new URL('/auth/refresh', apiBaseUrl()), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ refreshToken: current.refreshToken }),
-  });
-  if (!response.ok) {
-    clearSession();
+  try {
+    const current = readSession();
+    if (!current) return false;
+    const response = await fetch(new URL('/auth/refresh', apiBaseUrl()), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ refreshToken: current.refreshToken }),
+    });
+    if (response.status === 401 || response.status === 403) {
+      clearSession();
+      return false;
+    }
+    if (!response.ok) return false;
+    const body = await readJson<{
+      accessToken: string;
+      refreshToken: string;
+      user: SessionUser;
+    }>(response);
+    if (!body.accessToken || !body.refreshToken || !body.user?.id) {
+      clearSession();
+      return false;
+    }
+    writeSession(body);
+    return true;
+  } catch {
     return false;
   }
-  const body = (await response.json()) as {
-    accessToken: string;
-    refreshToken: string;
-    user: SessionUser;
-  };
-  writeSession(body);
-  return true;
 }
 
 async function send(path: string, method: string, body: unknown, auth: boolean): Promise<Response> {
@@ -122,7 +150,7 @@ export async function postForm<T>(path: string, body: FormData, auth = false): P
       response = await sendForm(path, body, auth);
     }
     if (!response.ok) throw await readError(response);
-    return (await response.json()) as T;
+    return await readJson<T>(response);
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError('İstek tamamlanamadı.', 0);
@@ -132,29 +160,29 @@ export async function postForm<T>(path: string, body: FormData, auth = false): P
 export async function postJson<T>(path: string, body: unknown, auth = false): Promise<T> {
   const response = await withAuth(path, 'POST', body, auth);
   if (!response.ok) throw await readError(response);
-  return (await response.json()) as T;
+  return readJson<T>(response);
 }
 
 export async function getJson<T>(path: string, auth = false): Promise<T> {
   const response = await withAuth(path, 'GET', undefined, auth);
   if (!response.ok) throw await readError(response);
-  return (await response.json()) as T;
+  return readJson<T>(response);
 }
 
 export async function putJson<T>(path: string, body: unknown, auth = false): Promise<T> {
   const response = await withAuth(path, 'PUT', body, auth);
   if (!response.ok) throw await readError(response);
-  return (await response.json()) as T;
+  return readJson<T>(response);
 }
 
 export async function deleteJson<T>(path: string, auth = false): Promise<T> {
   const response = await withAuth(path, 'DELETE', undefined, auth);
   if (!response.ok) throw await readError(response);
-  return (await response.json()) as T;
+  return readJson<T>(response);
 }
 
 export async function patchJson<T>(path: string, body: unknown, auth = false): Promise<T> {
   const response = await withAuth(path, 'PATCH', body, auth);
   if (!response.ok) throw await readError(response);
-  return (await response.json()) as T;
+  return readJson<T>(response);
 }

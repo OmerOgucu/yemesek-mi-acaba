@@ -28,9 +28,9 @@ Mobil, ayrı bir terminalde:
 pnpm dev:mobile
 ```
 
-`EXPO_PUBLIC_API_URL` varsayılanı `http://localhost:3001`. Android emülatörde `http://10.0.2.2:3001` kullanın. iOS simülatör localhost’u görür.
+`EXPO_PUBLIC_API_URL` varsayılanı `http://localhost:3001`. Android emülatörde `http://10.0.2.2:3001`, iOS simülatörde `http://localhost:3001`, fiziksel cihazda bilgisayarın yerel IP’si. `http://` ile prebuild cleartext açar. Yayın derlemesi `https` olmalı; o zaman cleartext kapalıdır. Ayrıntı: aşağıdaki mobil bölüm.
 
-`db:seed` yerel SQLite verisini siler ve örnek mekanları yeniden yazar.
+`db:seed` yerel SQLite verisini siler ve örnek mekanları yeniden yazar. `NODE_ENV=production` iken `ALLOW_PRODUCTION_SEED=true` olmadan çalışmaz.
 
 Tek tek:
 
@@ -148,13 +148,29 @@ Kanıt dosyaları bu MVP'de depo kökündeki `uploads/` klasöründe durur ve AP
 
 Herkese açık yüzey: [docs/public-surface.md](docs/public-surface.md).
 
-## Android deneme APK
+## Mobil (Expo, iOS ve Android)
 
-Telefonda `localhost` API’ye ulaşmaz. Derlemeden önce makinenin yerel IP’sini yaz:
+Telefonda `localhost` API’ye ulaşmaz. Önce API’yi aç (`pnpm dev:api`), sonra:
 
 ```bash
 cd apps/mobile
-EXPO_PUBLIC_API_URL=http://192.168.1.10:3001 npx eas-cli build -p android --profile preview
+EXPO_PUBLIC_API_URL=http://192.168.1.10:3001 pnpm dev
 ```
 
-Profil `apps/mobile/eas.json` içinde `preview` ve APK üretir. Bilinmeyen kaynaklardan yüklemeyi telefonda aç. Aynı komutun yerel karşılığı, Android SDK kuruluysa: `npx expo run:android --variant release`.
+Expo Go veya bir simülatör bu Metro sunucusuna bağlanır. JS paketi uygulama içinde gömülü değildir; geliştirmede Metro’dan gelir.
+
+Mağaza veya iç dağıtım derlemesi JS’yi gömer. Windows’ta elle üretilmiş bir debug APK gerekmez.
+
+```bash
+cd apps/mobile
+EXPO_PUBLIC_API_URL=https://<api-host> npx eas-cli build -p android --profile production
+EXPO_PUBLIC_API_URL=https://<api-host> npx eas-cli build -p ios --profile production
+```
+
+`preview` profili iç APK üretir (`apps/mobile/eas.json`). `production` Android’de AAB üretir. API adresi derleme anında gömülür ve gizli değildir. `https` kullan. `http://` yalnızca emülatör ve yerel ağ içindir; o derleme cleartext açar.
+
+Yerel native proje, SDK kuruluysa: `npx expo prebuild` sonra `npx expo run:android` veya `npx expo run:ios`. Metro bu deponun kökünü kendisi izler; `EXPO_NO_METRO_WORKSPACE_ROOT` gerekmez.
+
+Web’i API’ye karşı yerelde açmak: `pnpm dev` (API :3001, web :3000). `apps/web/.env` içinde `NEXT_PUBLIC_API_URL=http://localhost:3001`.
+
+Yayın sırası: [docs/go-live.md](docs/go-live.md).

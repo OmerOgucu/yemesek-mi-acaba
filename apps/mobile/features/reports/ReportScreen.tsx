@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSession } from '../auth/SessionProvider';
@@ -18,7 +17,16 @@ const CATEGORIES = [
 
 type Picked = { uri: string; name: string; type: string };
 
+async function loadPicker() {
+  try {
+    return await import('expo-image-picker');
+  } catch {
+    throw new ApiError('Fotoğraf seçici bu kurulumda yok.', 0);
+  }
+}
+
 async function pickImages(limit: number): Promise<Picked[]> {
+  const ImagePicker = await loadPicker();
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) throw new ApiError('Fotoğraf seçmek için galeri izni gerekli.', 0);
   const result = await ImagePicker.launchImageLibraryAsync({

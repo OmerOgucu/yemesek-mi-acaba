@@ -21,9 +21,16 @@ export async function createApp(): Promise<NestExpressApplication> {
   if (config.isProduction && !process.env.CORS_ORIGINS?.trim()) {
     console.warn('CORS_ORIGINS boş. Production için https://yemesekmiacaba.com yazılmalı. Şu an yalnızca localhost kabul edilir.');
   }
+  if (config.isProduction && process.env.STORAGE_DRIVER !== 's3') {
+    console.warn('STORAGE_DRIVER s3 değil. Yayın kanıtları için S3 veya R2 kullan.');
+  }
   const uploads = uploadsRoot();
   mkdirSync(uploads, { recursive: true });
   app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
+    if (req.path.includes('..') || req.path.includes('\\') || req.path.includes('\0')) {
+      res.sendStatus(404);
+      return;
+    }
     if (!req.path || req.path === '/' || req.path.endsWith('/')) {
       res.sendStatus(404);
       return;

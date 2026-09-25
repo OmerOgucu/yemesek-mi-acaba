@@ -34,7 +34,7 @@ export function AuthMenu() {
       </Link>
       {user ? (
         <>
-          {user.role === 'ADMIN' ? (
+          {user.role === 'ADMIN' || user.role === 'MODERATOR' ? (
             <Link href="/admin" className="btn btn-ghost text-sm">
               Yönetim
             </Link>

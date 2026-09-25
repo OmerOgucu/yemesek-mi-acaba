@@ -26,6 +26,7 @@ export default function ListScreen() {
   const [city, setCity] = useState('');
   const [district, setDistrict] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
@@ -35,11 +36,13 @@ export default function ListScreen() {
       if (city) params.set('city', city);
       if (district) params.set('district', district);
       const query = params.toString();
-      const data = await getJson<{ items: Item[]; locations: Location[] }>(`/restaurants${query ? `?${query}` : ''}`);
-      setItems(data.items);
-      setLocations(data.locations);
+      const data = await getJson<{ items?: Item[]; locations?: Location[] }>(`/restaurants${query ? `?${query}` : ''}`);
+      setItems(data.items ?? []);
+      setLocations(data.locations ?? []);
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Liste alınamadı.');
+    } finally {
+      setLoading(false);
     }
   }, [city, district]);
 
@@ -70,6 +73,8 @@ export default function ListScreen() {
           <FirstTip />
           <Text style={styles.kicker}>Kara liste</Text>
           <Text style={styles.title}>En kötüden başlar.</Text>
+          {loading && items.length === 0 ? <Text style={styles.meta}>Liste kaynıyor…</Text> : null}
+          {!loading && !error && items.length === 0 ? <Text style={styles.meta}>Bu süzgeçte mekan yok.</Text> : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <Pressable style={styles.add} accessibilityLabel="Mekan ekle" onPress={() => router.push('/mekan-ekle')}>
             <Text style={styles.addText}>Mekan ekle</Text>

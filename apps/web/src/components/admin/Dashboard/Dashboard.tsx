@@ -47,7 +47,7 @@ export function Dashboard() {
       <section>
         <h2 className="font-display text-2xl">Son hareket</h2>
         <ul className="mt-3 space-y-2">
-          {data.recent.map((item) => (
+          {(data.recent ?? []).map((item) => (
             <li key={`${item.type}-${item.id}`} className="rounded-xl border border-line bg-card px-3 py-2 text-sm">
               <span className="text-muted">{TYPE_LABEL[item.type] ?? item.type}</span> · {item.label}
             </li>

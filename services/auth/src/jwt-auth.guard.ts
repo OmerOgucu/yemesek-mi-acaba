@@ -24,7 +24,7 @@ export class JwtAuthGuard implements CanActivate {
 
     let payload: AccessPayload;
     try {
-      payload = await this.jwt.verifyAsync<AccessPayload>(token, { secret });
+      payload = await this.jwt.verifyAsync<AccessPayload>(token, { secret, algorithms: ['HS256'] });
     } catch {
       throw new UnauthorizedException('Oturum geçersiz veya süresi dolmuş.');
     }

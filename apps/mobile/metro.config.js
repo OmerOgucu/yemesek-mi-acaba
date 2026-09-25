@@ -1,14 +1,8 @@
 const { getDefaultConfig } = require('expo/metro-config');
-const path = require('path');
 
-const projectRoot = __dirname;
-const workspaceRoot = path.resolve(projectRoot, '../..');
-const config = getDefaultConfig(projectRoot);
-
-config.watchFolders = [workspaceRoot];
-config.resolver.nodeModulesPaths = [
-  path.resolve(projectRoot, 'node_modules'),
-  path.resolve(workspaceRoot, 'node_modules'),
-];
+// SDK 53 already watches this pnpm workspace and sets nodeModulesPaths from the
+// git root. Replacing those arrays made Metro resolve the app from the wrong
+// root (the failure mode behind EXPO_NO_METRO_WORKSPACE_ROOT workarounds).
+const config = getDefaultConfig(__dirname);
 
 module.exports = config;

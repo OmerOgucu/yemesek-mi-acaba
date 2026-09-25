@@ -32,13 +32,13 @@ export function Leaderboard({
       <FirstRunTip />
       <LocationFilter locations={data.locations ?? []} q={q} city={city} district={district} />
 
-      {data.items.length === 0 ? (
+      {(data.items ?? []).length === 0 ? (
         <p className="mt-10 rounded-2xl border border-dashed border-line bg-card px-5 py-8 text-muted" role="status">
           Bu süzgeçte mekan yok. Şehir veya aramayı genişlet, ya da ilk mekanı sen ekle.
         </p>
       ) : (
         <ol className="mt-8 space-y-3">
-          {data.items.map((restaurant, index) => (
+          {(data.items ?? []).map((restaurant, index) => (
             <RestaurantCard key={restaurant.id} restaurant={restaurant} rank={index + 1} />
           ))}
         </ol>

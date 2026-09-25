@@ -1,6 +1,8 @@
 # Yayın iskelesi
 
-Bu dosya gerçek bir yayını başlatmaz. Alan adı satın alma ve Brevo hesabı bu turda yok. Aşağıdaki liste, sonra bağlanacak yerleri sabitler.
+Bu dosya gerçek bir yayını başlatmaz. Sıra `docs/go-live.md` içindedir: birleştir, ortam, migrate, DNS, Brevo DNS, seed kilidi, CORS, duman, mağaza. Operatör sırları doldurur; kod yangını gerekmez.
+
+`NODE_ENV=production` iken süreç, kısa veya örnek `JWT_ACCESS_SECRET`, `file:` veritabanı, boş `CORS_ORIGINS` veya `http` `APP_PUBLIC_URL` ile açılmaz.
 
 ## Ortam
 

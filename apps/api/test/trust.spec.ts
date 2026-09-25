@@ -250,4 +250,91 @@ describe('trust and abuse controls', () => {
       .expect(201);
     expect(session.body.accessToken).toEqual(expect.any(String));
   });
+
+  it('rejects alg=none, a role on register, a suspended login, and upload traversal', async () => {
+    const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
+    const payload = Buffer.from(JSON.stringify({ sub: 'user' })).toString('base64url');
+    await request(app.getHttpServer()).get('/auth/me').set('Authorization', `Bearer ${header}.${payload}.`).expect(401);
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email: 'rol@example.com',
+        password: 'Sifre1234',
+        displayName: 'Rol',
+        acceptKvkk: true,
+        acceptTerms: true,
+        ageConfirmed: true,
+        role: 'ADMIN',
+      })
+      .expect(400);
+
+    const session = await register('aski@example.com');
+    const me = await request(app.getHttpServer())
+      .get('/auth/me')
+      .set('Authorization', `Bearer ${session.accessToken}`)
+      .expect(200);
+    await app.get(PrismaService).user.update({ where: { id: me.body.id }, data: { disabledAt: new Date() } });
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'aski@example.com', password: 'Sifre1234' })
+      .expect(403);
+
+    await request(app.getHttpServer()).get('/uploads/').expect(404);
+    await request(app.getHttpServer()).get('/uploads/%2e%2e/package.json').expect(404);
+  });
+
+  it('locks a mailbox after bad passwords and burns a sprayed verification code', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email: 'kilit@example.com',
+        password: 'Sifre1234',
+        displayName: 'Kilit',
+        acceptKvkk: true,
+        acceptTerms: true,
+        ageConfirmed: true,
+      })
+      .expect(201);
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email: 'kilit@example.com', password: 'Yanlis123' })
+        .expect(401);
+    }
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'kilit@example.com', password: 'Sifre1234' })
+      .expect(429);
+
+    const created = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email: 'kod@example.com',
+        password: 'Sifre1234',
+        displayName: 'Kod',
+        acceptKvkk: true,
+        acceptTerms: true,
+        ageConfirmed: true,
+      })
+      .expect(201);
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      await request(app.getHttpServer())
+        .post('/auth/verify')
+        .set('Authorization', `Bearer ${created.body.accessToken}`)
+        .send({ code: '000000' })
+        .expect(400);
+    }
+    await request(app.getHttpServer())
+      .post('/auth/verify')
+      .set('Authorization', `Bearer ${created.body.accessToken}`)
+      .send({ code: '000000' })
+      .expect(429);
+    const prisma = app.get(PrismaService);
+    const row = await prisma.emailVerification.findFirst({
+      where: { user: { email: 'kod@example.com' } },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(row?.consumedAt).toBeTruthy();
+  });
 });

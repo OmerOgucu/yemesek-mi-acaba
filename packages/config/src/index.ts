@@ -1,1 +1,1 @@
-export { readConfig, uploadsDir, type AppConfig } from './env';
+export { assertLaunchConfig, readConfig, uploadsDir, type AppConfig } from './env';

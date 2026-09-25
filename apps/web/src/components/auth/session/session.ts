@@ -22,15 +22,28 @@ const ACCESS = 'yemesek.access';
 const REFRESH = 'yemesek.refresh';
 const USER = 'yemesek.user';
 
-export function readSession(): Session | null {
-  if (typeof window === 'undefined') return null;
-  const accessToken = localStorage.getItem(ACCESS);
-  const refreshToken = localStorage.getItem(REFRESH);
-  const raw = localStorage.getItem(USER);
-  if (!accessToken || !refreshToken || !raw) return null;
+function storage(): Storage | null {
   try {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+export function readSession(): Session | null {
+  const box = storage();
+  if (!box) return null;
+  try {
+    const accessToken = box.getItem(ACCESS);
+    const refreshToken = box.getItem(REFRESH);
+    const raw = box.getItem(USER);
+    if (!accessToken || !refreshToken || !raw) return null;
     const user = JSON.parse(raw) as SessionUser;
-    if (!user?.id || !user.email) return null;
+    if (!user?.id || !user.email) {
+      clearSession();
+      return null;
+    }
     return { accessToken, refreshToken, user };
   } catch {
     return null;
@@ -38,16 +51,20 @@ export function readSession(): Session | null {
 }
 
 export function writeSession(session: Session): void {
-  localStorage.setItem(ACCESS, session.accessToken);
-  localStorage.setItem(REFRESH, session.refreshToken);
-  localStorage.setItem(USER, JSON.stringify(session.user));
+  const box = storage();
+  if (!box) return;
+  box.setItem(ACCESS, session.accessToken);
+  box.setItem(REFRESH, session.refreshToken);
+  box.setItem(USER, JSON.stringify(session.user));
   window.dispatchEvent(new Event('yemesek-auth'));
 }
 
 export function clearSession(): void {
-  localStorage.removeItem(ACCESS);
-  localStorage.removeItem(REFRESH);
-  localStorage.removeItem(USER);
+  const box = storage();
+  if (!box) return;
+  box.removeItem(ACCESS);
+  box.removeItem(REFRESH);
+  box.removeItem(USER);
   window.dispatchEvent(new Event('yemesek-auth'));
 }
 

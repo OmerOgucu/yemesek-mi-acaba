@@ -49,6 +49,9 @@ function hashToken(token: string): string {
 export class AuthService {
   private readonly dummyHash = bcrypt.hashSync('not-a-real-user', 12);
   private readonly resendLimiter = new MemoryRateLimiter(3, 10 * 60_000);
+  private readonly loginFailures = new MemoryRateLimiter(8, 10 * 60_000);
+  private readonly verifyFailures = new MemoryRateLimiter(5, 10 * 60_000);
+  private readonly resetSends = new MemoryRateLimiter(3, 10 * 60_000);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -103,14 +106,24 @@ export class AuthService {
   async login(dto: LoginDto): Promise<AuthSession | MfaChallenge> {
     await assertHuman(dto);
     const email = dto.email.trim().toLowerCase();
+    const failureKey = `login:${email}`;
+    if (this.loginFailures.blocked(failureKey)) {
+      throw new HttpException('Çok fazla hatalı giriş. On dakika sonra tekrar dene.', HttpStatus.TOO_MANY_REQUESTS);
+    }
     const user = await this.prisma.user.findUnique({ where: { email } });
     const ok = await bcrypt.compare(dto.password, user?.passwordHash ?? this.dummyHash);
     if (!user || !ok || user.deletedAt) {
+      this.loginFailures.allow(failureKey);
       throw new UnauthorizedException('E-posta veya şifre hatalı.');
     }
+    this.loginFailures.clear(failureKey);
+    if (user.disabledAt) throw new ForbiddenException('Bu hesap askıya alındı.');
     if (user.totpEnabledAt && user.totpSecret) {
       const secret = readConfig().jwtAccessSecret;
-      const mfaToken = await this.jwt.signAsync({ sub: user.id, purpose: 'mfa' }, { secret, expiresIn: '5m' });
+      const mfaToken = await this.jwt.signAsync(
+        { sub: user.id, purpose: 'mfa' },
+        { secret, expiresIn: '5m', algorithm: 'HS256' },
+      );
       return { mfaRequired: true, mfaToken };
     }
     return this.issue(user);
@@ -119,7 +132,9 @@ export class AuthService {
   async refresh(dto: RefreshDto): Promise<AuthSession> {
     const tokenHash = hashToken(dto.refreshToken);
     const row = await this.prisma.refreshToken.findUnique({ where: { tokenHash } });
-    if (!row) throw new UnauthorizedException('Oturum yenilenemedi.');
+    if (!row || row.expiresAt.getTime() <= Date.now()) {
+      throw new UnauthorizedException('Oturum yenilenemedi.');
+    }
     if (row.revokedAt) {
       await this.prisma.refreshToken.updateMany({
         where: { userId: row.userId, revokedAt: null },
@@ -127,12 +142,19 @@ export class AuthService {
       });
       throw new UnauthorizedException('Oturum yenilenemedi.');
     }
-    if (row.expiresAt.getTime() <= Date.now()) {
+    const consumed = await this.prisma.refreshToken.updateMany({
+      where: { id: row.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    if (consumed.count !== 1) {
+      await this.prisma.refreshToken.updateMany({
+        where: { userId: row.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
       throw new UnauthorizedException('Oturum yenilenemedi.');
     }
     const user = await this.prisma.user.findUnique({ where: { id: row.userId } });
-    if (!user) throw new UnauthorizedException('Oturum yenilenemedi.');
-    await this.prisma.refreshToken.update({ where: { id: row.id }, data: { revokedAt: new Date() } });
+    if (!user || user.deletedAt) throw new UnauthorizedException('Oturum yenilenemedi.');
     return this.issue(user);
   }
 
@@ -297,6 +319,8 @@ export class AuthService {
   async requestPasswordReset(email: string, human: { company?: string; captchaToken?: string }): Promise<{ ok: true }> {
     await assertHuman(human);
     const user = await this.prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+    const normalized = email.trim().toLowerCase();
+    if (!this.resetSends.allow(`reset:${normalized}`)) return { ok: true };
     if (!user || user.deletedAt || user.disabledAt) return { ok: true };
     const config = readConfig();
     const token = randomBytes(32).toString('base64url');
@@ -320,6 +344,10 @@ export class AuthService {
     });
     if (!row) throw new BadRequestException('Bağlantı hatalı veya süresi dolmuş.');
     await this.prisma.passwordReset.update({ where: { id: row.id }, data: { consumedAt: new Date() } });
+    const account = await this.prisma.user.findUnique({ where: { id: row.userId } });
+    if (!account || account.deletedAt || account.disabledAt) {
+      throw new BadRequestException('Bağlantı hatalı veya süresi dolmuş.');
+    }
     await this.prisma.user.update({
       where: { id: row.userId },
       data: { passwordHash: await bcrypt.hash(password, 12) },
@@ -366,7 +394,7 @@ export class AuthService {
     const secret = readConfig().jwtAccessSecret;
     let payload: { sub?: string; purpose?: string };
     try {
-      payload = await this.jwt.verifyAsync(mfaToken, { secret });
+      payload = await this.jwt.verifyAsync(mfaToken, { secret, algorithms: ['HS256'] });
     } catch {
       throw new UnauthorizedException('Doğrulama süresi doldu.');
     }
@@ -401,8 +429,23 @@ export class AuthService {
   }
 
   async verifyCode(userId: string, code: string): Promise<PublicUser> {
-    const user = await this.consumeVerification({ userId, codeHash: hashToken(code) });
-    return this.toPublicUser(user);
+    const key = `verify:${userId}`;
+    if (this.verifyFailures.blocked(key)) {
+      await this.burnVerificationCodes(userId);
+      throw new HttpException('Çok fazla hatalı kod. Yeni doğrulama e-postası iste.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+    try {
+      const user = await this.consumeVerification({ userId, codeHash: hashToken(code) });
+      this.verifyFailures.clear(key);
+      return this.toPublicUser(user);
+    } catch (error) {
+      this.verifyFailures.allow(key);
+      if (this.verifyFailures.blocked(key)) {
+        await this.burnVerificationCodes(userId);
+        throw new HttpException('Çok fazla hatalı kod. Yeni doğrulama e-postası iste.', HttpStatus.TOO_MANY_REQUESTS);
+      }
+      throw error;
+    }
   }
 
   async verifyLink(token: string): Promise<{ ok: true }> {
@@ -502,10 +545,20 @@ export class AuthService {
     return user;
   }
 
+  private async burnVerificationCodes(userId: string): Promise<void> {
+    await this.prisma.emailVerification.updateMany({
+      where: { userId, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+  }
+
   private async issue(user: User): Promise<AuthSession> {
     if (user.disabledAt) throw new ForbiddenException('Bu hesap askıya alındı.');
     const secret = readConfig().jwtAccessSecret;
-    const accessToken = await this.jwt.signAsync({ sub: user.id }, { secret, expiresIn: ACCESS_TTL });
+    const accessToken = await this.jwt.signAsync(
+      { sub: user.id },
+      { secret, expiresIn: ACCESS_TTL, algorithm: 'HS256' },
+    );
     const refreshToken = randomBytes(32).toString('base64url');
     await this.prisma.refreshToken.create({
       data: {

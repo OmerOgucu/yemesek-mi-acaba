@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { clearSession, readSession, writeSession, type Session, type SessionUser } from './session';
+import { refreshStoredSession } from '../api/client';
+import { accessTokenFresh, clearSession, onSessionCleared, readSession, writeSession, type Session, type SessionUser } from './session';
 
 type SessionState = {
   user: SessionUser | null;
@@ -15,10 +16,41 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [ready, setReady] = useState(false);
 
+  useEffect(() => onSessionCleared(() => setUser(null)), []);
+
   useEffect(() => {
-    void readSession()
-      .then((session) => setUser(session?.user ?? null))
-      .finally(() => setReady(true));
+    let cancelled = false;
+    void (async () => {
+      let existing: Session | null = null;
+      try {
+        existing = await readSession();
+      } catch {
+        existing = null;
+      }
+      if (cancelled) return;
+      if (!existing) {
+        setUser(null);
+        setReady(true);
+        return;
+      }
+      if (accessTokenFresh(existing.accessToken)) {
+        setUser(existing.user);
+        setReady(true);
+        const outcome = await refreshStoredSession();
+        if (cancelled) return;
+        if (outcome === 'signed-out') setUser(null);
+        else if (outcome === 'ok') setUser((await readSession())?.user ?? null);
+        return;
+      }
+      const outcome = await refreshStoredSession();
+      if (cancelled) return;
+      if (outcome === 'ok') setUser((await readSession())?.user ?? null);
+      else setUser(null);
+      setReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const value = useMemo<SessionState>(

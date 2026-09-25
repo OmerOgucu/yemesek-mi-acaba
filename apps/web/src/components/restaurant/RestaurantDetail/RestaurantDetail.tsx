@@ -6,9 +6,9 @@ import { severityLabel } from '@/lib/categories/categories';
 import type { RestaurantDetail as RestaurantDetailData } from '@/lib/types/restaurant';
 
 function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(
-    new Date(iso),
-  );
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
 }
 
 export function RestaurantDetail({ restaurant }: { restaurant: RestaurantDetailData }) {
@@ -46,11 +46,11 @@ export function RestaurantDetail({ restaurant }: { restaurant: RestaurantDetailD
         ) : null}
 
         <h2 className="mt-10 font-display text-3xl">Şikayetler</h2>
-        {restaurant.reports.length === 0 ? (
+        {(restaurant.reports ?? []).length === 0 ? (
           <p className="mt-4 text-muted">Henüz şikayet yok. İlk not için fotoğraf ve fiş gerekir.</p>
         ) : (
           <ol className="mt-4 space-y-4">
-            {restaurant.reports.map((report) => (
+            {(restaurant.reports ?? []).map((report) => (
               <li key={report.id} className="rounded-2xl border border-line bg-card p-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h3 className="font-display text-2xl">{report.title}</h3>
