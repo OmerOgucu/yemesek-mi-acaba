@@ -5,6 +5,12 @@
     "scheme": "yemesek",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/brand/icon.png",
+    "splash": {
+      "image": "./assets/brand/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F9F4EA"
+    },
     "newArchEnabled": false,
     "plugins": [
       "expo-router",
@@ -21,15 +27,19 @@
     },
     "ios": {
       "bundleIdentifier": "com.yemesek.app",
-      "associatedDomains": ["applinks:yemesek.example"]
+      "associatedDomains": ["applinks:yemesekmiacaba.com"]
     },
     "android": {
       "package": "com.yemesek.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/icon.png",
+        "backgroundColor": "#8B1E1E"
+      },
       "intentFilters": [
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "yemesek.example", "pathPrefix": "/dogrula" }],
+          "data": [{ "scheme": "https", "host": "yemesekmiacaba.com", "pathPrefix": "/dogrula" }],
           "category": ["BROWSABLE", "DEFAULT"]
         }
       ]

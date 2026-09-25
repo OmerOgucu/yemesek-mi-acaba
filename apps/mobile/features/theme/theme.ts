@@ -1,8 +1,11 @@
 export const colors = {
-  paper: '#f3eee4',
-  ink: '#1c1915',
-  chili: '#c5341a',
-  card: '#fffdf8',
-  line: '#e3d7c4',
-  muted: '#6b6258',
+  paper: '#F9F4EA',
+  ink: '#2E2E2E',
+  chili: '#8B1E1E',
+  chiliDark: '#6E1616',
+  gold: '#C9A962',
+  card: '#FFFCF7',
+  line: '#E7DCC8',
+  muted: '#6A635A',
+  moss: '#2F6B45',
 };

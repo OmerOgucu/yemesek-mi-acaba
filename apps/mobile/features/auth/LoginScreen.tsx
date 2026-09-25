@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import logo from '../../assets/brand/logo.png';
 import { colors } from '../theme/theme';
 import { ApiError, postJson } from '../api/client';
 import type { Session } from './session';
@@ -27,6 +28,8 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.page}>
+      <Image source={logo} style={styles.logo} resizeMode="contain" accessibilityLabel="Yemesek Mi Acaba?" />
+      <Text style={styles.tagline}>Mekanları keşfet — kararını kolaylaştır</Text>
       <TextInput style={styles.input} autoCapitalize="none" keyboardType="email-address" placeholder="E-posta" value={email} onChangeText={setEmail} />
       <TextInput style={styles.input} secureTextEntry placeholder="Parola" value={password} onChangeText={setPassword} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -42,6 +45,8 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   page: { padding: 16, gap: 10 },
+  logo: { width: 220, height: 72, alignSelf: 'center' },
+  tagline: { color: colors.gold, textAlign: 'center', fontWeight: '600', marginBottom: 8 },
   input: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, borderRadius: 12, padding: 12 },
   primary: { backgroundColor: colors.chili, borderRadius: 999, padding: 14, alignItems: 'center' },
   primaryText: { color: colors.card, fontWeight: '700' },

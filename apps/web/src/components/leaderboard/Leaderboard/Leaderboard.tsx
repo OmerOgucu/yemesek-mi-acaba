@@ -15,7 +15,8 @@ export function Leaderboard({
 }) {
   return (
     <div>
-      <p className="text-[11px] tracking-[0.22em] text-chili uppercase">Anti-menü</p>
+      <p className="text-sm font-medium text-amber">Mekanları keşfet — kararını kolaylaştır</p>
+      <p className="mt-3 text-[11px] tracking-[0.22em] text-chili uppercase">Anti-menü</p>
       <h1 className="mt-2 max-w-3xl font-display text-4xl leading-[1.05] font-semibold sm:text-6xl">
         Önce şikayet, sonra çatal.
       </h1>

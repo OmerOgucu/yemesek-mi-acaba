@@ -4,6 +4,10 @@ Kötü restoran deneyimlerini toplayan kara liste. Konum, mekan eklerken yazıla
 
 Şikayetler kullanıcı metnidir. Resmi tespit, laboratuvar sonucu veya mahkeme kararı değildir. Telefon, tam adres ve kimlik yazılmaz. Liste herkese açıktır. Giriş yapılabilir; mekan eklemek, şikayet ve yararlı oy e-posta doğrulaması ister. Şikayet ancak en az bir fotoğraf ve fiş/fatura görseliyle açılır.
 
+Herkese açık adres: https://yemesekmiacaba.com
+
+Marka dosyaları `apps/web/public/brand` ve `apps/mobile/assets/brand` altındadır (kelime işareti, iğne, uygulama ikonu, favicon ve paylaşım görseli). Renkler: ana `#8B1E1E`, vurgu `#C9A962`, metin `#2E2E2E`, zemin `#F9F4EA`. Web bunları CSS değişkeni olarak, mobil `apps/mobile/features/theme/theme.ts` içinde kullanır.
+
 ## Çalıştırma
 
 Gerekli: Node 20+, pnpm 10. Mobil için Expo Go veya bir simülatör.
@@ -77,7 +81,12 @@ Yerel yönetici, yalnızca bu makine içindir. Parolayı yayına taşıma.
 - Parola: `Admin1234!`
 - Panel: http://localhost:3000/admin
 
-Kayıtta KVKK aydınlatma metni ve kullanım koşulları zorunludur. Pazarlama kutusu isteğe bağlıdır ve kaydı engellemez. Kayıt doğrulama e-postası gönderir. `BREVO_API_KEY` yoksa kod ve bağlantı API günlüğüne yazılır; `GET /auth/dev/verification?email=` yalnızca geliştirmede cevap verir.
+Yerel moderatör inceleme kuyruğunu görür, ayar ve rol değiştirmez.
+
+- E-posta: `moderator@yemesek.local`
+- Parola: `Mod1234!`
+
+Kayıtta 18 yaş onayı, KVKK aydınlatma metni ve kullanım koşulları zorunludur. Pazarlama kutusu isteğe bağlıdır ve kaydı engellemez. Kayıt doğrulama e-postası gönderir. `BREVO_API_KEY` yoksa kod ve bağlantı API günlüğüne yazılır; `GET /auth/dev/verification?email=` yalnızca geliştirmede cevap verir.
 
 Giriş, e-posta doğrulanmadan da olur. Mekan, şikayet ve oy doğrulama ister. Bu, doğrulanmamış hesapla listeyi okumaya izin verip yazmayı kapatan varsayılandır.
 

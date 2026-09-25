@@ -63,7 +63,7 @@ export function LocationFilter({
       <label className="sr-only" htmlFor="q">
         Ara
       </label>
-      <input id="q" name="q" defaultValue={q ?? ''} placeholder="Mekan veya mutfak" maxLength={60} className="field" />
+      <input id="q" name="q" defaultValue={q ?? ''} placeholder="Hangi mekanı merak ediyorsun?" maxLength={60} className="field" />
       <button className="btn btn-primary" type="submit">
         Süz
       </button>

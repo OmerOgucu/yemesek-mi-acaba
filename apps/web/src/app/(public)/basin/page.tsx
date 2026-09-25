@@ -4,7 +4,7 @@ import { apiBaseUrl } from '@/lib/api/client';
 export const metadata: Metadata = { title: 'Basın ve hukuk' };
 
 export default async function PressPage() {
-  let press = { email: 'basin@yemesek.example', name: 'Yemesek basın', legalEmail: 'hukuk@yemesek.example' };
+  let press = { email: 'basin@yemesekmiacaba.com', name: 'Yemesek basın', legalEmail: 'hukuk@yemesekmiacaba.com' };
   try {
     const response = await fetch(new URL('/press', apiBaseUrl()), { cache: 'no-store' });
     if (response.ok) press = (await response.json()) as typeof press;

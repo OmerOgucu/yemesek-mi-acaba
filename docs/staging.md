@@ -11,14 +11,14 @@ Staging, production’ın küçük kopyasıdır. Aynı kod, ayrı sırlar, ayrı
 | `NODE_ENV` | `production` |
 | `DATABASE_URL` | Staging Postgres. SQLite’ı staging’e taşıma. |
 | `JWT_ACCESS_SECRET` | Prod’dan farklı, uzun, rastgele. |
-| `APP_PUBLIC_URL` | `https://staging.yemesek.example` |
+| `APP_PUBLIC_URL` | `https://staging.yemesekmiacaba.com` |
 | `BREVO_API_KEY` | Staging gönderen. Yoksa e-posta gitmez; production’da dev doğrulama ucu da kapalıdır. |
 | `CAPTCHA_PROVIDER` | `turnstile` veya `hcaptcha`. `none` yalnızca yerel ve test. |
 | `STORAGE_DRIVER` | `s3` ve staging kovası. |
 | `SENTRY_DSN` | Staging projesi. Boşsa olay gitmez. |
 | `admin2faRequired` | Panelden `true`. Yerelde `false` kalabilir. |
 
-Web: `NEXT_PUBLIC_API_URL=https://api-staging.yemesek.example`
+Web: `NEXT_PUBLIC_API_URL=https://api-staging.yemesekmiacaba.com`
 
 Mobil: `EXPO_PUBLIC_API_URL` aynı API. Mağaza derlemesi staging’e bakmasın.
 

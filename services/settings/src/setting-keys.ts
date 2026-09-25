@@ -20,7 +20,7 @@ export const SETTING_DEFS = {
     label: 'Şikayet sayfaları arama motoruna açık',
   },
   pressEmail: {
-    defaultValue: 'basin@yemesek.example',
+    defaultValue: 'basin@yemesekmiacaba.com',
     kind: 'text',
     label: 'Basın e-postası',
   },
@@ -30,12 +30,12 @@ export const SETTING_DEFS = {
     label: 'Basın iletişim adı',
   },
   legalEmail: {
-    defaultValue: 'hukuk@yemesek.example',
+    defaultValue: 'hukuk@yemesekmiacaba.com',
     kind: 'text',
     label: 'Hukuk e-postası',
   },
   supportEmail: {
-    defaultValue: 'destek@yemesek.example',
+    defaultValue: 'destek@yemesekmiacaba.com',
     kind: 'text',
     label: 'Destek e-postası',
   },

@@ -15,7 +15,7 @@ API `apps/api/.env.example` içindeki değişkenleri okur. Gizli değerleri depo
 | `BREVO_API_KEY` | Boşsa e-posta günlük ve yerel doğrulama ucuna düşer. Doluysa Brevo SMTP API kullanılır. |
 | `BREVO_SENDER_EMAIL` | Doğrulanmış gönderen adresi. |
 | `BREVO_SENDER_NAME` | Gönderen adı. |
-| `APP_PUBLIC_URL` | Sihirli bağlantının kökü. Örnek: `https://yemesek.example`. |
+| `APP_PUBLIC_URL` | Sihirli bağlantının kökü. Örnek: `https://yemesekmiacaba.com`. |
 | `EMAIL_VERIFICATION_TTL_MINUTES` | Kod, doğrulama ve parola sıfırlama ömrü. 5–1440, varsayılan 30. |
 | `CAPTCHA_PROVIDER` | `none`, `turnstile` veya `hcaptcha`. |
 | `STORAGE_DRIVER` | `local` veya `s3`. |
@@ -36,15 +36,15 @@ Anahtar yokken API kodu ve bağlantıyı süreç günlüğüne yazar. `GET /auth
 
 ## Alan adı ve DNS
 
-Yer tutucu ad: `yemesek.example`.
+Herkese açık adres: `yemesekmiacaba.com`.
 
 | Kayıt | Hedef |
 | --- | --- |
-| `yemesek.example` | Web (öneri: Vercel) |
-| `api.yemesek.example` | API (öneri: Railway veya Fly.io) |
+| `yemesekmiacaba.com` | Web (öneri: Vercel) |
+| `api.yemesekmiacaba.com` | API (öneri: Railway veya Fly.io) |
 | MX | E-posta sağlayıcısı, Brevo gönderen doğrulaması istediğinde |
 
-`APP_PUBLIC_URL=https://yemesek.example` ve web’de `NEXT_PUBLIC_API_URL=https://api.yemesek.example`.
+`APP_PUBLIC_URL=https://yemesekmiacaba.com` ve web’de `NEXT_PUBLIC_API_URL=https://api.yemesekmiacaba.com`.
 
 ## Önerilen parçalar
 

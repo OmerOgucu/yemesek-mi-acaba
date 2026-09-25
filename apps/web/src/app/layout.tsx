@@ -17,11 +17,20 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://yemesekmiacaba.com'),
   title: {
-    default: 'Yemesek mi acaba?',
-    template: '%s · Yemesek mi acaba?',
+    default: 'Yemesek Mi Acaba?',
+    template: '%s · Yemesek Mi Acaba?',
   },
   description: 'Kötü restoran deneyimlerini oku, şüpheli mekanlardan uzak dur.',
+  openGraph: {
+    title: 'Yemesek Mi Acaba?',
+    description: 'Kötülük skoru yüksek mekanlar. Kanıtlı şikayet, gerçek insanlar.',
+    url: 'https://yemesekmiacaba.com',
+    siteName: 'Yemesek Mi Acaba?',
+    locale: 'tr_TR',
+    type: 'website',
+  },
 };
 
 export const dynamic = 'force-dynamic';

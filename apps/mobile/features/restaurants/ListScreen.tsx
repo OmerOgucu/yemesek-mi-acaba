@@ -65,6 +65,7 @@ export default function ListScreen() {
       }
       ListHeaderComponent={
         <View style={styles.header}>
+          <Text style={styles.tagline}>Mekanları keşfet — kararını kolaylaştır</Text>
           <Text style={styles.kicker}>Kara liste</Text>
           <Text style={styles.title}>En kötüden başlar.</Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -138,7 +139,8 @@ export default function ListScreen() {
 const styles = StyleSheet.create({
   list: { padding: 16, gap: 10 },
   header: { marginBottom: 8 },
-  kicker: { color: colors.chili, letterSpacing: 1, fontSize: 12, textTransform: 'uppercase' },
+  tagline: { color: colors.gold, fontSize: 13, fontWeight: '600' },
+  kicker: { color: colors.chili, letterSpacing: 1, fontSize: 12, textTransform: 'uppercase', marginTop: 10 },
   title: { color: colors.ink, fontSize: 32, fontWeight: '700', marginTop: 4 },
   error: { color: colors.chili, marginTop: 8 },
   add: { marginTop: 12, alignSelf: 'flex-start', backgroundColor: colors.chili, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 },

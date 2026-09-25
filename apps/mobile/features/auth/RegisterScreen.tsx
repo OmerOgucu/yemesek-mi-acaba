@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import logo from '../../assets/brand/logo.png';
 import { colors } from '../theme/theme';
 import { ApiError, postJson } from '../api/client';
 import type { Session } from './session';
@@ -39,6 +40,8 @@ export default function RegisterScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
+      <Image source={logo} style={styles.logo} resizeMode="contain" accessibilityLabel="Yemesek Mi Acaba?" />
+      <Text style={styles.tagline}>Şikayet yazmak için hesap gerekir. Liste herkese açık kalır.</Text>
       <TextInput style={styles.input} placeholder="Görünen ad" value={displayName} onChangeText={setDisplayName} />
       <TextInput style={styles.input} autoCapitalize="none" keyboardType="email-address" placeholder="E-posta" value={email} onChangeText={setEmail} />
       <TextInput style={styles.input} secureTextEntry placeholder="Parola" value={password} onChangeText={setPassword} />
@@ -75,6 +78,8 @@ function Check({ label, checked, onPress }: { label: string; checked: boolean; o
 
 const styles = StyleSheet.create({
   page: { padding: 16, gap: 10 },
+  logo: { width: 220, height: 72, alignSelf: 'center' },
+  tagline: { color: colors.muted, textAlign: 'center' },
   input: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, borderRadius: 12, padding: 12 },
   check: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   box: { width: 18, height: 18, borderWidth: 1, borderColor: colors.ink, borderRadius: 4 },
