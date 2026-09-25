@@ -32,3 +32,8 @@ export type AuthSession = {
   refreshToken: string;
   user: PublicUser;
 };
+
+export type MfaChallenge = {
+  mfaRequired: true;
+  mfaToken: string;
+};

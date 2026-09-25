@@ -68,6 +68,8 @@ export function LoginForm() {
       </button>
       <p className="text-sm text-muted">
         Hesabın yok mu? <Link href={`/kayit?donus=${next}`} className="underline">Kayıt ol</Link>
+        {' · '}
+        <Link href="/sifre-sifirla" className="underline">Parolamı unuttum</Link>
       </p>
     </form>
   );

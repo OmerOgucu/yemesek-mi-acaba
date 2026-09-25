@@ -16,7 +16,10 @@ export function RestaurantCard({ restaurant, rank }: { restaurant: RestaurantSum
         <span className="w-8 font-display text-2xl text-muted">{rank}</span>
         <ScoreSeal score={restaurant.evilScore} label={restaurant.scoreLabel} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-display text-2xl leading-tight">{restaurant.name}</span>
+          <span className="block truncate font-display text-2xl leading-tight">
+            {restaurant.name}
+            {restaurant.status === 'CLOSED' ? ' · Kapalı' : restaurant.status === 'MOVED' ? ' · Taşındı' : ''}
+          </span>
           <span className="mt-1 block text-sm text-muted">{placeLine(restaurant)}</span>
           <span className="mt-2 flex flex-wrap gap-2 text-xs">
             <span className="rounded-full bg-paper px-2 py-1">

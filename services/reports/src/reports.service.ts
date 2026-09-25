@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { assertHuman } from '@yemesek/auth';
 import { BadgesService } from '@yemesek/badges';
 import { PrismaService } from '@yemesek/database';
 import { EvidenceService, type IncomingImage } from '@yemesek/evidence';
@@ -22,6 +23,7 @@ export class ReportsService {
     author: { id: string; displayName: string },
     files: { photos?: IncomingImage[]; receipt?: IncomingImage[] },
   ): Promise<ReportView> {
+    await assertHuman(dto);
     await this.restaurants.findRow(restaurantId);
     const issues = this.moderation.collect([
       { value: dto.title },
@@ -32,7 +34,7 @@ export class ReportsService {
       throw new BadRequestException({ message: issues });
     }
 
-    const evidence = this.evidence.assert(files.photos, files.receipt);
+    const evidence = await this.evidence.assert(files.photos, files.receipt);
     const review = this.moderation.stampEvidence();
     let created;
     try {

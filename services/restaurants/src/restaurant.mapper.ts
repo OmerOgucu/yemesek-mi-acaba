@@ -1,4 +1,4 @@
-import { ReportCategory } from '@prisma/client';
+import { ReportCategory, VenueStatus } from '@prisma/client';
 import { photoUrlList, publicUploadPath } from '@yemesek/evidence';
 import { CATEGORY_LABEL, computeEvilScore, foldTr, scoreLabel, type ScoreInput } from '@yemesek/shared';
 
@@ -17,6 +17,8 @@ export type ReportRow = ScoredReport & {
   photoUrls: unknown;
   receiptUrl: string;
   evidenceVerified: boolean;
+  moderationStatus: string;
+  replies?: { body: string; onBehalf: boolean; createdAt: Date }[];
 };
 
 export type RestaurantBase = {
@@ -26,6 +28,10 @@ export type RestaurantBase = {
   district: string | null;
   addressHint: string | null;
   cuisine: string | null;
+  brandName: string | null;
+  status: VenueStatus;
+  venueReply: string | null;
+  venueReplyOnBehalf: boolean;
   createdAt: Date;
 };
 
@@ -46,6 +52,10 @@ export type RestaurantSummary = {
   district: string | null;
   addressHint: string | null;
   cuisine: string | null;
+  brandName: string | null;
+  status: VenueStatus;
+  venueReply: string | null;
+  venueReplyOnBehalf: boolean;
   createdAt: string;
   reportCount: number;
   helpfulVotes: number;
@@ -67,6 +77,8 @@ export type ReportView = {
   photoUrls: string[];
   receiptUrl: string;
   evidenceVerified: boolean;
+  moderationStatus: string;
+  replies: { body: string; onBehalf: boolean; createdAt: string }[];
 };
 
 function toScoreInput(reports: ScoredReport[]): ScoreInput[] {
@@ -102,6 +114,10 @@ export function toSummary(restaurant: RestaurantBase & { reports: ScoredReport[]
     district: restaurant.district,
     addressHint: restaurant.addressHint,
     cuisine: restaurant.cuisine,
+    brandName: restaurant.brandName,
+    status: restaurant.status,
+    venueReply: restaurant.venueReply,
+    venueReplyOnBehalf: restaurant.venueReplyOnBehalf,
     createdAt: restaurant.createdAt.toISOString(),
     reportCount: restaurant.reports.length,
     helpfulVotes,
@@ -125,6 +141,12 @@ export function toReportView(report: ReportRow): ReportView {
     photoUrls: photoUrlList(report.photoUrls),
     receiptUrl: publicUploadPath(report.receiptUrl) ?? '',
     evidenceVerified: report.evidenceVerified,
+    moderationStatus: report.moderationStatus,
+    replies: (report.replies ?? []).map((reply) => ({
+      body: reply.body,
+      onBehalf: reply.onBehalf,
+      createdAt: reply.createdAt.toISOString(),
+    })),
   };
 }
 

@@ -44,6 +44,12 @@ export async function getRestaurants(params: {
   return (await response.json()) as RestaurantListResponse;
 }
 
+export async function getPublicSettings(): Promise<{ key: string; value: string }[]> {
+  const response = await fetch(new URL('/settings', apiBaseUrl()), { cache: 'no-store' });
+  if (!response.ok) return [];
+  return (await response.json()) as { key: string; value: string }[];
+}
+
 export async function getRestaurant(id: string): Promise<RestaurantDetail> {
   const response = await fetch(new URL(`/restaurants/${id}`, apiBaseUrl()), { cache: 'no-store' });
   if (!response.ok) throw await readError(response);

@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import type { AuthUser } from '@yemesek/auth';
 import { BadgesService } from '@yemesek/badges';
 import { PrismaService } from '@yemesek/database';
 import { ModerationService } from '@yemesek/moderation';
 import { SettingsService } from '@yemesek/settings';
-import { placeKey } from '@yemesek/shared';
+import { levenshtein, placeKey } from '@yemesek/shared';
 import { findOrCreateLocation } from './location';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { ListRestaurantsQuery } from './dto/list-restaurants.query';
@@ -35,6 +36,7 @@ export class RestaurantsService {
     const reviewedOnly = await this.settings.reportsNeedReview();
     return {
       hidden: false,
+      withdrawnAt: null,
       moderationStatus: reviewedOnly ? 'APPROVED' : { not: 'REJECTED' },
     };
   }
@@ -125,9 +127,28 @@ export class RestaurantsService {
     } catch (error) {
       throw new BadRequestException(error instanceof Error ? error.message : 'Konum kaydedilemedi.');
     }
+    const nameKey = placeKey(dto.name).key;
+    const samePlace = await this.prisma.restaurant.findMany({
+      where: { cityKey: location.cityKey, districtId: location.districtId, hidden: false },
+      select: { id: true, name: true, nameKey: true },
+    });
+    const exact = samePlace.find((row) => row.nameKey === nameKey);
+    const suggestions = samePlace
+      .filter((row) => row.nameKey !== nameKey && levenshtein(row.nameKey, nameKey) <= 2 && nameKey.length > 4)
+      .slice(0, 3)
+      .map((row) => ({ id: row.id, name: row.name }));
+    if (exact) {
+      throw new ConflictException({
+        message: 'Bu mekan bu ilçede zaten var.',
+        existingId: exact.id,
+        suggestions,
+      });
+    }
     const created = await this.prisma.restaurant.create({
       data: {
         name: dto.name,
+        nameKey,
+        brandName: dto.brandName || null,
         city: location.city,
         cityKey: location.cityKey,
         cityId: location.cityId,
@@ -143,6 +164,43 @@ export class RestaurantsService {
     return toSummary(created);
   }
 
+  async claim(id: string, userId: string, note?: string) {
+    const restaurant = await this.prisma.restaurant.findUnique({ where: { id } });
+    if (!restaurant || restaurant.hidden) throw new NotFoundException('Mekan bulunamadı.');
+    const existing = await this.prisma.restaurantClaim.findFirst({
+      where: { restaurantId: id, userId, status: { in: ['PENDING', 'APPROVED'] } },
+    });
+    if (existing) return { id: existing.id, status: existing.status };
+    const created = await this.prisma.restaurantClaim.create({
+      data: { restaurantId: id, userId, note: note?.trim() || null },
+    });
+    return { id: created.id, status: created.status };
+  }
+
+  async venueReply(id: string, user: AuthUser, body: string) {
+    const issues = this.moderation.collect([{ value: body }]);
+    if (issues.length) throw new BadRequestException({ message: issues });
+    const restaurant = await this.prisma.restaurant.findUnique({ where: { id } });
+    if (!restaurant || restaurant.hidden) throw new NotFoundException('Mekan bulunamadı.');
+    const staff = user.role === 'ADMIN' || user.role === 'MODERATOR';
+    const claim = await this.prisma.restaurantClaim.findFirst({
+      where: { restaurantId: id, userId: user.id, status: 'APPROVED' },
+    });
+    if (!staff && !claim) throw new ForbiddenException('Bu mekana yanıt yazma yetkin yok.');
+    const updated = await this.prisma.restaurant.update({
+      where: { id },
+      data: {
+        venueReply: body.trim(),
+        venueReplyAt: new Date(),
+        venueReplyOnBehalf: staff && !claim,
+      },
+    });
+    return {
+      venueReply: updated.venueReply,
+      venueReplyOnBehalf: updated.venueReplyOnBehalf,
+    };
+  }
+
   async findRow(id: string, reportWhere?: Prisma.ReportWhereInput): Promise<RestaurantRow> {
     if (!id || id.length > 40) throw new NotFoundException('Mekan bulunamadı.');
     const restaurant = await this.prisma.restaurant.findUnique({
@@ -150,7 +208,10 @@ export class RestaurantsService {
       include: {
         reports: {
           where: reportWhere,
-          include: { _count: { select: { votes: true } } },
+          include: {
+            _count: { select: { votes: true } },
+            replies: { orderBy: { createdAt: 'asc' }, select: { body: true, onBehalf: true, createdAt: true } },
+          },
         },
       },
     });

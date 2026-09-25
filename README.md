@@ -115,7 +115,9 @@ pnpm build
 
 Şehir ve ilçe ikisi de zorunludur. Eşleşme: boşluklar kırpılır, art arda boşluk teke iner, Türkçe küçük harfe katlanır (`toLocaleLowerCase('tr-TR')`). Aynı anahtara düşen sonraki mekan yeni şehir veya ilçe açmaz; ilk kaydın yazımına bağlanır. Örnek: `Ankara` / `Çankaya` ile ` ankara ` / `çankaya` tek konumdur. Filtre bu tablodan şehir → ilçe listesi döner.
 
-Yönetim paneli ayrı bir mobil veritabanı değildir. Ayar, rozet, inceleme, e-posta şablonu ve mekan veya şikayet gizleme aynı API’ye yazılır. Web, Expo iOS ve Android aynı veriyi okur. Mobilde ayrı bir yönetim ekranı yoktur.
+Yönetim paneli ayrı bir mobil veritabanı değildir. Ayar, rozet, inceleme, e-posta şablonu, mekan veya şikayet gizleme, konum ve denetim kaydı aynı API’ye yazılır. Web, Expo iOS ve Android aynı veriyi okur. Mobilde ayrı bir yönetim ekranı yoktur.
+
+Parola sıfırlama, hesap silme (anonimleştirme), işletme talebi ve yanıt, moderatör rolü, denetim kaydı ve noindex şikayet sayfaları bu sürümde vardır. Harita, reklam ve Apple ile giriş yoktur. Yayın listesi `docs/deploy.md`.
 
 Katkı puanı: şikayet × 10, alınan yararlı oy × 3, eklenen mekan × 8, verilen yararlı oy × 1. Rozetler bu sayaçların eşiğine göre otomatik verilir. Elle verilen veya geri alınan rozet `MANUAL` kalır ve otomatik hesap onu bozmaz.
 

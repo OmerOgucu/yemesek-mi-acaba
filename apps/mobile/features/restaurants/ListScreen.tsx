@@ -12,6 +12,7 @@ type Item = {
   district: string | null;
   evilScore: number;
   scoreLabel: string;
+  status?: 'OPEN' | 'CLOSED' | 'MOVED';
   reportCount: number;
 };
 
@@ -125,6 +126,7 @@ export default function ListScreen() {
             <Text style={styles.name}>{item.name}</Text>
             <Text style={styles.meta}>
               {[item.district, item.city].filter(Boolean).join(', ')} · {item.reportCount} şikayet
+              {item.status === 'CLOSED' ? ' · Kapalı' : item.status === 'MOVED' ? ' · Taşındı' : ''}
             </Text>
           </View>
         </Pressable>

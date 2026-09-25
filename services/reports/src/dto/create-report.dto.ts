@@ -49,4 +49,14 @@ export class CreateReportDto {
     message: 'Takma adta yalnızca harf, rakam ve boşluk kullanın.',
   })
   nickname?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  company?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  captchaToken?: string;
 }

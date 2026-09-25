@@ -23,6 +23,19 @@ export class SettingsService {
     return this.flag('publicReportsNeedReview');
   }
 
+  indexPublicReports(): Promise<boolean> {
+    return this.flag('indexPublicReports');
+  }
+
+  admin2faRequired(): Promise<boolean> {
+    return this.flag('admin2faRequired');
+  }
+
+  async number(key: SettingKey): Promise<number> {
+    const parsed = Number(await this.get(key));
+    return Number.isInteger(parsed) ? parsed : Number(SETTING_DEFS[key].defaultValue);
+  }
+
   async publicList(): Promise<{ key: SettingKey; value: string; label: string }[]> {
     const keys = Object.keys(SETTING_DEFS) as SettingKey[];
     const rows = await Promise.all(
@@ -41,6 +54,12 @@ export class SettingsService {
     const def = SETTING_DEFS[key];
     if (def.kind === 'boolean' && trimmed !== 'true' && trimmed !== 'false') {
       throw new BadRequestException('Bu ayar true veya false olmalı.');
+    }
+    if (def.kind === 'number') {
+      const parsed = Number(trimmed);
+      if (!Number.isInteger(parsed) || parsed < 1 || parsed > 3650) {
+        throw new BadRequestException('Bu ayar 1 ile 3650 arasında tam sayı olmalı.');
+      }
     }
     if (trimmed.length < 1 || trimmed.length > 500) {
       throw new BadRequestException('Ayar metni 1 ile 500 karakter arasında olmalı.');

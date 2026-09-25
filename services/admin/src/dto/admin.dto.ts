@@ -1,8 +1,9 @@
-import { BadgeMetric, ModerationStatus, UserRole } from '@prisma/client';
+import { BadgeMetric, ModerationStatus, UserRole, VenueStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -61,6 +62,37 @@ export class UpdateRestaurantDto {
   @IsOptional()
   @IsBoolean()
   hidden?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  brandName?: string;
+
+  @IsOptional()
+  @IsEnum(VenueStatus)
+  status?: VenueStatus;
+}
+
+export class ReviewClaimDto {
+  @IsIn(['APPROVED', 'REJECTED'])
+  status!: 'APPROVED' | 'REJECTED';
+}
+
+export class ResolveAppealDto {
+  @IsIn(['RESOLVED', 'REJECTED'])
+  status!: 'RESOLVED' | 'REJECTED';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  resolution?: string;
+}
+
+export class SaveContentDto {
+  @IsString()
+  @MinLength(10)
+  @MaxLength(20000)
+  body!: string;
 }
 
 export class ModerateReportDto {

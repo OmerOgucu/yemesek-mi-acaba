@@ -12,8 +12,10 @@ export {
   publicUploadPath,
   removeStoredFile,
   saveEvidenceFile,
+  prepareEvidenceBuffer,
   uploadsRoot,
   writeSeedPlaceholders,
   type ImageExt,
   type IncomingImage,
 } from './evidence-files';
+export { stripImageMetadata } from './strip-metadata';

@@ -3,6 +3,7 @@ import { ReportCategory } from '@prisma/client';
 import request from 'supertest';
 import { createApp } from '../src/create-app';
 import { PrismaService } from '@yemesek/database';
+import { resetDb } from './reset-db';
 import { RECEIPT_PNG, VENUE_PNG } from '@yemesek/evidence';
 
 describe('Yemesek API', () => {
@@ -18,19 +19,7 @@ describe('Yemesek API', () => {
   });
 
   beforeEach(async () => {
-    const prisma = app.get(PrismaService);
-    await prisma.vote.deleteMany();
-    await prisma.userBadge.deleteMany();
-    await prisma.emailVerification.deleteMany();
-    await prisma.report.deleteMany();
-    await prisma.refreshToken.deleteMany();
-    await prisma.restaurant.deleteMany();
-    await prisma.district.deleteMany();
-    await prisma.city.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.badge.deleteMany();
-    await prisma.emailTemplate.deleteMany();
-    await prisma.siteSetting.deleteMany();
+    await resetDb(app.get(PrismaService));
   });
 
   async function register(email = 'yazar@example.com', displayName = 'Yazar') {
@@ -42,6 +31,7 @@ describe('Yemesek API', () => {
         displayName,
         acceptKvkk: true,
         acceptTerms: true,
+        ageConfirmed: true,
       })
       .expect(201);
     expect(response.body.passwordHash).toBeUndefined();

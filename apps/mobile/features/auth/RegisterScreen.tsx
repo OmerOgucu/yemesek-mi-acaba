@@ -15,6 +15,7 @@ export default function RegisterScreen() {
   const [acceptKvkk, setAcceptKvkk] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptMarketing, setAcceptMarketing] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [error, setError] = useState('');
 
   async function submit() {
@@ -27,6 +28,7 @@ export default function RegisterScreen() {
         acceptKvkk,
         acceptTerms,
         acceptMarketing,
+        ageConfirmed,
       });
       await signIn(session);
       router.replace('/dogrula');
@@ -40,6 +42,7 @@ export default function RegisterScreen() {
       <TextInput style={styles.input} placeholder="Görünen ad" value={displayName} onChangeText={setDisplayName} />
       <TextInput style={styles.input} autoCapitalize="none" keyboardType="email-address" placeholder="E-posta" value={email} onChangeText={setEmail} />
       <TextInput style={styles.input} secureTextEntry placeholder="Parola" value={password} onChangeText={setPassword} />
+      <Check label="18 yaşından büyüğüm" checked={ageConfirmed} onPress={() => setAgeConfirmed((value) => !value)} />
       <Check label="KVKK aydınlatma metnini okudum" checked={acceptKvkk} onPress={() => setAcceptKvkk((value) => !value)} />
       <Pressable onPress={() => router.push('/yasal/kvkk')}>
         <Text style={styles.link}>Aydınlatma metnini aç</Text>
@@ -54,7 +57,7 @@ export default function RegisterScreen() {
         onPress={() => setAcceptMarketing((value) => !value)}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Pressable style={[styles.primary, (!acceptKvkk || !acceptTerms) && styles.disabled]} disabled={!acceptKvkk || !acceptTerms} onPress={() => void submit()}>
+      <Pressable style={[styles.primary, (!acceptKvkk || !acceptTerms || !ageConfirmed) && styles.disabled]} disabled={!acceptKvkk || !acceptTerms || !ageConfirmed} onPress={() => void submit()}>
         <Text style={styles.primaryText}>Hesap aç</Text>
       </Pressable>
     </ScrollView>

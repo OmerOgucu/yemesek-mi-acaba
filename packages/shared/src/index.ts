@@ -1,4 +1,5 @@
 export { foldTr, normalizeCity, placeKey } from './city';
+export { levenshtein } from './levenshtein';
 export { contributionScore, type ContributionCounts } from './contribution';
 export { ApiErrorMessage } from './errors';
 export { MemoryRateLimiter } from './memory-rate-limiter';

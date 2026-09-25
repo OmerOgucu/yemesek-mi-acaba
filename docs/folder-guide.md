@@ -11,7 +11,8 @@
 | Metin politikası, kanıt damgası | `services/moderation` |
 | Rozet eşiği | `services/badges` |
 | Site ayarı | `services/settings` |
-| Yönetim uçları | `services/admin` |
+| Yönetim uçları, denetim, talep, destek kutusu | `services/admin` |
+| Herkese açık kural, şeffaflık, destek formu | `services/settings` |
 | Prisma şema, migration, seed | `packages/database` |
 | Kategori, skor, hız sayacı, ortak hata metni | `packages/shared` |
 | `DATABASE_URL`, JWT, port, uploads yolu | `packages/config` |

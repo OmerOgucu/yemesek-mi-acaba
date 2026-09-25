@@ -14,6 +14,7 @@ type ErrorBody = {
   statusCode: number;
   message: string;
   details?: string[];
+  existingId?: string;
 };
 
 @Catch()
@@ -46,7 +47,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
           };
         }
         if (typeof record.message === 'string') {
-          return { statusCode, message: record.message };
+          const existingId = (raw as { existingId?: unknown }).existingId;
+          return {
+            statusCode,
+            message: record.message,
+            ...(typeof existingId === 'string' ? { existingId } : {}),
+          };
         }
       }
       return { statusCode, message: ApiErrorMessage.requestFailed };

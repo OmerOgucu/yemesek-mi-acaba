@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import request from 'supertest';
 import { createApp } from '../src/create-app';
 import { PrismaService } from '@yemesek/database';
+import { resetDb } from './reset-db';
 import { RECEIPT_PNG, VENUE_PNG } from '@yemesek/evidence';
 
 describe('gates, mail, cities, badges, admin', () => {
@@ -19,19 +20,7 @@ describe('gates, mail, cities, badges, admin', () => {
   });
 
   beforeEach(async () => {
-    const prisma = app.get(PrismaService);
-    await prisma.vote.deleteMany();
-    await prisma.userBadge.deleteMany();
-    await prisma.emailVerification.deleteMany();
-    await prisma.report.deleteMany();
-    await prisma.refreshToken.deleteMany();
-    await prisma.restaurant.deleteMany();
-    await prisma.district.deleteMany();
-    await prisma.city.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.badge.deleteMany();
-    await prisma.emailTemplate.deleteMany();
-    await prisma.siteSetting.deleteMany();
+    await resetDb(app.get(PrismaService));
   });
 
   async function registerRaw(email: string, displayName = 'Yazar') {
@@ -43,6 +32,7 @@ describe('gates, mail, cities, badges, admin', () => {
         displayName,
         acceptKvkk: true,
         acceptTerms: true,
+        ageConfirmed: true,
       })
       .expect(201);
     return response.body as { accessToken: string; user: { emailVerified: boolean } };

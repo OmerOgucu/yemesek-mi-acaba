@@ -65,7 +65,16 @@ export class AdminService {
     ]
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, 8);
-    return { members, restaurants, reports, recent };
+    const config = readConfig();
+    return {
+      members,
+      restaurants,
+      reports,
+      recent,
+      mailConfigured: Boolean(config.brevoApiKey),
+      storageDriver: (process.env.STORAGE_DRIVER ?? 'local').trim() || 'local',
+      sentryConfigured: Boolean(process.env.SENTRY_DSN?.trim()),
+    };
   }
 
   async users(q?: string) {
@@ -145,6 +154,7 @@ export class AdminService {
       city: row.city,
       district: row.district,
       cuisine: row.cuisine,
+      status: row.status,
       hidden: row.hidden,
       reportCount: row._count.reports,
       createdAt: row.createdAt.toISOString(),
@@ -177,6 +187,9 @@ export class AdminService {
       where: { id },
       data: {
         name: dto.name ?? current.name,
+        nameKey: placeKey(dto.name ?? current.name).key,
+        brandName: dto.brandName !== undefined ? dto.brandName || null : current.brandName,
+        status: dto.status ?? current.status,
         city: location.city,
         cityKey: location.cityKey,
         cityId: location.cityId,
@@ -247,6 +260,9 @@ export class AdminService {
     }
     const updated = await this.prisma.report.update({ where: { id }, data });
     await this.badges.sync(updated.authorId);
+    if (input.status) {
+      console.info(`[push:noop] moderation_decision report=${updated.id} status=${input.status}`);
+    }
     return {
       id: updated.id,
       moderationStatus: updated.moderationStatus,
@@ -484,6 +500,159 @@ export class AdminService {
 
   setSetting(key: string, value: string) {
     return this.settings.set(key, value);
+  }
+
+  async forceLogout(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Üye bulunamadı.');
+    const now = new Date();
+    await this.prisma.user.update({ where: { id: userId }, data: { sessionsRevokedAt: now } });
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: now },
+    });
+    return { ok: true };
+  }
+
+  async analytics() {
+    const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    const [signups, reports] = await Promise.all([
+      this.prisma.user.findMany({
+        where: { createdAt: { gte: since }, deletedAt: null },
+        select: { createdAt: true },
+      }),
+      this.prisma.report.findMany({
+        where: { createdAt: { gte: since } },
+        select: { restaurant: { select: { city: true } } },
+      }),
+    ]);
+    const byDay = new Map<string, number>();
+    for (const user of signups) {
+      const day = user.createdAt.toISOString().slice(0, 10);
+      byDay.set(day, (byDay.get(day) ?? 0) + 1);
+    }
+    const byCity = new Map<string, number>();
+    for (const report of reports) {
+      const city = report.restaurant.city;
+      byCity.set(city, (byCity.get(city) ?? 0) + 1);
+    }
+    return {
+      signupsByDay: [...byDay.entries()].map(([day, count]) => ({ day, count })),
+      reportsByCity: [...byCity.entries()].map(([city, count]) => ({ city, count })),
+    };
+  }
+
+  audit(take = 100) {
+    return this.prisma.auditLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(take, 200),
+      include: { actor: { select: { displayName: true, role: true } } },
+    });
+  }
+
+  async claims() {
+    const rows = await this.prisma.restaurantClaim.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: { restaurant: { select: { name: true, city: true } }, user: { select: { email: true, displayName: true } } },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      status: row.status,
+      note: row.note,
+      createdAt: row.createdAt.toISOString(),
+      restaurant: row.restaurant,
+      user: { displayName: row.user.displayName },
+    }));
+  }
+
+  async reviewClaim(id: string, status: 'APPROVED' | 'REJECTED') {
+    const current = await this.prisma.restaurantClaim.findUnique({ where: { id } });
+    if (!current) throw new NotFoundException('Talep bulunamadı.');
+    const updated = await this.prisma.restaurantClaim.update({
+      where: { id },
+      data: { status, reviewedAt: new Date() },
+    });
+    return { id: updated.id, status: updated.status };
+  }
+
+  async appeals() {
+    const rows = await this.prisma.appeal.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: { report: { select: { title: true } } },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      status: row.status,
+      body: row.body,
+      resolution: row.resolution,
+      createdAt: row.createdAt.toISOString(),
+      reportTitle: row.report.title,
+    }));
+  }
+
+  async resolveAppeal(id: string, status: 'RESOLVED' | 'REJECTED', resolution?: string) {
+    const current = await this.prisma.appeal.findUnique({ where: { id } });
+    if (!current) throw new NotFoundException('İtiraz bulunamadı.');
+    const updated = await this.prisma.appeal.update({
+      where: { id },
+      data: { status, resolution: resolution?.trim() || null, resolvedAt: new Date() },
+    });
+    return { id: updated.id, status: updated.status };
+  }
+
+  tickets() {
+    return this.prisma.supportTicket.findMany({ orderBy: { createdAt: 'desc' }, take: 100 });
+  }
+
+  async closeTicket(id: string) {
+    const current = await this.prisma.supportTicket.findUnique({ where: { id } });
+    if (!current) throw new NotFoundException('Kayıt bulunamadı.');
+    return this.prisma.supportTicket.update({ where: { id }, data: { status: 'CLOSED' } });
+  }
+
+  async content(key: string) {
+    const row = await this.prisma.siteContent.findUnique({ where: { key } });
+    return { key, body: row?.body ?? '' };
+  }
+
+  async saveContent(key: string, body: string) {
+    if (!/^[a-z0-9_-]{2,40}$/.test(key)) throw new BadRequestException('İçerik anahtarı geçersiz.');
+    const trimmed = body.trim();
+    if (trimmed.length < 10 || trimmed.length > 20_000) {
+      throw new BadRequestException('Metin 10 ile 20000 karakter arasında olmalı.');
+    }
+    await this.prisma.siteContent.upsert({
+      where: { key },
+      update: { body: trimmed },
+      create: { key, body: trimmed },
+    });
+    return { key, body: trimmed };
+  }
+
+  async purgeEvidence() {
+    const due = await this.prisma.report.findMany({
+      where: { evidencePurgeAfter: { lte: new Date() } },
+      select: { id: true, photoUrls: true, receiptUrl: true },
+    });
+    for (const report of due) this.unlinkReport(report.photoUrls, report.receiptUrl);
+    if (due.length) {
+      await this.prisma.report.updateMany({
+        where: { id: { in: due.map((report) => report.id) } },
+        data: { photoUrls: [], receiptUrl: '', evidencePurgeAfter: null },
+      });
+    }
+    return { purged: due.length };
+  }
+
+  async transparency() {
+    const [hiddenReports, verifiedEvidence, withdrawnReports] = await Promise.all([
+      this.prisma.report.count({ where: { hidden: true } }),
+      this.prisma.report.count({ where: { receiptUrl: { not: '' }, withdrawnAt: null } }),
+      this.prisma.report.count({ where: { withdrawnAt: { not: null } } }),
+    ]);
+    return { hiddenReports, verifiedEvidence, withdrawnReports };
   }
 
   private async recomputeAll(): Promise<void> {

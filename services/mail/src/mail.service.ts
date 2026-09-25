@@ -11,6 +11,7 @@ export type MailVars = {
   displayName: string;
   code?: string;
   verifyUrl?: string;
+  resetUrl?: string;
 };
 
 export type DevVerificationHint = {
@@ -41,6 +42,7 @@ export class MailService {
       displayName: vars.displayName,
       code: vars.code ?? '',
       verifyUrl: vars.verifyUrl ?? '',
+      resetUrl: vars.resetUrl ?? '',
       appName: config.brevoSenderName,
     };
     return {
@@ -55,9 +57,13 @@ export class MailService {
     const rendered = await this.render(key, vars);
     const provider: MailProvider = config.brevoApiKey ? new BrevoMailProvider(config) : new ConsoleMailProvider();
     await provider.send({ to, subject: rendered.subject, html: rendered.html, text: rendered.text });
-    if (!config.isProduction && !config.brevoApiKey && vars.code && vars.verifyUrl) {
-      console.info(`[mail:dev] to=${to} code=${vars.code} verifyUrl=${vars.verifyUrl}`);
-      this.devHints.set(to.trim().toLowerCase(), { code: vars.code, verifyUrl: vars.verifyUrl });
+    if (!config.isProduction && !config.brevoApiKey && (vars.verifyUrl || vars.resetUrl)) {
+      const hint = {
+        code: vars.code ?? '',
+        verifyUrl: vars.verifyUrl || vars.resetUrl || '',
+      };
+      console.info(`[mail:dev] to=${to} code=${hint.code} verifyUrl=${hint.verifyUrl}`);
+      this.devHints.set(to.trim().toLowerCase(), hint);
     }
   }
 

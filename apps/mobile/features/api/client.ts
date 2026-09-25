@@ -59,7 +59,12 @@ async function send(path: string, method: string, body: unknown, auth: boolean):
 }
 
 async function request<T>(path: string, method: string, body: unknown, auth: boolean): Promise<T> {
-  let response = await send(path, method, body, auth);
+  let response: Response;
+  try {
+    response = await send(path, method, body, auth);
+  } catch {
+    throw new ApiError('Bağlantı yok. İnterneti kontrol et.', 0);
+  }
   if (auth && response.status === 401 && (await refreshSession())) {
     response = await send(path, method, body, auth);
   }

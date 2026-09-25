@@ -34,4 +34,17 @@ export class RegisterDto {
   @IsOptional()
   @IsBoolean({ message: 'Pazarlama tercihi doğru veya yanlış olmalı.' })
   acceptMarketing?: boolean;
+
+  @Equals(true, { message: '18 yaşından büyük olduğunu onaylamalısın.' })
+  ageConfirmed!: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  company?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  captchaToken?: string;
 }

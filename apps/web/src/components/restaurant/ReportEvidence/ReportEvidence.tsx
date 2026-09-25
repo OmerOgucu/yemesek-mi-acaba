@@ -6,17 +6,22 @@ export function ReportEvidence({
   photoUrls,
   receiptUrl,
   evidenceVerified,
+  moderationStatus,
 }: {
   photoUrls: string[];
   receiptUrl: string;
   evidenceVerified: boolean;
+  moderationStatus?: string;
 }) {
   if (!photoUrls.length && !receiptUrl) return null;
+  const approved = moderationStatus === 'APPROVED' || evidenceVerified;
   return (
     <div className="mt-3">
-      <p className="text-xs font-medium tracking-wide text-moss uppercase">Kanıtlı şikayet</p>
-      {evidenceVerified ? null : (
-        <p className="mt-1 text-xs text-muted">Kanıt kullanıcı tarafından yüklendi, henüz incelenmedi.</p>
+      <p className="text-xs font-medium tracking-wide text-moss uppercase">Kanıtlı (dosya eklendi)</p>
+      {approved ? (
+        <p className="mt-1 text-xs font-medium text-ink">Moderatör onaylı</p>
+      ) : (
+        <p className="mt-1 text-xs text-muted">Dosya var. Bu, moderatör onayı değildir.</p>
       )}
       <div className="mt-2 flex flex-wrap gap-2">
         {photoUrls.map((url) => (

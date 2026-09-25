@@ -20,7 +20,9 @@ import { MailService } from '@yemesek/mail';
 import { ModerationService } from '@yemesek/moderation';
 import { SettingsService } from '@yemesek/settings';
 import { MemoryRateLimiter } from '@yemesek/shared';
-import type { AuthSession, PublicBadge, PublicUser } from './auth.types';
+import { assertHuman } from './captcha';
+import type { AuthSession, MfaChallenge, PublicBadge, PublicUser } from './auth.types';
+import { openSecret, randomBase32, sealSecret, totpMatches } from './totp';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
@@ -58,6 +60,7 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthSession> {
+    await assertHuman(dto);
     if (!(await this.settings.registrationOpen())) {
       throw new ForbiddenException('Yeni kayıtlar kapalı.');
     }
@@ -77,6 +80,7 @@ export class AuthService {
           kvkkAcceptedAt: now,
           termsAcceptedAt: now,
           marketingAcceptedAt: dto.acceptMarketing ? now : null,
+          ageConfirmedAt: now,
         },
       });
     } catch (error) {
@@ -96,12 +100,18 @@ export class AuthService {
     return this.issue(user);
   }
 
-  async login(dto: LoginDto): Promise<AuthSession> {
+  async login(dto: LoginDto): Promise<AuthSession | MfaChallenge> {
+    await assertHuman(dto);
     const email = dto.email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({ where: { email } });
     const ok = await bcrypt.compare(dto.password, user?.passwordHash ?? this.dummyHash);
-    if (!user || !ok) {
+    if (!user || !ok || user.deletedAt) {
       throw new UnauthorizedException('E-posta veya şifre hatalı.');
+    }
+    if (user.totpEnabledAt && user.totpSecret) {
+      const secret = readConfig().jwtAccessSecret;
+      const mfaToken = await this.jwt.signAsync({ sub: user.id, purpose: 'mfa' }, { secret, expiresIn: '5m' });
+      return { mfaRequired: true, mfaToken };
     }
     return this.issue(user);
   }
@@ -165,20 +175,135 @@ export class AuthService {
 
   async remove(userId: string, dto: DeleteAccountDto): Promise<{ ok: true }> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new UnauthorizedException('Giriş gerekli.');
+    if (!user || user.deletedAt) throw new UnauthorizedException('Giriş gerekli.');
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Parola hatalı.');
-    const reports = await this.prisma.report.findMany({
-      where: { authorId: userId },
-      select: { photoUrls: true, receiptUrl: true },
+    const days = await this.settings.number('evidenceRetentionDays');
+    const now = new Date();
+    const purgeAfter = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    await this.prisma.report.updateMany({
+      where: { authorId: userId, evidencePurgeAfter: null },
+      data: { evidencePurgeAfter: purgeAfter },
     });
-    await this.prisma.user.delete({ where: { id: userId } });
-    for (const report of reports) {
-      for (const url of this.evidence.photoUrls(report.photoUrls)) this.evidence.remove(url);
-      const receipt = this.evidence.publicPath(report.receiptUrl);
-      if (receipt) this.evidence.remove(receipt);
-    }
+    await this.revokeSessions(userId);
+    await this.prisma.emailVerification.deleteMany({ where: { userId } });
+    await this.prisma.passwordReset.deleteMany({ where: { userId } });
+    await this.prisma.recoveryCode.deleteMany({ where: { userId } });
+    await this.prisma.pushToken.deleteMany({ where: { userId } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        email: `silindi-${userId}@deleted.local`,
+        displayName: 'Silinmiş kullanıcı',
+        passwordHash: await bcrypt.hash(randomBytes(24).toString('hex'), 4),
+        disabledAt: now,
+        deletedAt: now,
+        totpSecret: null,
+        totpEnabledAt: null,
+        marketingAcceptedAt: null,
+      },
+    });
     return { ok: true };
+  }
+
+  async revokeSessions(userId: string): Promise<{ ok: true }> {
+    const now = new Date();
+    await this.prisma.user.update({ where: { id: userId }, data: { sessionsRevokedAt: now } });
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: now },
+    });
+    return { ok: true };
+  }
+
+  async requestPasswordReset(email: string, human: { company?: string; captchaToken?: string }): Promise<{ ok: true }> {
+    await assertHuman(human);
+    const user = await this.prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+    if (!user || user.deletedAt || user.disabledAt) return { ok: true };
+    const config = readConfig();
+    const token = randomBytes(32).toString('base64url');
+    const expiresAt = new Date(Date.now() + config.emailVerificationTtlMinutes * 60_000);
+    await this.prisma.passwordReset.updateMany({
+      where: { userId: user.id, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+    await this.prisma.passwordReset.create({
+      data: { userId: user.id, tokenHash: hashToken(token), expiresAt },
+    });
+    const resetUrl = `${config.appPublicUrl}/sifre-sifirla?token=${encodeURIComponent(token)}`;
+    await this.mail.send('password_reset', user.email, { displayName: user.displayName, resetUrl });
+    return { ok: true };
+  }
+
+  async confirmPasswordReset(token: string, password: string): Promise<{ ok: true }> {
+    assertPassword(password);
+    const row = await this.prisma.passwordReset.findFirst({
+      where: { tokenHash: hashToken(token), consumedAt: null, expiresAt: { gt: new Date() } },
+    });
+    if (!row) throw new BadRequestException('Bağlantı hatalı veya süresi dolmuş.');
+    await this.prisma.passwordReset.update({ where: { id: row.id }, data: { consumedAt: new Date() } });
+    await this.prisma.user.update({
+      where: { id: row.userId },
+      data: { passwordHash: await bcrypt.hash(password, 12) },
+    });
+    await this.revokeSessions(row.userId);
+    return { ok: true };
+  }
+
+  async setupTotp(userId: string): Promise<{ otpauthUrl: string; secret: string; recoveryCodes: string[] }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('Giriş gerekli.');
+    if (user.role !== 'ADMIN' && user.role !== 'MODERATOR') {
+      throw new ForbiddenException('İki adımlı doğrulama görevliler içindir.');
+    }
+    const secret = randomBase32();
+    const recoveryCodes = Array.from({ length: 8 }, () => randomBytes(5).toString('hex'));
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { totpSecret: sealSecret(secret), totpEnabledAt: null },
+    });
+    await this.prisma.recoveryCode.deleteMany({ where: { userId } });
+    await this.prisma.recoveryCode.createMany({
+      data: recoveryCodes.map((code) => ({ userId, codeHash: hashToken(code) })),
+    });
+    const label = encodeURIComponent(user.email);
+    return {
+      secret,
+      recoveryCodes,
+      otpauthUrl: `otpauth://totp/Yemesek:${label}?secret=${secret}&issuer=Yemesek&digits=6&period=30`,
+    };
+  }
+
+  async confirmTotp(userId: string, code: string): Promise<{ ok: true }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.totpSecret) throw new BadRequestException('Önce kurulumu başlat.');
+    if (!totpMatches(openSecret(user.totpSecret), code)) {
+      throw new BadRequestException('Kod hatalı.');
+    }
+    await this.prisma.user.update({ where: { id: userId }, data: { totpEnabledAt: new Date() } });
+    return { ok: true };
+  }
+
+  async challengeMfa(mfaToken: string, code?: string, recoveryCode?: string): Promise<AuthSession> {
+    const secret = readConfig().jwtAccessSecret;
+    let payload: { sub?: string; purpose?: string };
+    try {
+      payload = await this.jwt.verifyAsync(mfaToken, { secret });
+    } catch {
+      throw new UnauthorizedException('Doğrulama süresi doldu.');
+    }
+    if (payload.purpose !== 'mfa' || !payload.sub) throw new UnauthorizedException('Doğrulama süresi doldu.');
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user?.totpSecret || !user.totpEnabledAt) throw new UnauthorizedException('Doğrulama kapalı.');
+    if (code && totpMatches(openSecret(user.totpSecret), code)) return this.issue(user);
+    if (recoveryCode) {
+      const row = await this.prisma.recoveryCode.findUnique({ where: { codeHash: hashToken(recoveryCode.trim()) } });
+      if (row && row.userId === user.id && !row.usedAt) {
+        await this.prisma.recoveryCode.update({ where: { id: row.id }, data: { usedAt: new Date() } });
+        return this.issue(user);
+      }
+    }
+    throw new UnauthorizedException('Kod hatalı.');
   }
 
   async myReports(userId: string) {
@@ -229,11 +354,19 @@ export class AuthService {
     return hint;
   }
 
-  passwordResetStub(): { ok: true; message: string } {
-    return {
-      ok: true,
-      message: 'Hesap varsa sıfırlama yönergesi daha sonra e-posta ile gelir. Bu sürümde gönderilmez.',
-    };
+  async savePushToken(userId: string, token: string, platform: string): Promise<{ ok: true }> {
+    const clean = token.trim();
+    if (clean.length < 8 || clean.length > 200) throw new BadRequestException('Jeton geçersiz.');
+    const name = platform.trim().slice(0, 20) || 'unknown';
+    await this.prisma.pushToken.upsert({
+      where: { token: clean },
+      update: { userId, platform: name },
+      create: { userId, token: clean, platform: name },
+    });
+    if (!process.env.EXPO_ACCESS_TOKEN) {
+      console.info(`[push:noop] registered user=${userId}`);
+    }
+    return { ok: true };
   }
 
   private async sendVerification(user: User): Promise<void> {

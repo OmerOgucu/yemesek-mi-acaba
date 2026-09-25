@@ -4,4 +4,6 @@ export { RolesGuard } from './roles.guard';
 export { Roles } from './roles.decorator';
 export { VerifiedEmailGuard } from './verified-email.guard';
 export { CurrentUser } from './current-user.decorator';
-export type { AuthSession, AuthUser, PublicUser } from './auth.types';
+export type { AuthSession, AuthUser, MfaChallenge, PublicUser } from './auth.types';
+export { assertHuman } from './captcha';
+export { totpNow } from './totp';

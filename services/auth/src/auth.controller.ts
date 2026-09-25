@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 import { CurrentUser } from './current-user.decorator';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { LoginDto } from './dto/login.dto';
-import { PasswordResetDto, VerifyCodeDto, VerifyLinkDto } from './dto/verify-email.dto';
+import { ConfirmTotpDto, MfaDto, PasswordResetDto, ResetPasswordDto, VerifyCodeDto, VerifyLinkDto } from './dto/verify-email.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -88,7 +88,42 @@ export class AuthController {
   @Post('password-reset')
   @UseGuards(AuthRateLimitGuard)
   passwordReset(@Body() dto: PasswordResetDto) {
-    void dto.email;
-    return this.auth.passwordResetStub();
+    return this.auth.requestPasswordReset(dto.email, dto);
+  }
+
+  @Post('password-reset/confirm')
+  @UseGuards(AuthRateLimitGuard)
+  confirmReset(@Body() dto: ResetPasswordDto) {
+    return this.auth.confirmPasswordReset(dto.token, dto.password);
+  }
+
+  @Post('sessions/revoke')
+  @UseGuards(JwtAuthGuard)
+  revoke(@CurrentUser() user: AuthUser) {
+    return this.auth.revokeSessions(user.id);
+  }
+
+  @Post('2fa/setup')
+  @UseGuards(JwtAuthGuard)
+  setupTotp(@CurrentUser() user: AuthUser) {
+    return this.auth.setupTotp(user.id);
+  }
+
+  @Post('2fa/confirm')
+  @UseGuards(JwtAuthGuard)
+  confirmTotp(@CurrentUser() user: AuthUser, @Body() dto: ConfirmTotpDto) {
+    return this.auth.confirmTotp(user.id, dto.code);
+  }
+
+  @Post('2fa/challenge')
+  @UseGuards(AuthRateLimitGuard)
+  challenge(@Body() dto: MfaDto) {
+    return this.auth.challengeMfa(dto.mfaToken, dto.code, dto.recoveryCode);
+  }
+
+  @Post('me/push-token')
+  @UseGuards(JwtAuthGuard)
+  pushToken(@CurrentUser() user: AuthUser, @Body() body: { token?: string; platform?: string }) {
+    return this.auth.savePushToken(user.id, body.token ?? '', body.platform ?? 'unknown');
   }
 }

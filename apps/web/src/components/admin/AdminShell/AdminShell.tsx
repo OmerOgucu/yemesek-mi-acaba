@@ -13,16 +13,22 @@ const LINKS = [
   ['/admin/konumlar', 'Konumlar'],
   ['/admin/eposta', 'E-posta'],
   ['/admin/ayarlar', 'Ayarlar'],
+  ['/admin/denetim', 'Denetim'],
+  ['/admin/destek', 'Destek'],
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const [state, setState] = useState<'loading' | 'anon' | 'forbidden' | 'ok'>('loading');
+  const [role, setRole] = useState('');
 
   useEffect(() => {
     const user = readSession()?.user;
     if (!user) setState('anon');
-    else if (user.role !== 'ADMIN') setState('forbidden');
-    else setState('ok');
+    else if (user.role !== 'ADMIN' && user.role !== 'MODERATOR') setState('forbidden');
+    else {
+      setRole(user.role);
+      setState('ok');
+    }
   }, []);
 
   if (state === 'loading') return <p className="text-muted">Yönetim açılıyor…</p>;
@@ -50,7 +56,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <div>
         <p className="text-[11px] tracking-[0.22em] text-chili uppercase">Yönetim</p>
         <nav className="mt-3 flex flex-wrap gap-2">
-          {LINKS.map(([href, label]) => (
+          {LINKS.filter(([href]) => role === 'ADMIN' || ['/admin', '/admin/moderasyon', '/admin/mekanlar', '/admin/denetim'].includes(href)).map(([href, label]) => (
             <Link key={href} href={href} className="btn btn-ghost text-sm">
               {label}
             </Link>

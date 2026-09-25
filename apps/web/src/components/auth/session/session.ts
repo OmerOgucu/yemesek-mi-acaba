@@ -2,7 +2,7 @@ export type SessionUser = {
   id: string;
   email: string;
   displayName: string;
-  role?: 'USER' | 'ADMIN';
+  role?: 'USER' | 'MODERATOR' | 'ADMIN';
   emailVerified?: boolean;
   badges?: { slug: string; name: string; icon: string }[];
   kvkkAcceptedAt: string;

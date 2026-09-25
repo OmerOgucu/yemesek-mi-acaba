@@ -30,13 +30,14 @@ export async function createApp(): Promise<NestExpressApplication> {
     fallthrough: true,
     setHeaders(res) {
       res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
       res.setHeader('Cache-Control', 'public, max-age=3600');
     },
   });
   app.enableCors({
     origin: LOCAL_ORIGINS,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'X-Api-Key'],
   });
   app.useGlobalPipes(createValidationPipe());
   app.useGlobalFilters(new AllExceptionsFilter());

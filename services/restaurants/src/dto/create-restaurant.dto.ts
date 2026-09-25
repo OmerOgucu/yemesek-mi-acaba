@@ -40,4 +40,10 @@ export class CreateRestaurantDto {
   @IsString({ message: 'Mutfak metin olmalı.' })
   @MaxLength(40, { message: 'Mutfak en fazla 40 karakter olmalı.' })
   cuisine?: string;
+
+  @IsOptional()
+  @Transform(trimString)
+  @IsString({ message: 'Marka metin olmalı.' })
+  @MaxLength(80, { message: 'Marka en fazla 80 karakter olmalı.' })
+  brandName?: string;
 }

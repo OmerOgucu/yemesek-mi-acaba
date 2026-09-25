@@ -5,6 +5,11 @@ const LINKS = [
   { href: '/gizlilik', label: 'Gizlilik' },
   { href: '/kullanim-kosullari', label: 'Kullanım koşulları' },
   { href: '/cerez-politikasi', label: 'Çerez bildirimi' },
+  { href: '/topluluk-kurallari', label: 'Topluluk kuralları' },
+  { href: '/seffaflik', label: 'Şeffaflık' },
+  { href: '/basin', label: 'Basın' },
+  { href: '/destek', label: 'Destek' },
+  { href: '/harita', label: 'Harita' },
 ];
 
 export function SiteFooter() {

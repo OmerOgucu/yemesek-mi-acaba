@@ -6,11 +6,13 @@ import { ModerationModule } from '@yemesek/moderation';
 import { RestaurantsModule } from '@yemesek/restaurants';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
+import { TrustController } from './trust.controller';
+import { TrustService } from './trust.service';
 
 @Module({
   imports: [RestaurantsModule, AuthModule, ModerationModule, EvidenceModule, BadgesModule],
-  controllers: [ReportsController],
-  providers: [ReportsService],
+  controllers: [ReportsController, TrustController],
+  providers: [ReportsService, TrustService],
   exports: [ReportsService],
 })
 export class ReportsModule {}

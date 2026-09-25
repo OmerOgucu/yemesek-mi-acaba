@@ -19,11 +19,20 @@
     "experiments": {
       "typedRoutes": false
     },
-    "android": {
-      "package": "com.yemesek.app"
-    },
     "ios": {
-      "bundleIdentifier": "com.yemesek.app"
+      "bundleIdentifier": "com.yemesek.app",
+      "associatedDomains": ["applinks:yemesek.example"]
+    },
+    "android": {
+      "package": "com.yemesek.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "yemesek.example", "pathPrefix": "/dogrula" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     }
   }
 }

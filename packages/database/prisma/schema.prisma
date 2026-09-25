@@ -18,6 +18,11 @@ model User {
   kvkkAcceptedAt      DateTime
   termsAcceptedAt     DateTime
   marketingAcceptedAt DateTime?
+  ageConfirmedAt      DateTime?
+  totpSecret          String?
+  totpEnabledAt       DateTime?
+  sessionsRevokedAt   DateTime?
+  deletedAt           DateTime?
   createdAt           DateTime            @default(now())
   reports             Report[]
   votes               Vote[]
@@ -25,6 +30,14 @@ model User {
   refreshTokens       RefreshToken[]
   emailVerifications  EmailVerification[]
   badges              UserBadge[]
+  passwordResets      PasswordReset[]
+  recoveryCodes       RecoveryCode[]
+  claims              RestaurantClaim[]
+  appeals             Appeal[]
+  flags               ContentFlag[]
+  pushTokens          PushToken[]
+  auditLogs           AuditLog[]
+  replies             ReportReply[]
 }
 
 model RefreshToken {
@@ -72,14 +85,23 @@ model Restaurant {
   districtId    String?
   districtPlace District? @relation(fields: [districtId], references: [id], onDelete: SetNull)
   addressHint   String?
-  cuisine       String?
-  hidden        Boolean   @default(false)
-  createdById   String?
-  createdBy     User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt     DateTime  @default(now())
-  reports       Report[]
+  cuisine           String?
+  nameKey           String       @default("")
+  brandName         String?
+  status            VenueStatus  @default(OPEN)
+  venueReply        String?
+  venueReplyAt      DateTime?
+  venueReplyOnBehalf Boolean     @default(false)
+  hidden            Boolean      @default(false)
+  createdById       String?
+  createdBy         User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime     @default(now())
+  reports           Report[]
+  claims            RestaurantClaim[]
+  flags             ContentFlag[]
 
   @@index([cityKey])
+  @@index([nameKey, cityKey])
   @@index([cityId])
   @@index([districtId])
   @@index([createdById])
@@ -102,11 +124,17 @@ model Report {
   moderationStatus   ModerationStatus   @default(PENDING)
   hidden             Boolean            @default(false)
   moderationNote     String?
+  withdrawnAt        DateTime?
+  evidencePurgeAfter DateTime?
   createdAt          DateTime           @default(now())
-  votes        Vote[]
+  votes              Vote[]
+  replies            ReportReply[]
+  flags              ContentFlag[]
+  appeals            Appeal[]
 
   @@index([restaurantId, createdAt])
   @@index([authorId])
+  @@index([evidencePurgeAfter])
 }
 
 model Vote {
@@ -176,9 +204,160 @@ model UserBadge {
   @@index([userId])
 }
 
+model PasswordReset {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model RecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String    @unique
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model RestaurantClaim {
+  id           String      @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note         String?
+  status       ClaimStatus @default(PENDING)
+  createdAt    DateTime    @default(now())
+  reviewedAt   DateTime?
+
+  @@index([restaurantId, status])
+  @@index([userId])
+}
+
+model ReportReply {
+  id        String   @id @default(cuid())
+  reportId  String
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  onBehalf  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([reportId])
+}
+
+model ContentFlag {
+  id           String      @id @default(cuid())
+  reportId     String?
+  report       Report?     @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  restaurantId String?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason       String
+  createdAt    DateTime    @default(now())
+  resolvedAt   DateTime?
+
+  @@index([reportId])
+  @@index([restaurantId])
+}
+
+model Appeal {
+  id           String       @id @default(cuid())
+  reportId     String
+  report       Report       @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body         String
+  status       AppealStatus @default(OPEN)
+  resolution   String?
+  createdAt    DateTime     @default(now())
+  resolvedAt   DateTime?
+
+  @@index([reportId])
+  @@index([status])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String
+  summary    String
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+}
+
+model SupportTicket {
+  id        String       @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  body      String
+  status    TicketStatus @default(OPEN)
+  createdAt DateTime     @default(now())
+
+  @@index([status, createdAt])
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model SiteContent {
+  key       String   @id
+  body      String
+  updatedAt DateTime @updatedAt
+}
+
 enum UserRole {
   USER
+  MODERATOR
   ADMIN
+}
+
+enum VenueStatus {
+  OPEN
+  CLOSED
+  MOVED
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AppealStatus {
+  OPEN
+  RESOLVED
+  REJECTED
+}
+
+enum TicketStatus {
+  OPEN
+  CLOSED
 }
 
 enum ModerationStatus {

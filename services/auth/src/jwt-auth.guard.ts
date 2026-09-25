@@ -4,7 +4,7 @@ import { readConfig } from '@yemesek/config';
 import { PrismaService } from '@yemesek/database';
 import type { AuthUser } from './auth.types';
 
-type AccessPayload = { sub?: string };
+type AccessPayload = { sub?: string; iat?: number; purpose?: string };
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -28,11 +28,18 @@ export class JwtAuthGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException('Oturum geçersiz veya süresi dolmuş.');
     }
-    if (!payload.sub) throw new UnauthorizedException('Oturum geçersiz veya süresi dolmuş.');
+    if (!payload.sub || payload.purpose === 'mfa') {
+      throw new UnauthorizedException('Oturum geçersiz veya süresi dolmuş.');
+    }
 
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-    if (!user) throw new UnauthorizedException('Giriş gerekli.');
+    if (!user || user.deletedAt) throw new UnauthorizedException('Giriş gerekli.');
     if (user.disabledAt) throw new ForbiddenException('Bu hesap askıya alındı.');
+    if (user.sessionsRevokedAt && typeof payload.iat === 'number') {
+      if (payload.iat < Math.floor(user.sessionsRevokedAt.getTime() / 1000)) {
+        throw new UnauthorizedException('Oturum kapatıldı. Yeniden gir.');
+      }
+    }
     request.user = {
       id: user.id,
       email: user.email,

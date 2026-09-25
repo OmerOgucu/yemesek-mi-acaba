@@ -9,6 +9,7 @@ type Place = {
   city: string;
   district: string | null;
   hidden: boolean;
+  status: 'OPEN' | 'CLOSED' | 'MOVED';
   reportCount: number;
 };
 
@@ -33,7 +34,8 @@ export function PlacesPanel() {
           <li key={place.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-card px-3 py-2 text-sm">
             <span>
               {place.name} · {place.city}
-              {place.district ? ` / ${place.district}` : ''} · {place.reportCount} şikayet {place.hidden ? '· gizli' : ''}
+              {place.district ? ` / ${place.district}` : ''} · {place.reportCount} şikayet {place.hidden ? '· gizli' : ''}{' '}
+              {place.status === 'CLOSED' ? '· kapalı' : place.status === 'MOVED' ? '· taşındı' : ''}
             </span>
             <span className="flex gap-2">
               <button
@@ -42,6 +44,19 @@ export function PlacesPanel() {
                 onClick={() => void patchJson(`/admin/restaurants/${place.id}`, { hidden: !place.hidden }, true).then(load)}
               >
                 {place.hidden ? 'Göster' : 'Gizle'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost text-sm"
+                onClick={() =>
+                  void patchJson(
+                    `/admin/restaurants/${place.id}`,
+                    { status: place.status === 'CLOSED' ? 'OPEN' : 'CLOSED' },
+                    true,
+                  ).then(load)
+                }
+              >
+                {place.status === 'CLOSED' ? 'Aç' : 'Kapalı işaretle'}
               </button>
               <button type="button" className="btn btn-ghost text-sm" onClick={() => void deleteJson(`/admin/restaurants/${place.id}`, true).then(load)}>
                 Sil

@@ -10,6 +10,8 @@ export const DEMO_EMAIL = 'demo@yemesek.local';
 export const DEMO_PASSWORD = 'Demo1234!';
 export const ADMIN_EMAIL = 'admin@yemesek.local';
 export const ADMIN_PASSWORD = 'Admin1234!';
+export const MODERATOR_EMAIL = 'moderator@yemesek.local';
+export const MODERATOR_PASSWORD = 'Mod1234!';
 
 const BADGES: { slug: string; name: string; description: string; icon: string; metric: BadgeMetric; threshold: number; sortOrder: number }[] = [
   { slug: 'ilk-fis', name: 'İlk fiş', description: 'İlk şikayetini bıraktı.', icon: '🧾', metric: 'REPORTS_FILED', threshold: 1, sortOrder: 1 },
@@ -35,8 +37,20 @@ const TEMPLATES = [
   {
     key: 'password_reset',
     subject: 'Parola sıfırlama',
-    htmlBody: '<p>Merhaba {{displayName}}, parola sıfırlama bu sürümde henüz gönderilmez. Şablon yayın öncesi hazır durur.</p>',
-    textBody: 'Merhaba {{displayName}}, parola sıfırlama bu sürümde henüz gönderilmez.',
+    htmlBody: '<p>Merhaba {{displayName}},</p><p><a href="{{resetUrl}}">Yeni parola belirle</a></p>',
+    textBody: 'Merhaba {{displayName}}, yeni parola bağlantın: {{resetUrl}}',
+  },
+  {
+    key: 'press_inquiry',
+    subject: 'Basın sorun alındı',
+    htmlBody: '<p>Merhaba {{displayName}}, sorun ulaştı.</p>',
+    textBody: 'Merhaba {{displayName}}, basın sorun ulaştı.',
+  },
+  {
+    key: 'legal_takedown_ack',
+    subject: 'Kaldırma bildirimi alındı',
+    htmlBody: '<p>Merhaba {{displayName}}, kaldırma bildirimin alındı.</p>',
+    textBody: 'Merhaba {{displayName}}, kaldırma bildirimin alındı.',
   },
 ];
 
@@ -53,6 +67,15 @@ async function main(): Promise<void> {
     return date;
   };
 
+  await prisma.auditLog.deleteMany();
+  await prisma.appeal.deleteMany();
+  await prisma.contentFlag.deleteMany();
+  await prisma.reportReply.deleteMany();
+  await prisma.restaurantClaim.deleteMany();
+  await prisma.passwordReset.deleteMany();
+  await prisma.recoveryCode.deleteMany();
+  await prisma.pushToken.deleteMany();
+  await prisma.supportTicket.deleteMany();
   await prisma.userBadge.deleteMany();
   await prisma.emailVerification.deleteMany();
   await prisma.vote.deleteMany();
@@ -84,7 +107,22 @@ async function main(): Promise<void> {
       emailVerifiedAt: now,
       kvkkAcceptedAt: now,
       termsAcceptedAt: now,
+      ageConfirmedAt: now,
       createdAt: daysAgo(70),
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      email: MODERATOR_EMAIL,
+      passwordHash: await bcrypt.hash(MODERATOR_PASSWORD, 12),
+      displayName: 'Moderatör',
+      role: 'MODERATOR',
+      emailVerifiedAt: now,
+      kvkkAcceptedAt: now,
+      termsAcceptedAt: now,
+      ageConfirmedAt: now,
+      createdAt: daysAgo(65),
     },
   });
 
@@ -113,6 +151,7 @@ async function main(): Promise<void> {
     await prisma.restaurant.create({
       data: {
         name: restaurant.name,
+        nameKey: restaurant.name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('tr-TR'),
         city: location.city,
         cityKey: location.cityKey,
         cityId: location.cityId,
@@ -178,6 +217,24 @@ async function main(): Promise<void> {
     where: { key: 'publicReportsNeedReview' },
     update: {},
     create: { key: 'publicReportsNeedReview', value: 'false' },
+  });
+  await prisma.siteSetting.upsert({
+    where: { key: 'indexPublicReports' },
+    update: {},
+    create: { key: 'indexPublicReports', value: 'false' },
+  });
+  await prisma.siteSetting.upsert({
+    where: { key: 'admin2faRequired' },
+    update: {},
+    create: { key: 'admin2faRequired', value: 'false' },
+  });
+  await prisma.siteContent.upsert({
+    where: { key: 'community_guidelines' },
+    update: {},
+    create: {
+      key: 'community_guidelines',
+      body: 'Hakaret yok. Kişisel veri yok. Fotoğraf ve fiş zorunlu. Aynı mekanı çoğaltma.',
+    },
   });
 
   const users = await prisma.user.findMany({ select: { id: true } });

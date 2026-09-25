@@ -6,6 +6,7 @@ import { PrismaModule } from '@yemesek/database';
 import { ReportsModule, VotesModule } from '@yemesek/reports';
 import { RestaurantsModule } from '@yemesek/restaurants';
 import { SettingsModule } from '@yemesek/settings';
+import { GetRateLimitGuard } from './common/get-rate-limit.guard';
 import { PostRateLimitGuard } from './common/post-rate-limit.guard';
 import { HealthModule } from './health/health.module';
 
@@ -15,6 +16,10 @@ import { HealthModule } from './health/health.module';
     {
       provide: APP_GUARD,
       useClass: PostRateLimitGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: GetRateLimitGuard,
     },
   ],
 })

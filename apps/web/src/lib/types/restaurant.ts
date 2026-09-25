@@ -11,6 +11,10 @@ export type RestaurantSummary = {
   district: string | null;
   addressHint: string | null;
   cuisine: string | null;
+  brandName: string | null;
+  status: 'OPEN' | 'CLOSED' | 'MOVED';
+  venueReply: string | null;
+  venueReplyOnBehalf: boolean;
   createdAt: string;
   reportCount: number;
   helpfulVotes: number;
@@ -39,6 +43,8 @@ export type ReportView = {
   photoUrls: string[];
   receiptUrl: string;
   evidenceVerified: boolean;
+  moderationStatus: string;
+  replies: { body: string; onBehalf: boolean; createdAt: string }[];
 };
 
 export type RestaurantDetail = RestaurantSummary & {

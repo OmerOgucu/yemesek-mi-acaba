@@ -4,6 +4,8 @@ import { basename, join } from 'path';
 import { BadRequestException } from '@nestjs/common';
 import { uploadsDir } from '@yemesek/config';
 import { MAX_IMAGE_BYTES, MAX_PHOTOS } from './dto/upload-limits';
+import { storeReportImage } from './object-storage';
+import { stripImageMetadata } from './strip-metadata';
 
 export { MAX_IMAGE_BYTES, MAX_PHOTOS };
 
@@ -50,16 +52,32 @@ export function photoUrlList(value: unknown): string[] {
   return value.map(publicUploadPath).filter((item): item is string => Boolean(item));
 }
 
-export function saveEvidenceFile(buffer: Buffer): string {
+export async function prepareEvidenceBuffer(buffer: Buffer): Promise<{ ext: ImageExt; bytes: Buffer }> {
   const ext = detectImage(buffer);
   if (!ext) {
     throw new BadRequestException('Yalnızca JPEG, PNG veya WebP yükleyebilirsin.');
   }
-  const name = `${randomBytes(16).toString('hex')}.${ext}`;
-  const dir = join(uploadsRoot(), 'reports');
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, name), buffer);
-  return `/uploads/reports/${name}`;
+  let bytes = stripImageMetadata(buffer, ext);
+  try {
+    const sharp = (await import('sharp')).default;
+    let image = sharp(bytes, { failOn: 'none' }).rotate();
+    const meta = await image.metadata();
+    if ((meta.width ?? 0) > 1600 || (meta.height ?? 0) > 1600) {
+      image = image.resize(1600, 1600, { fit: 'inside', withoutEnlargement: true });
+    }
+    if (ext === 'jpg') bytes = await image.jpeg({ quality: 82 }).toBuffer();
+    else if (ext === 'png') bytes = await image.png({ compressionLevel: 9 }).toBuffer();
+    else bytes = await image.webp({ quality: 82 }).toBuffer();
+  } catch {
+    // Metadata is already stripped. Resize is best-effort when sharp is unavailable.
+  }
+  return { ext, bytes };
+}
+
+export async function saveEvidenceFile(buffer: Buffer): Promise<string> {
+  const prepared = await prepareEvidenceBuffer(buffer);
+  const name = `${randomBytes(16).toString('hex')}.${prepared.ext}`;
+  return storeReportImage(name, prepared.bytes);
 }
 
 export function removeStoredFile(url: string): void {
@@ -83,10 +101,10 @@ export function writeSeedPlaceholders(): { photoUrl: string; receiptUrl: string 
   return { photoUrl: '/uploads/seed/venue.png', receiptUrl: '/uploads/seed/receipt.png' };
 }
 
-export function assertEvidenceFiles(photos: IncomingImage[] | undefined, receipt: IncomingImage[] | undefined): {
+export async function assertEvidenceFiles(photos: IncomingImage[] | undefined, receipt: IncomingImage[] | undefined): Promise<{
   photoUrls: string[];
   receiptUrl: string;
-} {
+}> {
   if (!photos?.length) {
     throw new BadRequestException('En az bir yemek veya mekan fotoğrafı gerekli.');
   }
@@ -102,12 +120,13 @@ export function assertEvidenceFiles(photos: IncomingImage[] | undefined, receipt
 
   const written: string[] = [];
   try {
-    const photoUrls = photos.map((file) => {
-      const url = saveEvidenceFile(file.buffer);
+    const photoUrls: string[] = [];
+    for (const file of photos) {
+      const url = await saveEvidenceFile(file.buffer);
       written.push(url);
-      return url;
-    });
-    const receiptUrl = saveEvidenceFile(receipt[0].buffer);
+      photoUrls.push(url);
+    }
+    const receiptUrl = await saveEvidenceFile(receipt[0].buffer);
     written.push(receiptUrl);
     return { photoUrls, receiptUrl };
   } catch (error) {

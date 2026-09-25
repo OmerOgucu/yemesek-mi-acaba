@@ -7,7 +7,7 @@ type UserRow = {
   id: string;
   email: string;
   displayName: string;
-  role: 'USER' | 'ADMIN';
+  role: 'USER' | 'MODERATOR' | 'ADMIN';
   emailVerified: boolean;
   disabled: boolean;
   contribution: {
@@ -41,7 +41,7 @@ export function UsersPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function update(id: string, body: { role?: 'USER' | 'ADMIN'; disabled?: boolean }) {
+  async function update(id: string, body: { role?: 'USER' | 'MODERATOR' | 'ADMIN'; disabled?: boolean }) {
     setError('');
     try {
       await patchJson(`/admin/users/${id}`, body, true);

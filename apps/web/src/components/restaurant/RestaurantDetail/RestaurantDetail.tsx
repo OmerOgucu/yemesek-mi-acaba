@@ -22,6 +22,13 @@ export function RestaurantDetail({ restaurant }: { restaurant: RestaurantDetailD
           <div>
             <h1 className="font-display text-4xl leading-tight font-semibold sm:text-5xl">{restaurant.name}</h1>
             {restaurant.cuisine ? <p className="mt-1 text-muted">{restaurant.cuisine}</p> : null}
+            {restaurant.brandName ? <p className="mt-1 text-sm text-muted">Marka: {restaurant.brandName}</p> : null}
+            {restaurant.status === 'CLOSED' ? (
+              <p className="mt-2 inline-block rounded-full bg-chili/15 px-2 py-1 text-xs font-medium text-chili">Kapalı</p>
+            ) : null}
+            {restaurant.status === 'MOVED' ? (
+              <p className="mt-2 inline-block rounded-full bg-paper px-2 py-1 text-xs font-medium">Taşındı</p>
+            ) : null}
           </div>
         </div>
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
@@ -31,6 +38,12 @@ export function RestaurantDetail({ restaurant }: { restaurant: RestaurantDetailD
         <p className="mt-3 text-sm">
           {restaurant.reportCount} şikayet · {restaurant.helpfulVotes} yararlı oy
         </p>
+        {restaurant.venueReply ? (
+          <p className="mt-4 rounded-2xl border border-line bg-paper px-4 py-3 text-sm">
+            <span className="font-medium">İşletme yanıtı</span>
+            {restaurant.venueReplyOnBehalf ? ' · işletme adına' : ''}: {restaurant.venueReply}
+          </p>
+        ) : null}
 
         <h2 className="mt-10 font-display text-3xl">Şikayetler</h2>
         {restaurant.reports.length === 0 ? (
@@ -53,7 +66,14 @@ export function RestaurantDetail({ restaurant }: { restaurant: RestaurantDetailD
                   photoUrls={report.photoUrls}
                   receiptUrl={report.receiptUrl}
                   evidenceVerified={report.evidenceVerified}
+                  moderationStatus={report.moderationStatus}
                 />
+                {report.replies?.map((reply) => (
+                  <p key={reply.createdAt} className="mt-3 rounded-xl bg-paper px-3 py-2 text-sm">
+                    <span className="font-medium">{reply.onBehalf ? 'İşletme adına yanıt' : 'İşletme yanıtı'}</span>
+                    : {reply.body}
+                  </p>
+                ))}
                 <div className="mt-4">
                   <HelpfulVote reportId={report.id} initialCount={report.helpfulCount} />
                 </div>

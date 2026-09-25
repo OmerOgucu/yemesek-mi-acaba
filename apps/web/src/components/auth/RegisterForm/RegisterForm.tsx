@@ -15,6 +15,7 @@ export function RegisterForm() {
   const [acceptKvkk, setAcceptKvkk] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [acceptMarketing, setAcceptMarketing] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [error, setError] = useState('');
   const [details, setDetails] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
@@ -32,6 +33,7 @@ export function RegisterForm() {
         acceptKvkk,
         acceptTerms,
         acceptMarketing,
+        ageConfirmed,
       });
       writeSession(session);
       const next = params.get('donus');
@@ -94,6 +96,16 @@ export function RegisterForm() {
         <input
           type="checkbox"
           className="mt-1"
+          checked={ageConfirmed}
+          onChange={(event) => setAgeConfirmed(event.target.checked)}
+          required
+        />
+        <span>18 yaşından büyüğüm.</span>
+      </label>
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          className="mt-1"
           checked={acceptKvkk}
           onChange={(event) => setAcceptKvkk(event.target.checked)}
           required
@@ -141,7 +153,7 @@ export function RegisterForm() {
           ) : null}
         </div>
       ) : null}
-      <button className="btn btn-primary" type="submit" disabled={pending || !acceptKvkk || !acceptTerms}>
+      <button className="btn btn-primary" type="submit" disabled={pending || !acceptKvkk || !acceptTerms || !ageConfirmed}>
         {pending ? 'Kaydediliyor…' : 'Hesap aç'}
       </button>
     </form>

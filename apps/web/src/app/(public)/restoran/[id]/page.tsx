@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import { RestaurantDetail } from '@/components/restaurant/RestaurantDetail/RestaurantDetail';
 import { ApiUnavailable } from '@/components/site/ApiUnavailable/ApiUnavailable';
-import { ApiError, getRestaurant } from '@/lib/api/client';
+import { ApiError, getPublicSettings, getRestaurant } from '@/lib/api/client';
 
 const loadRestaurant = cache(async (id: string) => getRestaurant(id));
 
@@ -15,7 +15,12 @@ export async function generateMetadata({
   const { id } = await params;
   try {
     const restaurant = await loadRestaurant(id);
-    return { title: restaurant.name };
+    const settings = await getPublicSettings().catch(() => []);
+    const indexReports = settings.find((row) => row.key === 'indexPublicReports')?.value === 'true';
+    return {
+      title: restaurant.name,
+      robots: indexReports ? { index: true, follow: true } : { index: false, follow: false },
+    };
   } catch {
     return { title: 'Mekan' };
   }
