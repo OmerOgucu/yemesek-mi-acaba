@@ -15,6 +15,9 @@ export const LEGAL_SLUGS = ['kvkk', 'gizlilik', 'kullanim-kosullari', 'cerez-pol
 
 export type LegalSlug = (typeof LEGAL_SLUGS)[number];
 
+export { ONBOARDING_STEPS, ONBOARDING_STORAGE_KEY } from './onboarding';
+export type { OnboardingStep } from './onboarding';
+
 const PROJECT = 'Yemesek mi acaba';
 const LEGAL_EMAIL = 'hukuk@yemesekmiacaba.com';
 const PRESS_EMAIL = 'basin@yemesekmiacaba.com';
@@ -207,12 +210,13 @@ export const DOCUMENTS: LegalDocument[] = [
           'yemesek.user: e-posta ve görünen ad gibi sizin gördüğünüz profil özeti.',
           'yemesek.notice: eski bildirim anahtarı.',
           'yemesek.cookies: zorunlu depolama her zaman açık kalır. Analiz ve pazarlama tercihleri bu anahtarda, yalnızca bu tarayıcıda durur. “Yalnızca gerekli” seçilince analiz ve pazarlama kapalı yazılır. Şu an analiz veya pazarlama betiği yüklenmez.',
+          'yemesek.intro: ilk tanıtımın kapatıldığı. Zorunlu arayüz kaydıdır, analiz değildir. “Yalnızca gerekli” bunu silmez.',
         ],
       },
       {
         heading: 'Mobil',
         paragraphs: [
-          'Mobil uygulama jetonu cihazın güvenli deposunda (SecureStore) tutar. Reklam kimliği veya konum izni istemez.',
+          'Mobil uygulama jetonu cihazın güvenli deposunda (SecureStore) tutar. Aynı depoda yemesek.intro anahtarı tanıtımın görüldüğünü tutar. Reklam kimliği veya konum izni istemez.',
         ],
       },
       {

@@ -107,6 +107,11 @@ export function ProfilePanel() {
         <p className="mt-3 text-sm text-muted">
           Aydınlatma: {formatDate(user.kvkkAcceptedAt)} · Koşullar: {formatDate(user.termsAcceptedAt)}
         </p>
+        <p className="mt-3 text-sm">
+          <Link href="/nasil-calisir" className="underline">
+            Nasıl çalışır?
+          </Link>
+        </p>
       </div>
       <section className="rounded-2xl border border-line bg-card p-4">
         <h2 className="font-display text-2xl">Pazarlama rızası</h2>

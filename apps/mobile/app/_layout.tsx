@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ApiError, getJson } from '../features/api/client';
 import { SessionProvider, useSession } from '../features/auth/SessionProvider';
 import { SelectionProvider } from '../features/restaurants/SelectionProvider';
+import { OnboardingProvider } from '../features/onboarding/OnboardingProvider/OnboardingProvider';
 import { RootErrorBoundary } from '../features/shell/RootErrorBoundary/RootErrorBoundary';
 import { colors } from '../features/theme/theme';
 
@@ -44,21 +45,23 @@ export default function RootLayout() {
       <SessionProvider>
         <SelectionProvider>
           <BootGate>
-            <StatusBar style="dark" />
-            <Stack
-              screenOptions={{
-                headerStyle: { backgroundColor: colors.paper },
-                headerTintColor: colors.ink,
-                contentStyle: { backgroundColor: colors.paper },
-              }}
-            >
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="giris" options={{ title: 'Giriş' }} />
-              <Stack.Screen name="kayit" options={{ title: 'Kayıt' }} />
-              <Stack.Screen name="dogrula" options={{ title: 'E-posta doğrulama' }} />
-              <Stack.Screen name="mekan-ekle" options={{ title: 'Mekan ekle' }} />
-              <Stack.Screen name="yasal/[slug]" options={{ title: 'Yasal metin' }} />
-            </Stack>
+            <OnboardingProvider>
+              <StatusBar style="dark" />
+              <Stack
+                screenOptions={{
+                  headerStyle: { backgroundColor: colors.paper },
+                  headerTintColor: colors.ink,
+                  contentStyle: { backgroundColor: colors.paper },
+                }}
+              >
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="giris" options={{ title: 'Giriş' }} />
+                <Stack.Screen name="kayit" options={{ title: 'Kayıt' }} />
+                <Stack.Screen name="dogrula" options={{ title: 'E-posta doğrulama' }} />
+                <Stack.Screen name="mekan-ekle" options={{ title: 'Mekan ekle' }} />
+                <Stack.Screen name="yasal/[slug]" options={{ title: 'Yasal metin' }} />
+              </Stack>
+            </OnboardingProvider>
           </BootGate>
         </SelectionProvider>
       </SessionProvider>

@@ -1,4 +1,3 @@
-import { FirstRunTip } from '@/components/site/FirstRunTip/FirstRunTip';
 import type { RestaurantListResponse } from '@/lib/types/restaurant';
 import { LocationFilter } from '../LocationFilter/LocationFilter';
 import { RestaurantCard } from './RestaurantCard';
@@ -29,7 +28,6 @@ export function Leaderboard({
         Gönüllü bir topluluk hizmetidir, şirket değildir. İnceleme de gönüllüdür; listedekiler resmi tespit değildir.
       </p>
 
-      <FirstRunTip />
       <LocationFilter locations={data.locations ?? []} q={q} city={city} district={district} />
 
       {(data.items ?? []).length === 0 ? (

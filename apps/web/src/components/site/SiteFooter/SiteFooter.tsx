@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CookieSettingsButton } from '@/components/site/CookieNotice/CookieNotice';
 
 const LINKS = [
+  { href: '/nasil-calisir', label: 'Nasıl çalışır?' },
   { href: '/kvkk', label: 'KVKK aydınlatma' },
   { href: '/gizlilik', label: 'Gizlilik' },
   { href: '/kullanim-kosullari', label: 'Kullanım koşulları' },

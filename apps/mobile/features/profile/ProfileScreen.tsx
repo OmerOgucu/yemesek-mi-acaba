@@ -5,10 +5,12 @@ import { LEGAL_SLUGS, getDocument } from '@yemesek/legal';
 import { readSession, type SessionUser } from '../auth/session';
 import { useSession } from '../auth/SessionProvider';
 import { ApiError, getJson, postJson } from '../api/client';
+import { useOnboarding } from '../onboarding/OnboardingProvider/OnboardingProvider';
 import { colors } from '../theme/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { show } = useOnboarding();
   const { user, signOut, refreshUser } = useSession();
   const [info, setInfo] = useState('');
 
@@ -83,6 +85,9 @@ export default function ProfileScreen() {
         </>
       )}
       {info ? <Text style={styles.meta}>{info}</Text> : null}
+      <Pressable accessibilityLabel="Nasıl çalışır?" onPress={show}>
+        <Text style={styles.link}>Nasıl çalışır?</Text>
+      </Pressable>
       <Text style={styles.section}>Yasal</Text>
       {LEGAL_SLUGS.map((slug) => (
         <Pressable key={slug} onPress={() => router.push(`/yasal/${slug}`)}>

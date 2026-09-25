@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Fraunces, Outfit } from 'next/font/google';
 import { CookieNotice } from '@/components/site/CookieNotice/CookieNotice';
 import { MaintenanceGate } from '@/components/site/MaintenanceGate/MaintenanceGate';
+import { OnboardingDialog } from '@/components/site/Onboarding/OnboardingDialog';
 import { SiteFooter } from '@/components/site/SiteFooter/SiteFooter';
 import { SiteHeader } from '@/components/site/SiteHeader/SiteHeader';
 import './globals.css';
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </main>
           <SiteFooter />
           <CookieNotice />
+          <OnboardingDialog />
         </MaintenanceGate>
       </body>
     </html>

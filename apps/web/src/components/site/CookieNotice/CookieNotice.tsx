@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-const KEY = 'yemesek.cookies';
+export const COOKIE_STORAGE_KEY = 'yemesek.cookies';
 export const COOKIE_EVENT = 'yemesek-cookies-open';
+export const COOKIE_SAVED_EVENT = 'yemesek-cookies-saved';
+const KEY = COOKIE_STORAGE_KEY;
 
 type Prefs = { necessary: true; analytics: boolean; marketing: boolean; updatedAt: string };
 
@@ -57,10 +59,11 @@ export function CookieNotice() {
     setMarketing(nextMarketing);
     setOpen(false);
     setPanel(false);
+    window.dispatchEvent(new Event(COOKIE_SAVED_EVENT));
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-card px-4 py-4 shadow-lg">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-card px-4 py-4 shadow-lg">
       <div className="mx-auto max-w-5xl">
         <p className="text-sm text-muted">
           Zorunlu depolama her zaman açık: oturum jetonu. Analiz ve pazarlama çerezi şu an yok; tercih yine de bu cihazda durur.{' '}
