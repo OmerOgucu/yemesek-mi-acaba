@@ -1,18 +1,16 @@
 services:
   minio:
     profiles: ["ci"]
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-    command: ["server", "/data", "--console-address", ":9001"]
-    environment:
-      MINIO_ROOT_USER: ciaccesskey
-      MINIO_ROOT_PASSWORD: cisecretvalue123456
+    # Docker Hub removed minio/minio. This stand-in speaks S3 and is not production R2.
+    image: chrislusf/seaweedfs:4.47
+    command: ["mini", "-s3.port=9000"]
     networks: [internal]
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/healthz"]
       interval: 5s
       timeout: 5s
       retries: 20
-      start_period: 5s
+      start_period: 10s
 
   mail:
     profiles: ["ci"]

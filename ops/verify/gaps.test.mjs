@@ -47,6 +47,9 @@ test('workspace mode-600 files are written as the invoking user', () => {
   }
   assert.match(read('ops/backup.sh'), /docker_as_invoker[\s\S]*openssl yemesek-ops:local/);
   assert.match(read('ops/restore-test.sh'), /docker_as_invoker[\s\S]*enc -d/);
+  const ci = read('compose.ci.yml');
+  assert.match(ci, /chrislusf\/seaweedfs:4\.47/);
+  assert.equal(/image:\s*minio\/minio/.test(ci), false);
 });
 
 test('runtime proof stays on a clean host and distributed images', () => {
