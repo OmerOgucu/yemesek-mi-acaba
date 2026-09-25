@@ -15,21 +15,24 @@ export const LEGAL_SLUGS = ['kvkk', 'gizlilik', 'kullanim-kosullari', 'cerez-pol
 
 export type LegalSlug = (typeof LEGAL_SLUGS)[number];
 
-const CONTROLLER = 'Yemesek mi acaba';
-const CONTACT = 'kvkk@yemesek.local';
+const PROJECT = 'Yemesek mi acaba';
+const LEGAL_EMAIL = 'hukuk@yemesekmiacaba.com';
+const PRESS_EMAIL = 'basin@yemesekmiacaba.com';
 
 export const DOCUMENTS: LegalDocument[] = [
   {
     slug: 'kvkk',
     title: 'KVKK aydınlatma metni',
-    summary: '6698 sayılı Kanun madde 10 kapsamındaki aydınlatma. Veri sorumlusu: Yemesek mi acaba.',
+    summary: '6698 sayılı Kanun madde 10 kapsamındaki aydınlatma. Şu an tüzel kişilik yok; gönüllü proje.',
     updated: '25 Eylül 2026',
     sections: [
       {
         heading: 'Veri sorumlusu',
         paragraphs: [
-          `Veri sorumlusu: ${CONTROLLER}. Bu metin yerel MVP içindir; tescilli bir şirket adresi henüz yoktur. Kişisel veri talepleri için: ${CONTACT}.`,
-          'Yayına çıkmadan önce metin bir hukukçu tarafından, gerçek unvan, adres ve iletişim bilgileriyle güncellenmelidir.',
+          `${PROJECT} şu an bir şirket değildir. Tüzel kişilik, ticari unvan ve şube yoktur. Gönüllü bir topluluk projesidir.`,
+          'Veri sorumlusu, projeyi yürüten gerçek kişidir. Unvan ve adres tescil edilene kadar metinde “proje yürütücüsü” yer tutucusu kullanılır. Sahte bir limited şirket adı yazılmaz.',
+          `Kişisel veri talepleri hukuk adresine yazılır: ${LEGAL_EMAIL}. Basın iletişimi: ${PRESS_EMAIL}. Bu adresler yönetim ayarlarındaki hukuk ve basın alanlarıdır. Sitedeki basın sayfası güncel adresi gösterir; oradaki adres bu paragraftaki yer tutucudan farklıysa sayfadaki adres geçerlidir.`,
+          'Metin bir avukat görüşü değildir. Tüzel kişilik kurulursa unvan, adres ve işleyenler bu metne ayrıca yazılır.',
         ],
       },
       {
@@ -50,7 +53,7 @@ export const DOCUMENTS: LegalDocument[] = [
           'Hesap açmak, girişi doğrulamak ve şikayet ile oyu size bağlamak.',
           'Kötülük skorunu hesaplamak ve liderlik tablosunu herkese açık göstermek.',
           'Hakaret, tehdit, kişisel veri ve kötüye kullanımı engellemek; hız sınırını uygulamak.',
-          'Pazarlama iletisi yalnızca ayrıca ve isteğe bağlı verdiğiniz açık rıza varsa gönderilir. Bu MVP pazarlama postası göndermez.',
+          'Pazarlama iletisi yalnızca ayrıca ve isteğe bağlı verdiğiniz açık rıza varsa gönderilebilir. Bu gönüllü aşamada pazarlama postası gönderilmez. İleride bir tüzel kişilik kurulursa pazarlama ancak ayrıca açıklanır.',
         ],
       },
       {
@@ -66,8 +69,8 @@ export const DOCUMENTS: LegalDocument[] = [
         heading: 'Aktarım ve işleyenler',
         paragraphs: [
           'Şikayet metni siteyi açan herkese açıktır. Bunu aktarım değil, sizin yayımladığınız içerik sayın.',
-          'Yer tutucu işleyenler, anahtarlar bağlanınca devreye girer: e-posta için Brevo, dosya deposu için S3 veya uyumlu kova, uygulamanın çalıştığı barındırıcı. İsimler ve ülkeler sözleşme imzalanınca bu metne yazılır.',
-          'Kişisel veri ihlalinde işletme içi prosedür işletilir. Bu metin hukuk görüşü değildir ve iç kontrol listesini yayımlamaz.',
+          'Yer tutucu işleyenler, anahtarlar bağlanınca devreye girer: e-posta için Brevo, dosya deposu için S3 veya uyumlu kova, uygulamanın çalıştığı barındırıcı. İsimler ve ülkeler sözleşme imzalanınca bu metne yazılır. Şu an bu sözleşmeler imzalı bir şirket adına değil, proje adına yer tutucudur.',
+          'Kişisel veri ihlalinde proje içi prosedür işletilir. Bu metin hukuk görüşü değildir ve iç kontrol listesini yayımlamaz.',
         ],
       },
       {
@@ -82,7 +85,7 @@ export const DOCUMENTS: LegalDocument[] = [
         paragraphs: [
           'KVKK madde 11: verinizin işlenip işlenmediğini öğrenme, düzeltilmesini isteme, silinmesini isteme, işlenen veriyi öğrenme.',
           'Uygulama: profil ekranında görünen adı güncelleyebilir, pazarlama rızasını kapatabilir, “Verilerimi indir” ile kendi kaydınızı JSON alabilir ve hesabınızı parolanızla silebilirsiniz. Diğer talepler için ' +
-            CONTACT +
+            LEGAL_EMAIL +
             ' adresine e-posta yazın. Kimliğinizi doğrulamamız gerekebilir.',
           'Yanıt süresi Kanundaki otuz gündür. Başvurunuz reddedilirse veya süresinde cevap alamazsanız Kişisel Verileri Koruma Kuruluna şikayet hakkınız vardır.',
         ],
@@ -98,7 +101,7 @@ export const DOCUMENTS: LegalDocument[] = [
       {
         heading: 'Kısa hali',
         paragraphs: [
-          `${CONTROLLER} bir şikayet tahtasıdır. Liderlik tablosunu herkes okur. Şikayet yazmak ve yararlı oyu vermek için hesap gerekir.`,
+          `${PROJECT} gönüllü bir topluluk hizmetidir, şirket değildir. Kanıtlı kötü mekan deneyimlerini paylaşmak içindir. Listeyi herkes okur. Şikayet yazmak ve yararlı oy vermek için hesap gerekir.`,
           'E-postanız ve parolanız yayımlanmaz. Şikayetin yanında görünen ad, sizin yazdığınız takma addır; boş bırakırsanız görünen adınız kullanılır.',
         ],
       },
@@ -140,7 +143,7 @@ export const DOCUMENTS: LegalDocument[] = [
       {
         heading: 'Hizmet',
         paragraphs: [
-          `${CONTROLLER}, restoranlar hakkında kullanıcı şikayetlerini listeler ve bunlardan bir kötülük skoru üretir. Skor bir mahkeme kararı, hijyen denetimi veya sağlık raporu değildir.`,
+          `${PROJECT}, gönüllülerin yürüttüğü bir şikayet tahtasıdır. Restoranlar hakkında kullanıcıların anlattığı, fotoğraf ve fişle desteklenen deneyimleri listeler ve bunlardan bir kötülük skoru üretir. Skor bir mahkeme kararı, hijyen denetimi veya sağlık raporu değildir. İnceleme gönüllüdür.`,
           'Listeyi okumak için hesap gerekmez. Mekan eklemek herkese açıktır. Şikayet ve yararlı oy için kayıt ve giriş gerekir.',
         ],
       },
@@ -154,7 +157,7 @@ export const DOCUMENTS: LegalDocument[] = [
       {
         heading: 'İçerik lisansı',
         paragraphs: [
-          'Şikayet, fotoğraf ve fiş üzerindeki hak sizde kalır. Yayımlayınca platforma, bu hizmette göstermek, sıralamak ve moderasyon için saklamak üzere dünya çapında, münhasır olmayan, bedelsiz bir lisans verirsiniz.',
+          'Şikayet, fotoğraf ve fiş üzerindeki hak sizde kalır. Yayımlayınca projeye, bu hizmette göstermek, sıralamak ve gönüllü moderasyon için saklamak üzere dünya çapında, münhasır olmayan, bedelsiz bir lisans verirsiniz. Bu lisans bir şirkete devir değildir.',
           'Lisans, içeriği geri çekmeniz veya hesabı silmenizle yeni gösterimler için sona erer. Daha önce indirilmiş kopyalar ve yasal saklama yükümlülüğü bu cümlenin dışındadır.',
         ],
       },
@@ -177,7 +180,7 @@ export const DOCUMENTS: LegalDocument[] = [
       {
         heading: 'Sorumluluk',
         paragraphs: [
-          'Hizmet olduğu gibi sunulur. Listenin eksiksiz, güncel veya bir işletme hakkında kesin doğru olduğu taahhüt edilmez.',
+          'Hizmet olduğu gibi, gönüllü olarak sunulur. Listenin eksiksiz, güncel veya bir işletme hakkında kesin doğru olduğu taahhüt edilmez.',
           'Bu MVP koşulları Türkiye Cumhuriyeti hukukuna göre yorumlanır. Yetkili mahkeme yayın öncesi ayrıca yazılacaktır.',
         ],
       },
@@ -186,13 +189,13 @@ export const DOCUMENTS: LegalDocument[] = [
   {
     slug: 'cerez-politikasi',
     title: 'Çerez bildirimi',
-    summary: 'Reklam çerezi yok. Oturum, tarayıcıda yerel depoda tutulur.',
+    summary: 'Reklam çerezi yok. Gönüllü proje; ticari izleme yok. Oturum tarayıcıda yerel depoda tutulur.',
     updated: '25 Eylül 2026',
     sections: [
       {
         heading: 'Çerez kullanmıyoruz',
         paragraphs: [
-          `${CONTROLLER} reklam, analiz veya üçüncü taraf takip çerezi yazmaz. Zorunlu bir çerez de bırakmayız.`,
+          `${PROJECT} reklam, analiz veya üçüncü taraf takip çerezi yazmaz. Zorunlu bir çerez de bırakmayız. Şu an ticari bir yayın yoktur.`,
           'Web arayüzü oturum jetonunu ve çerez bildirimini kapattığınızı tarayıcının localStorage alanına yazar. Bu bir çerez değildir; aynı cihazda, aynı tarayıcıda durur ve sunucuya kendiliğinden gitmez.',
         ],
       },

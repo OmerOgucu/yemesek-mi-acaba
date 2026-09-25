@@ -14,7 +14,10 @@ export default async function TransparencyPage() {
   return (
     <article className="mx-auto max-w-2xl">
       <h1 className="font-display text-4xl font-semibold">Şeffaflık</h1>
-      <p className="mt-3 text-muted">Sayılar toplamdır. Kişi veya dosya içeriği burada yok.</p>
+      <p className="mt-3 text-muted">
+        Gönüllü bir topluluk hizmetidir. İnceleme de gönüllüdür. Sayılar toplamdır. Kişi veya dosya içeriği burada yok.
+        Şikayetler kullanıcı metnidir, resmi tespit değildir.
+      </p>
       <ul className="mt-6 space-y-2">
         <li>Gizlenen şikayet: {counts.hiddenReports}</li>
         <li>Dosyalı şikayet: {counts.verifiedEvidence}</li>

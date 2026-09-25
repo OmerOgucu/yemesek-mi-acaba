@@ -1,8 +1,8 @@
 # Yemesek mi acaba?
 
-Kötü restoran deneyimlerini toplayan kara liste. Konum, mekan eklerken yazılan şehir ve ilçeden çıkar; ilk yazım kalıcıdır. Övgü değil, şikayet sıralanır: yüksek **kötülük skoru** daha kötü demektir.
+Gönüllü bir topluluk hizmetidir. Şirket değildir. Kanıtlı kötü mekan deneyimlerini paylaşmak içindir. Konum, mekan eklerken yazılan şehir ve ilçeden çıkar; ilk yazım kalıcıdır. Övgü değil, şikayet sıralanır: yüksek **kötülük skoru** daha kötü demektir.
 
-Şikayetler kullanıcı metnidir. Resmi tespit, laboratuvar sonucu veya mahkeme kararı değildir. Telefon, tam adres ve kimlik yazılmaz. Liste herkese açıktır. Giriş yapılabilir; mekan eklemek, şikayet ve yararlı oy e-posta doğrulaması ister. Şikayet ancak en az bir fotoğraf ve fiş/fatura görseliyle açılır.
+Şikayetler kullanıcı metnidir. Gönüllü inceleme resmi tespit, laboratuvar sonucu veya mahkeme kararı değildir. Telefon, tam adres ve kimlik yazılmaz. Liste herkese açıktır. Giriş yapılabilir; mekan eklemek, şikayet ve yararlı oy e-posta doğrulaması ister. Şikayet ancak en az bir fotoğraf ve fiş/fatura görseliyle açılır.
 
 Herkese açık adres: https://yemesekmiacaba.com
 

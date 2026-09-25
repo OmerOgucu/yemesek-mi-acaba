@@ -15,8 +15,8 @@ export function FirstRunTip() {
 
   return (
     <aside className="mt-6 rounded-2xl border border-line bg-card px-4 py-3 text-sm">
-      <p className="font-medium text-ink">Bu bir şikayet tahtası.</p>
-      <p className="mt-1 text-muted">Yüksek kötülük skoru daha kötü demektir. Övgü sıralaması yoktur.</p>
+      <p className="font-medium text-ink">Gönüllü bir şikayet tahtası.</p>
+      <p className="mt-1 text-muted">Şirket değil, topluluk hizmeti. Yüksek kötülük skoru daha kötü demektir. Övgü sıralaması yoktur.</p>
       <button
         type="button"
         className="btn btn-ghost mt-3 text-sm"

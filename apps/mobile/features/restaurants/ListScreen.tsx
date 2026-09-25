@@ -66,6 +66,7 @@ export default function ListScreen() {
       ListHeaderComponent={
         <View style={styles.header}>
           <Text style={styles.tagline}>Mekanları keşfet — kararını kolaylaştır</Text>
+          <Text style={styles.meta}>Gönüllü topluluk hizmeti. Kanıtlı şikayet. Şirket değil.</Text>
           <FirstTip />
           <Text style={styles.kicker}>Kara liste</Text>
           <Text style={styles.title}>En kötüden başlar.</Text>
@@ -142,8 +143,8 @@ function FirstTip() {
   if (!open) return null;
   return (
     <View style={styles.tip}>
-      <Text style={styles.tipTitle}>Bu bir şikayet tahtası.</Text>
-      <Text style={styles.meta}>Yüksek kötülük skoru daha kötü demektir.</Text>
+      <Text style={styles.tipTitle}>Gönüllü bir şikayet tahtası.</Text>
+      <Text style={styles.meta}>Şirket değil. Yüksek kötülük skoru daha kötü demektir.</Text>
       <Pressable accessibilityLabel="İpucunu kapat" onPress={() => setOpen(false)}>
         <Text style={styles.tipClose}>Kapat</Text>
       </Pressable>

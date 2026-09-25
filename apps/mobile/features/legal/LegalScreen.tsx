@@ -1,12 +1,23 @@
 import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import { getDocument } from '@yemesek/legal';
+import { getJson } from '../api/client';
 import { colors } from '../theme/theme';
 
 export default function LegalScreen() {
   const params = useLocalSearchParams<{ slug: string }>();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const document = slug ? getDocument(slug) : undefined;
+  const [contact, setContact] = useState('hukuk@yemesekmiacaba.com');
+
+  useEffect(() => {
+    void getJson<{ legalEmail?: string }>('/press')
+      .then((press) => {
+        if (press.legalEmail) setContact(press.legalEmail);
+      })
+      .catch(() => undefined);
+  }, []);
 
   if (!document) return <Text style={styles.missing}>Bu metin yok.</Text>;
 
@@ -15,6 +26,7 @@ export default function LegalScreen() {
       <Text style={styles.kicker}>{document.updated}</Text>
       <Text style={styles.title}>{document.title}</Text>
       <Text style={styles.summary}>{document.summary}</Text>
+      <Text style={styles.summary}>Güncel hukuk adresi: {contact}. Şu an tüzel kişilik yoktur.</Text>
       {document.sections.map((section) => (
         <ViewSection key={section.heading} heading={section.heading} paragraphs={section.paragraphs} />
       ))}

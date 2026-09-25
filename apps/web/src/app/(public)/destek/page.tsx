@@ -28,6 +28,9 @@ export default function SupportPage() {
   return (
     <article className="mx-auto max-w-2xl">
       <h1 className="font-display text-4xl font-semibold">Destek</h1>
+      <p className="mt-3 text-muted">
+        Gönüllü bir topluluk hizmetidir. Hesap, şikayet veya kaldırma için yazın. Bu bir şirket destek hattı değildir.
+      </p>
       <form onSubmit={onSubmit} className="mt-6 space-y-3">
         <input name="name" required minLength={2} className="field" placeholder="Ad" />
         <input name="email" required type="email" className="field" placeholder="E-posta" />

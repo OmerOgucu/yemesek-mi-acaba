@@ -14,6 +14,10 @@ export default async function PressPage() {
   return (
     <article className="mx-auto max-w-2xl">
       <h1 className="font-display text-4xl font-semibold">Basın ve hukuk</h1>
+      <p className="mt-3 text-muted">
+        Yemesek mi acaba gönüllü bir topluluk projesidir. Şu an tüzel kişilik yoktur. Basın ve kişisel veri
+        yazışması proje yürütücüsüne gider.
+      </p>
       <p className="mt-4">
         {press.name}: <a className="underline" href={`mailto:${press.email}`}>{press.email}</a>
       </p>
@@ -21,7 +25,7 @@ export default async function PressPage() {
         Kaldırma ve hukuk: <a className="underline" href={`mailto:${press.legalEmail}`}>{press.legalEmail}</a>
       </p>
       <p className="mt-4 text-sm text-muted">
-        Hazır yanıt şablonları yönetim panelinde: basın sorun alındı ve kaldırma bildirimi alındı.
+        Şikayetler kullanıcı içeriğidir. Gönüllü inceleme, resmi bir denetim değildir.
       </p>
     </article>
   );

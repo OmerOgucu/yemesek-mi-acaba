@@ -23,10 +23,10 @@ export const metadata: Metadata = {
     default: 'Yemesek Mi Acaba?',
     template: '%s · Yemesek Mi Acaba?',
   },
-  description: 'Kötü restoran deneyimlerini oku, şüpheli mekanlardan uzak dur.',
+  description: 'Gönüllü topluluk hizmeti. Kanıtlı kötü mekan deneyimlerini oku, şüpheli yerlerden uzak dur.',
   openGraph: {
     title: 'Yemesek Mi Acaba?',
-    description: 'Kötülük skoru yüksek mekanlar. Kanıtlı şikayet, gerçek insanlar.',
+    description: 'Gönüllü topluluk hizmeti. Kötülük skoru yüksek mekanlar. Kanıtlı şikayet, resmi tespit değil.',
     url: 'https://yemesekmiacaba.com',
     siteName: 'Yemesek Mi Acaba?',
     locale: 'tr_TR',

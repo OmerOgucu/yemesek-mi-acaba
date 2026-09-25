@@ -233,11 +233,11 @@ async function main(): Promise<void> {
   await prisma.siteContent.upsert({
     where: { key: 'community_guidelines' },
     update: {
-      body: 'Hakaret yok. Kişisel veri yok. Fotoğraf ve fiş zorunlu. Aynı mekanı çoğaltma. İşletme yanıtı sırayı değiştirmez. Reklam veya skor satışı yoktur; çıkar çatışması bu tahtayı satın alamaz.',
+      body: 'Yemesek mi acaba, gönüllü bir topluluk hizmetidir. Şirket değildir. Kanıtlı kötü mekan deneyimlerini paylaşmak içindir. Hakaret yok. Kişisel veri yok. Fotoğraf ve fiş zorunlu. Aynı mekanı çoğaltma. Şikayet kullanıcı metnidir; gönüllü inceleme resmi tespit değildir. İşletme yanıtı sırayı değiştirmez. Şu an reklam ve skor satışı yoktur. İleride tüzel kişilik kurulursa ayrıca açıklanır. Çıkar çatışması bu tahtayı satın alamaz.',
     },
     create: {
       key: 'community_guidelines',
-      body: 'Hakaret yok. Kişisel veri yok. Fotoğraf ve fiş zorunlu. Aynı mekanı çoğaltma. İşletme yanıtı sırayı değiştirmez. Reklam veya skor satışı yoktur; çıkar çatışması bu tahtayı satın alamaz.',
+      body: 'Yemesek mi acaba, gönüllü bir topluluk hizmetidir. Şirket değildir. Kanıtlı kötü mekan deneyimlerini paylaşmak içindir. Hakaret yok. Kişisel veri yok. Fotoğraf ve fiş zorunlu. Aynı mekanı çoğaltma. Şikayet kullanıcı metnidir; gönüllü inceleme resmi tespit değildir. İşletme yanıtı sırayı değiştirmez. Şu an reklam ve skor satışı yoktur. İleride tüzel kişilik kurulursa ayrıca açıklanır. Çıkar çatışması bu tahtayı satın alamaz.',
     },
   });
 

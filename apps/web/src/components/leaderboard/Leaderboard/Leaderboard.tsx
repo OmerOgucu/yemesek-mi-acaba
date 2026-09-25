@@ -25,6 +25,9 @@ export function Leaderboard({
         Övgü sıraları tok karınla yazılır. Burada hijyen, zehirlenme şüphesi, şaibeli hesap, kaba hizmet,
         soğuk tabak ve yanıltıcı reklam en kötüden başlar.
       </p>
+      <p className="mt-2 max-w-2xl text-sm text-muted">
+        Gönüllü bir topluluk hizmetidir, şirket değildir. İnceleme de gönüllüdür; listedekiler resmi tespit değildir.
+      </p>
 
       <FirstRunTip />
       <LocationFilter locations={data.locations ?? []} q={q} city={city} district={district} />

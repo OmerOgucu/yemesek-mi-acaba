@@ -1,6 +1,8 @@
 # Para ve çıkar çatışması
 
-Bu ürün şikayet sıralamasıdır. Reklam, öne çıkarma veya “skoru düşür” satışı yoktur ve eklenmemelidir.
+Şu anki aşama ticari değildir. Yemesek mi acaba gönüllü bir topluluk hizmetidir. Tüzel kişilik yoktur.
+
+Reklam, öne çıkarma veya “skoru düşür” satışı bu aşamada yoktur. Yönetim panelinde ileride kullanılmak üzere duran reklam veya öne çıkarma ayarları varsayılan olarak kapalı ve etkisiz kalır. Bu ayarlar silinmez. Açılmaları, ancak bir tüzel kişilik kurulur ve uygulama içinde açıkça yazılırsa gündeme gelir.
 
 Bir işletme yanıtı, kaydın sırasını değiştirmez. Onaylı sahiplik yalnızca yanıt yazmak içindir.
 

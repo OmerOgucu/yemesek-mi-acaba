@@ -20,7 +20,10 @@ export function SiteFooter() {
         <p className="font-display text-xl text-ink">Yemesek Mi Acaba?</p>
         <p className="mt-1 text-ink">Mekanları keşfet — kararını kolaylaştır</p>
         <p className="text-xs tracking-wide">yemesekmiacaba.com</p>
-        <p className="mt-4">
+        <p className="mt-4 text-ink">
+          Gönüllü bir topluluk hizmetidir. Şirket değildir. Kanıtlı kötü mekan deneyimlerini paylaşmak içindir.
+        </p>
+        <p className="mt-2">
           Buradaki şikayetler kullanıcıların anlattıklarıdır. Resmi denetim, laboratuvar sonucu veya
           mahkeme kararı değildir. Hakaret, tehdit ve kişisel veri (telefon, tam adres, kimlik) yazmayın.
           Yüksek kötülük skoru “uzak dur” tavsiyesidir, birinin suçluluğu değildir.
