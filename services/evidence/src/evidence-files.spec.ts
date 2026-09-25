@@ -31,9 +31,8 @@ describe('evidence files', () => {
     expect(stripped[1]).toBe(0xd8);
   });
 
-  it('drops paths that are not public uploads', () => {
-    expect(photoUrlList(['/uploads/seed/venue.png', 'https://evil.example/a.png', '../secret.png'])).toEqual([
-      '/uploads/seed/venue.png',
-    ]);
+  it('keeps only private object keys', () => {
+    const key = 'evidence/0123456789abcdef0123456789abcdef.png';
+    expect(photoUrlList([key, 'https://evil.example/a.png', '/uploads/reports/x.png', '../secret.png'])).toEqual([key]);
   });
 });

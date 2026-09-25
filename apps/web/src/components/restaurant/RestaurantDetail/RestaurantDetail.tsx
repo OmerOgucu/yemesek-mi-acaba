@@ -64,7 +64,7 @@ export function RestaurantDetail({ restaurant }: { restaurant: RestaurantDetailD
                 <p className="mt-3 leading-relaxed">{report.body}</p>
                 <ReportEvidence
                   photoUrls={report.photoUrls}
-                  receiptUrl={report.receiptUrl}
+                  hasReceipt={report.hasReceipt}
                   evidenceVerified={report.evidenceVerified}
                   moderationStatus={report.moderationStatus}
                 />

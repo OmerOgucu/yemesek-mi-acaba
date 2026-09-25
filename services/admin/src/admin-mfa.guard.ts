@@ -19,6 +19,9 @@ export class AdminMfaGuard implements CanActivate {
     if (!row?.totpEnabledAt) {
       throw new ForbiddenException('Yönetici için iki adımlı doğrulama gerekli.');
     }
+    if (!user.mfa) {
+      throw new ForbiddenException('Bu oturumda iki adımlı doğrulama yok. Çıkıp yeniden gir.');
+    }
     return true;
   }
 }

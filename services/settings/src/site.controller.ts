@@ -1,5 +1,6 @@
 import { BadRequestException, Body, Controller, Get, Post } from '@nestjs/common';
 import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import { readConfig } from '@yemesek/config';
 import { PrismaService } from '@yemesek/database';
 import { ModerationService } from '@yemesek/moderation';
 import { SettingsService } from './settings.service';
@@ -42,6 +43,24 @@ export class SiteController {
     private readonly settings: SettingsService,
     private readonly moderation: ModerationService,
   ) {}
+
+  @Get('site/identity')
+  async identity() {
+    const [pressEmail, legalEmail, supportEmail] = await Promise.all([
+      this.settings.get('pressEmail'),
+      this.settings.get('legalEmail'),
+      this.settings.get('supportEmail'),
+    ]);
+    return {
+      version: 1 as const,
+      controllerName: readConfig().controllerName,
+      contactEmail: readConfig().contactEmail,
+      contactAddress: readConfig().contactAddress,
+      pressEmail,
+      legalEmail,
+      supportEmail,
+    };
+  }
 
   @Get('site/maintenance')
   async maintenance() {

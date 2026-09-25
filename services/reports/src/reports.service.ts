@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { assertHuman } from '@yemesek/auth';
 import { BadgesService } from '@yemesek/badges';
-import { PrismaService } from '@yemesek/database';
+import { consumeBucket, PrismaService } from '@yemesek/database';
 import { EvidenceService, type IncomingImage } from '@yemesek/evidence';
 import { ModerationService } from '@yemesek/moderation';
 import { RestaurantsService, toReportView, type ReportView } from '@yemesek/restaurants';
@@ -34,7 +34,21 @@ export class ReportsService {
       throw new BadRequestException({ message: issues });
     }
 
+    const uploadAllowed = await consumeBucket(this.prisma, `upload:user:${author.id}`, 30, 60 * 60 * 1000);
+    if (!uploadAllowed) {
+      throw new HttpException('Saatlik yükleme hakkın doldu. Bir saat sonra tekrar dene.', HttpStatus.TOO_MANY_REQUESTS);
+    }
     const evidence = await this.evidence.assert(files.photos, files.receipt);
+    await this.prisma.evidenceObject.createMany({
+      data: evidence.objects.map((item) => ({
+        objectKey: item.key,
+        kind: item.kind,
+        contentType: item.contentType,
+        byteSize: item.byteSize,
+        ownerId: author.id,
+        status: 'STAGED',
+      })),
+    });
     const review = this.moderation.stampEvidence();
     let created;
     try {
@@ -53,8 +67,22 @@ export class ReportsService {
         },
         include: { _count: { select: { votes: true } } },
       });
+      await this.prisma.evidenceObject.updateMany({
+        where: { objectKey: { in: evidence.objects.map((item) => item.key) } },
+        data: { reportId: created.id, status: 'ATTACHED' },
+      });
     } catch (error) {
-      for (const url of [...evidence.photoUrls, evidence.receiptUrl]) this.evidence.remove(url);
+      for (const item of evidence.objects) {
+        const removed = await this.evidence.remove(item.key);
+        if (!removed) {
+          await this.prisma.cleanupJob.create({ data: { objectKey: item.key } });
+        } else {
+          await this.prisma.evidenceObject.updateMany({
+            where: { objectKey: item.key },
+            data: { status: 'DELETED', deletedAt: new Date() },
+          });
+        }
+      }
       throw error;
     }
     await this.badges.sync(author.id);
@@ -63,10 +91,15 @@ export class ReportsService {
 
   async findOrThrow(id: string) {
     if (!id || id.length > 40) throw new NotFoundException('Şikayet bulunamadı.');
-    const report = await this.prisma.report.findUnique({ where: { id } });
-    if (!report || report.hidden || report.moderationStatus === 'REJECTED') {
+    const report = await this.prisma.report.findUnique({
+      where: { id },
+      include: { restaurant: { select: { cityKey: true, hidden: true } } },
+    });
+    if (!report || report.hidden || report.withdrawnAt || report.moderationStatus === 'REJECTED' || report.restaurant.hidden) {
       throw new NotFoundException('Şikayet bulunamadı.');
     }
+    await this.restaurants.assertCityKeyListed(report.restaurant.cityKey);
+    await this.restaurants.assertPublicReport(report.moderationStatus);
     return report;
   }
 }

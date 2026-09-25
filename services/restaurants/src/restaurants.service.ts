@@ -38,8 +38,29 @@ export class RestaurantsService {
       .split(',')
       .map((part) => part.trim())
       .filter(Boolean);
-    if (!parts.length) return null;
-    return parts.map((part) => placeKey(part).key);
+    if (parts.length) return parts.map((part) => placeKey(part).key);
+    if (process.env.NODE_ENV === 'production') return [];
+    return null;
+  }
+
+  async assertCityOpen(city: string): Promise<void> {
+    const allowed = await this.allowedCityKeys();
+    if (allowed === null) return;
+    if (!allowed.includes(placeKey(city).key)) {
+      throw new BadRequestException('Bu şehir henüz açık değil.');
+    }
+  }
+
+  async assertCityKeyListed(cityKey: string): Promise<void> {
+    const allowed = await this.allowedCityKeys();
+    if (allowed === null) return;
+    if (!allowed.includes(cityKey)) throw new NotFoundException('Mekan bulunamadı.');
+  }
+
+  async assertPublicReport(status: string): Promise<void> {
+    if ((await this.settings.reportsNeedReview()) && status !== 'APPROVED') {
+      throw new NotFoundException('Şikayet bulunamadı.');
+    }
   }
 
   private async visibleReports(): Promise<Prisma.ReportWhereInput> {
@@ -54,6 +75,8 @@ export class RestaurantsService {
   async list(query: ListRestaurantsQuery): Promise<{
     items: RestaurantSummary[];
     total: number;
+    page: number;
+    pageSize: number;
     cities: string[];
     locations: { city: string; districts: string[] }[];
   }> {
@@ -90,7 +113,7 @@ export class RestaurantsService {
     const cities = locations.map((location) => location.city);
     const needle = query.q ? foldTr(query.q) : undefined;
 
-    const items = visibleRows
+    const ranked = visibleRows
       .map((restaurant) => toSummary(restaurant))
       .filter((restaurant) => {
         if (!needle) return true;
@@ -104,10 +127,23 @@ export class RestaurantsService {
         (a, b) =>
           b.evilScore - a.evilScore ||
           b.reportCount - a.reportCount ||
-          a.name.localeCompare(b.name, 'tr'),
+          a.name.localeCompare(b.name, 'tr') ||
+          a.id.localeCompare(b.id),
       );
-
-    return { items, total: items.length, cities, locations };
+    if (ranked.length > 2000) {
+      throw new BadRequestException('Liste çok geniş. Şehir seç.');
+    }
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const start = (page - 1) * pageSize;
+    return {
+      items: ranked.slice(start, start + pageSize),
+      total: ranked.length,
+      page,
+      pageSize,
+      cities,
+      locations,
+    };
   }
 
   async detail(id: string) {
@@ -134,6 +170,7 @@ export class RestaurantsService {
       throw new BadRequestException({ message: issues });
     }
 
+    await this.assertCityOpen(dto.city);
     let location;
     try {
       location = await findOrCreateLocation(this.prisma, dto.city, dto.district);
@@ -157,10 +194,6 @@ export class RestaurantsService {
         suggestions,
       });
     }
-    const allowed = await this.allowedCityKeys();
-    if (allowed && !allowed.includes(location.cityKey)) {
-      throw new BadRequestException('Bu şehir henüz açık değil.');
-    }
     const created = await this.prisma.restaurant.create({
       data: {
         name: dto.name,
@@ -182,8 +215,7 @@ export class RestaurantsService {
   }
 
   async claim(id: string, userId: string, note?: string) {
-    const restaurant = await this.prisma.restaurant.findUnique({ where: { id } });
-    if (!restaurant || restaurant.hidden) throw new NotFoundException('Mekan bulunamadı.');
+    await this.findRow(id);
     const existing = await this.prisma.restaurantClaim.findFirst({
       where: { restaurantId: id, userId, status: { in: ['PENDING', 'APPROVED'] } },
     });
@@ -197,8 +229,7 @@ export class RestaurantsService {
   async venueReply(id: string, user: AuthUser, body: string) {
     const issues = this.moderation.collect([{ value: body }]);
     if (issues.length) throw new BadRequestException({ message: issues });
-    const restaurant = await this.prisma.restaurant.findUnique({ where: { id } });
-    if (!restaurant || restaurant.hidden) throw new NotFoundException('Mekan bulunamadı.');
+    await this.findRow(id);
     const staff = user.role === 'ADMIN' || user.role === 'MODERATOR';
     const claim = await this.prisma.restaurantClaim.findFirst({
       where: { restaurantId: id, userId: user.id, status: 'APPROVED' },
@@ -233,6 +264,7 @@ export class RestaurantsService {
       },
     });
     if (!restaurant || restaurant.hidden) throw new NotFoundException('Mekan bulunamadı.');
+    await this.assertCityKeyListed(restaurant.cityKey);
     return restaurant;
   }
 }

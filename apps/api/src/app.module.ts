@@ -11,9 +11,11 @@ import { GetRateLimitGuard } from './common/get-rate-limit.guard';
 import { MaintenanceGuard } from './common/maintenance.guard';
 import { PostRateLimitGuard } from './common/post-rate-limit.guard';
 import { HealthModule } from './health/health.module';
+import { JobsModule } from './jobs/jobs.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
-  imports: [PrismaModule, HealthModule, AuthModule, RestaurantsModule, ReportsModule, VotesModule, SettingsModule, AdminModule],
+  imports: [PrismaModule, HealthModule, AuthModule, RestaurantsModule, ReportsModule, VotesModule, SettingsModule, AdminModule, MediaModule, JobsModule],
   providers: [
     {
       provide: APP_GUARD,

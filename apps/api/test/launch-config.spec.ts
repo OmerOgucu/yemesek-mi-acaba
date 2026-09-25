@@ -6,6 +6,21 @@ const ready = {
   DATABASE_URL: 'postgresql://app@db.internal:5432/yemesek',
   CORS_ORIGINS: 'https://yemesekmiacaba.com',
   APP_PUBLIC_URL: 'https://yemesekmiacaba.com',
+  API_URL: 'https://api.yemesekmiacaba.com',
+  BREVO_API_KEY: 'brevo-live-key',
+  BREVO_SENDER_EMAIL: 'noreply@yemesekmiacaba.com',
+  STORAGE_DRIVER: 's3',
+  S3_BUCKET: 'yemesek-evidence',
+  S3_ACCESS_KEY_ID: 'r2-access',
+  S3_SECRET_ACCESS_KEY: 'r2-secret-value',
+  S3_ENDPOINT: 'https://account.r2.cloudflarestorage.com',
+  PROJECT_CONTROLLER_NAME: 'Ada Yılmaz',
+  PROJECT_CONTACT_EMAIL: 'hukuk@yemesekmiacaba.com',
+  PROJECT_CONTACT_ADDRESS: 'İstanbul',
+  TRUST_PROXY_HOPS: '1',
+  INITIAL_ADMIN_EMAIL: 'admin@yemesekmiacaba.com',
+  INITIAL_ADMIN_SETUP_SECRET: 'one-time-setup-secret',
+  INITIAL_ALLOWED_CITIES: 'İstanbul,Ankara',
 };
 
 describe('assertLaunchConfig', () => {

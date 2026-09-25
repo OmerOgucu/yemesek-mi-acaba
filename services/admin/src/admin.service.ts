@@ -77,11 +77,18 @@ export class AdminService {
       this.settings.number('minIosBuild'),
       this.settings.number('minAndroidBuild'),
     ]);
+    const [mailFailed, cleanupPending] = await Promise.all([
+      this.prisma.mailJob.count({ where: { status: 'FAILED' } }),
+      this.prisma.cleanupJob.count({ where: { status: 'PENDING' } }),
+    ]);
     return {
       status: 'ok' as const,
       uptime: Math.round(process.uptime()),
       maintenance,
       mailConfigured: Boolean(config.brevoApiKey),
+      storageDriver: (process.env.STORAGE_DRIVER ?? 'local').trim().toLowerCase(),
+      mailFailed,
+      cleanupPending,
       minMobileVersion,
       minIosBuild,
       minAndroidBuild,
@@ -222,7 +229,7 @@ export class AdminService {
     });
     if (!current) throw new NotFoundException('Mekan bulunamadı.');
     await this.prisma.restaurant.delete({ where: { id } });
-    for (const report of current.reports) this.unlinkReport(report.photoUrls, report.receiptUrl);
+    for (const report of current.reports) await this.unlinkReport(report.photoUrls, report.receiptUrl);
     const authors = new Set(current.reports.map((report) => report.authorId));
     if (current.createdById) authors.add(current.createdById);
     for (const authorId of authors) await this.badges.sync(authorId);
@@ -288,7 +295,7 @@ export class AdminService {
     const current = await this.prisma.report.findUnique({ where: { id } });
     if (!current) throw new NotFoundException('Şikayet bulunamadı.');
     await this.prisma.report.delete({ where: { id } });
-    this.unlinkReport(current.photoUrls, current.receiptUrl);
+    await this.unlinkReport(current.photoUrls, current.receiptUrl);
     await this.badges.sync(current.authorId);
     return { ok: true };
   }
@@ -534,7 +541,10 @@ export class AdminService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Üye bulunamadı.');
     const now = new Date();
-    await this.prisma.user.update({ where: { id: userId }, data: { sessionsRevokedAt: now } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { sessionsRevokedAt: now, tokenVersion: { increment: 1 } },
+    });
     await this.prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: now },
@@ -668,7 +678,7 @@ export class AdminService {
     });
     if (!target || target.deletedAt) throw new NotFoundException('Üye bulunamadı.');
     if (target.role === UserRole.ADMIN) throw new BadRequestException('Yönetici hesabı bu uçtan silinmez.');
-    for (const report of target.reports) this.unlinkReport(report.photoUrls, report.receiptUrl);
+    for (const report of target.reports) await this.unlinkReport(report.photoUrls, report.receiptUrl);
     await this.prisma.user.delete({ where: { id: targetId } });
     return { ok: true };
   }
@@ -679,14 +689,17 @@ export class AdminService {
       where: { evidencePurgeAfter: { lte: new Date() } },
       select: { id: true, photoUrls: true, receiptUrl: true },
     });
-    for (const report of due) this.unlinkReport(report.photoUrls, report.receiptUrl);
-    if (due.length) {
+    const cleared: string[] = [];
+    for (const report of due) {
+      if (await this.unlinkReport(report.photoUrls, report.receiptUrl)) cleared.push(report.id);
+    }
+    if (cleared.length) {
       await this.prisma.report.updateMany({
-        where: { id: { in: due.map((report) => report.id) } },
+        where: { id: { in: cleared } },
         data: { photoUrls: [], receiptUrl: '', evidencePurgeAfter: null },
       });
     }
-    return { purged: due.length };
+    return { purged: cleared.length, pending: due.length - cleared.length };
   }
 
   async transparency() {
@@ -711,9 +724,18 @@ export class AdminService {
     for (const user of users) await this.badges.sync(user.id);
   }
 
-  private unlinkReport(photoUrls: unknown, receiptUrl: string): void {
-    for (const url of this.evidence.photoUrls(photoUrls)) this.evidence.remove(url);
+  private async unlinkReport(photoUrls: unknown, receiptUrl: string): Promise<boolean> {
+    const keys = [...this.evidence.photoUrls(photoUrls)];
     const receipt = this.evidence.publicPath(receiptUrl);
-    if (receipt) this.evidence.remove(receipt);
+    if (receipt) keys.push(receipt);
+    let ok = true;
+    for (const key of keys) {
+      const removed = await this.evidence.remove(key);
+      if (!removed) {
+        ok = false;
+        await this.prisma.cleanupJob.create({ data: { objectKey: key } });
+      }
+    }
+    return ok;
   }
 }

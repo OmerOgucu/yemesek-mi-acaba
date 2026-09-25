@@ -4,15 +4,24 @@ import { apiBaseUrl } from '@/lib/api/client';
 export async function LegalDocument({ document }: { document: LegalDocumentData }) {
   let legalEmail = 'hukuk@yemesekmiacaba.com';
   let pressEmail = 'basin@yemesekmiacaba.com';
+  let controllerName: string | null = null;
+  let contactAddress: string | null = null;
   try {
-    const response = await fetch(new URL('/press', apiBaseUrl()), { cache: 'no-store' });
+    const response = await fetch(new URL('/site/identity', apiBaseUrl()), { cache: 'no-store' });
     if (response.ok) {
-      const press = (await response.json()) as { email?: string; legalEmail?: string };
-      if (press.legalEmail) legalEmail = press.legalEmail;
-      if (press.email) pressEmail = press.email;
+      const identity = (await response.json()) as {
+        legalEmail?: string;
+        pressEmail?: string;
+        controllerName?: string | null;
+        contactAddress?: string | null;
+      };
+      if (identity.legalEmail) legalEmail = identity.legalEmail;
+      if (identity.pressEmail) pressEmail = identity.pressEmail;
+      controllerName = identity.controllerName ?? null;
+      contactAddress = identity.contactAddress ?? null;
     }
   } catch {
-    // Ayar okunamazsa yer tutucu adresler kalır.
+    // Kimlik okunamazsa yer tutucu adresler kalır. Sahte şirket adı yazılmaz.
   }
 
   return (
@@ -26,6 +35,8 @@ export async function LegalDocument({ document }: { document: LegalDocumentData 
         , basın{' '}
         <a className="underline" href={`mailto:${pressEmail}`}>{pressEmail}</a>
         . Şu an tüzel kişilik yoktur.
+        {controllerName ? ` Proje yürütücüsü: ${controllerName}.` : ' Proje yürütücüsü adı site ayarında yok.'}
+        {contactAddress ? ` Adres: ${contactAddress}.` : ''}
       </p>
       <div className="mt-8 space-y-8">
         {document.sections.map((section) => (

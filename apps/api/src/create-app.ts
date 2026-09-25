@@ -1,9 +1,7 @@
-import { mkdirSync } from 'fs';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { NextFunction, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { readConfig } from '@yemesek/config';
-import { uploadsRoot } from '@yemesek/evidence';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { resolveCorsOrigins } from './common/cors-origins';
@@ -21,33 +19,13 @@ export async function createApp(): Promise<NestExpressApplication> {
   if (config.isProduction && !process.env.CORS_ORIGINS?.trim()) {
     console.warn('CORS_ORIGINS boş. Production için https://yemesekmiacaba.com yazılmalı. Şu an yalnızca localhost kabul edilir.');
   }
-  if (config.isProduction && process.env.STORAGE_DRIVER !== 's3') {
-    console.warn('STORAGE_DRIVER s3 değil. Yayın kanıtları için S3 veya R2 kullan.');
+  const hops = Number(process.env.TRUST_PROXY_HOPS ?? '0');
+  if (!Number.isInteger(hops) || hops < 0 || hops > 5) {
+    throw new Error('TRUST_PROXY_HOPS 0 ile 5 arasında bir tam sayı olmalı.');
   }
-  const uploads = uploadsRoot();
-  mkdirSync(uploads, { recursive: true });
-  app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
-    if (req.path.includes('..') || req.path.includes('\\') || req.path.includes('\0')) {
-      res.sendStatus(404);
-      return;
-    }
-    if (!req.path || req.path === '/' || req.path.endsWith('/')) {
-      res.sendStatus(404);
-      return;
-    }
-    next();
-  });
-  app.useStaticAssets(uploads, {
-    prefix: '/uploads/',
-    index: false,
-    dotfiles: 'deny',
-    redirect: false,
-    fallthrough: true,
-    setHeaders(res) {
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-      res.setHeader('Cache-Control', 'public, max-age=3600');
-    },
+  app.set('trust proxy', hops);
+  app.use('/uploads', (_req: Request, res: Response) => {
+    res.sendStatus(404);
   });
   app.enableCors({
     origin: origins,

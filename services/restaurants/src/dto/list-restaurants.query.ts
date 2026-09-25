@@ -1,5 +1,5 @@
-import { Transform } from 'class-transformer';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 function emptyToUndefined({ value }: { value: unknown }): unknown {
   if (typeof value !== 'string') return value;
@@ -25,4 +25,18 @@ export class ListRestaurantsQuery {
   @IsString({ message: 'İlçe metin olmalı.' })
   @MaxLength(60, { message: 'İlçe en fazla 60 karakter olmalı.' })
   district?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  pageSize?: number;
 }

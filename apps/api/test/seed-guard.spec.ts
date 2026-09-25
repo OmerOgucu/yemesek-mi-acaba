@@ -1,9 +1,9 @@
 import { assertProductionSeedAllowed } from '../../../packages/database/src/seed-guard';
 
 describe('production seed guard', () => {
-  it('refuses a production seed unless the explicit flag is set', () => {
-    expect(() => assertProductionSeedAllowed({ NODE_ENV: 'production' })).toThrow(/ALLOW_PRODUCTION_SEED/);
-    expect(() => assertProductionSeedAllowed({ NODE_ENV: 'production', ALLOW_PRODUCTION_SEED: 'true' })).not.toThrow();
+  it('refuses every production seed, including the old override flag', () => {
+    expect(() => assertProductionSeedAllowed({ NODE_ENV: 'production' })).toThrow(/demo seed/);
+    expect(() => assertProductionSeedAllowed({ NODE_ENV: 'production', ALLOW_PRODUCTION_SEED: 'true' } as { NODE_ENV: string })).toThrow(/demo seed/);
     expect(() => assertProductionSeedAllowed({ NODE_ENV: 'development' })).not.toThrow();
   });
 });

@@ -10,7 +10,7 @@ export class ClientVersionGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const path = (request.path || request.url || '').split('?')[0];
-    if (path === '/health') return true;
+    if (path === '/health' || path === '/ready') return true;
     const version = request.header('x-app-version');
     const minVersion = await this.settings.get('minMobileVersion');
     if (version && minVersion && compareSemver(version, minVersion) < 0) {

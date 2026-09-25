@@ -1,0 +1,10 @@
+networks:
+  edge:
+    name: ${EDGE_NETWORK:?set EDGE_NETWORK to the existing proxy network}
+    external: true
+
+services:
+  api:
+    networks: [internal, edge]
+  web:
+    networks: [internal, edge]

@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import type { AuthUser } from '@yemesek/auth';
 import { PrismaService } from '@yemesek/database';
 import { ModerationService } from '@yemesek/moderation';
+import { placeKey } from '@yemesek/shared';
 
 @Injectable()
 export class TrustService {
@@ -70,6 +71,7 @@ export class TrustService {
     if (issues.length) throw new BadRequestException({ message: issues });
     const report = await this.prisma.report.findUnique({ where: { id: reportId } });
     if (!report) throw new NotFoundException('Şikayet bulunamadı.');
+    await this.assertVenueCityOpen(report.restaurantId);
     const staff = user.role === 'ADMIN' || user.role === 'MODERATOR';
     const claimed = await this.ownsVenue(user.id, report.restaurantId);
     if (!staff && !claimed) throw new ForbiddenException('Bu mekana yanıt yazma yetkin yok.');
@@ -87,6 +89,34 @@ export class TrustService {
       onBehalf: created.onBehalf,
       createdAt: created.createdAt.toISOString(),
     };
+  }
+
+  async block(blockerId: string, blockedId: string): Promise<{ ok: true }> {
+    if (blockerId === blockedId) throw new BadRequestException('Kendini engelleyemezsin.');
+    const user = await this.prisma.user.findUnique({ where: { id: blockedId } });
+    if (!user || user.deletedAt) throw new NotFoundException('Üye bulunamadı.');
+    await this.prisma.userBlock.upsert({
+      where: { blockerId_blockedId: { blockerId, blockedId } },
+      update: {},
+      create: { blockerId, blockedId },
+    });
+    return { ok: true };
+  }
+
+  private async assertVenueCityOpen(restaurantId: string): Promise<void> {
+    const restaurant = await this.prisma.restaurant.findUnique({ where: { id: restaurantId } });
+    if (!restaurant || restaurant.hidden) throw new NotFoundException('Mekan bulunamadı.');
+    const setting = await this.prisma.siteSetting.findUnique({ where: { key: 'allowedCities' } });
+    const keys = (setting?.value ?? '')
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => placeKey(part).key);
+    if (!keys.length) {
+      if (process.env.NODE_ENV === 'production') throw new NotFoundException('Mekan bulunamadı.');
+      return;
+    }
+    if (!keys.includes(restaurant.cityKey)) throw new NotFoundException('Mekan bulunamadı.');
   }
 
   private async ownsVenue(userId: string, restaurantId: string): Promise<boolean> {

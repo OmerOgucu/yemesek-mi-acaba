@@ -88,7 +88,7 @@ export const SETTING_DEFS = {
     defaultValue: '',
     kind: 'text',
     allowEmpty: true,
-    label: 'Açık şehirler (virgül, boşsa hepsi)',
+    label: 'Açık şehirler (virgül). Boş değer geliştirmede hepsini açar; production ilk kurulum boş listeyi açmaz.',
   },
   moderationSlaHours: {
     defaultValue: '24',

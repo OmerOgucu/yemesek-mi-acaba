@@ -45,6 +45,12 @@ export class TrustController {
     return this.trust.appeal(id, user, dto.body);
   }
 
+  @Post('users/:id/block')
+  @UseGuards(JwtAuthGuard, VerifiedEmailGuard)
+  block(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.trust.block(user.id, id);
+  }
+
   @Post('reports/:id/replies')
   @UseGuards(JwtAuthGuard, VerifiedEmailGuard)
   reply(@Param('id') id: string, @CurrentUser() user: AuthUser, @Body() dto: BodyDto) {

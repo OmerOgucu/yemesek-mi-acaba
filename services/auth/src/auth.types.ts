@@ -6,6 +6,8 @@ export type AuthUser = {
   displayName: string;
   role: UserRole;
   emailVerified: boolean;
+  /** True only when this access token was issued after a completed TOTP challenge. */
+  mfa: boolean;
 };
 
 export type PublicBadge = {

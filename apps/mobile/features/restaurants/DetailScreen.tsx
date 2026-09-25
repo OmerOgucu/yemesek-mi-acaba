@@ -14,7 +14,7 @@ type Report = {
   severity: number;
   helpfulCount: number;
   photoUrls: string[];
-  receiptUrl: string;
+  hasReceipt?: boolean;
   evidenceVerified: boolean;
 };
 
@@ -87,7 +87,7 @@ export default function DetailScreen() {
             {(report.photoUrls ?? []).map((url) => (
               <Image key={url} source={{ uri: mediaUrl(url) }} style={styles.thumb} />
             ))}
-            {report.receiptUrl ? <Image source={{ uri: mediaUrl(report.receiptUrl) }} style={styles.thumb} /> : null}
+            {report.hasReceipt ? <Text style={styles.meta}>Fiş yüklendi. Dosya herkese açık değil.</Text> : null}
           </View>
         </View>
       ))}

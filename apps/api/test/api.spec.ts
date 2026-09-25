@@ -150,7 +150,9 @@ describe('Yemesek API', () => {
 
     expect(report.body.nickname).toBe('Yazar');
     expect(report.body.photoUrls).toHaveLength(1);
-    expect(report.body.receiptUrl).toMatch(/^\/uploads\/reports\/[a-f0-9]{32}\.png$/);
+    expect(report.body.receiptUrl).toBeUndefined();
+    expect(report.body.hasReceipt).toBe(true);
+    expect(report.body.photoUrls[0]).toMatch(/^\/media\/photos\//);
     expect(report.body.evidenceVerified).toBe(false);
     const photo = await request(app.getHttpServer()).get(report.body.photoUrls[0]).expect(200);
     expect(photo.headers['x-content-type-options']).toBe('nosniff');
@@ -199,7 +201,8 @@ describe('Yemesek API', () => {
     const detail = await request(app.getHttpServer()).get(`/restaurants/${harsh.id}`).expect(200);
     expect(detail.body.reports).toHaveLength(1);
     expect(detail.body.reports[0].helpfulCount).toBe(1);
-    expect(detail.body.reports[0].receiptUrl).toMatch(/^\/uploads\/reports\//);
+    expect(detail.body.reports[0].receiptUrl).toBeUndefined();
+    expect(detail.body.reports[0].hasReceipt).toBe(true);
     expect(detail.body.reports[0].photoUrls.length).toBeGreaterThan(0);
     expect(detail.body.evilScore).toBeGreaterThan(0);
 

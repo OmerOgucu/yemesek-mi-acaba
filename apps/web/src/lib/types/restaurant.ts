@@ -41,7 +41,7 @@ export type ReportView = {
   createdAt: string;
   helpfulCount: number;
   photoUrls: string[];
-  receiptUrl: string;
+  hasReceipt: boolean;
   evidenceVerified: boolean;
   moderationStatus: string;
   replies: { body: string; onBehalf: boolean; createdAt: string }[];

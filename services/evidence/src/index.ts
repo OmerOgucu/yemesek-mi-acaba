@@ -9,7 +9,7 @@ export {
   assertEvidenceFiles,
   detectImage,
   photoUrlList,
-  publicUploadPath,
+  storedObjectKey,
   removeStoredFile,
   saveEvidenceFile,
   prepareEvidenceBuffer,
@@ -19,3 +19,4 @@ export {
   type IncomingImage,
 } from './evidence-files';
 export { stripImageMetadata } from './strip-metadata';
+export { deleteObject, getObject, isObjectKey } from './object-storage';

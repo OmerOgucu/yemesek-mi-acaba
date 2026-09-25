@@ -3,14 +3,37 @@ name: check
 on:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: yemesek
+          POSTGRES_PASSWORD: yemesek
+          POSTGRES_DB: yemesek_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U yemesek -d yemesek_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://yemesek:yemesek@127.0.0.1:5432/yemesek_test
+      NEXT_PUBLIC_API_URL: https://api.yemesekmiacaba.com
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -20,3 +43,12 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm audit:deps
+      - run: pnpm --filter @yemesek/web build
+      - name: mobile production config
+        run: |
+          node -e "process.env.APP_ENV='production'; process.env.EXPO_PUBLIC_API_URL='http://localhost:3001'; try { require('./apps/mobile/app.config.js')(); process.exit(1);} catch (e) { if (!String(e.message).includes('https')) process.exit(1); }"
+          node -e "process.env.APP_ENV='production'; process.env.EXPO_PUBLIC_API_URL='https://api.yemesekmiacaba.com'; const cfg=require('./apps/mobile/app.config.js')(); if (cfg.expo.android.usesCleartextTraffic) process.exit(1);"
+      - name: API image
+        run: docker build -f Dockerfile.api -t yemesek-api:ci .
+      - name: web image
+        run: docker build -f Dockerfile.web --build-arg NEXT_PUBLIC_API_URL=https://api.yemesekmiacaba.com -t yemesek-web:ci .

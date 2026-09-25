@@ -2,6 +2,7 @@ import { Body, Controller, Get, Patch, Post, Query, UseGuards } from '@nestjs/co
 import { AuthRateLimitGuard } from './auth-rate-limit.guard';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './current-user.decorator';
+import { AdminSetupDto } from './dto/admin-setup.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { LoginDto } from './dto/login.dto';
 import { ConfirmTotpDto, MfaDto, PasswordResetDto, ResetPasswordDto, VerifyCodeDto, VerifyLinkDto } from './dto/verify-email.dto';
@@ -19,6 +20,12 @@ export class AuthController {
   @UseGuards(AuthRateLimitGuard)
   register(@Body() dto: RegisterDto) {
     return this.auth.register(dto);
+  }
+
+  @Post('admin/setup')
+  @UseGuards(AuthRateLimitGuard)
+  setupAdmin(@Body() dto: AdminSetupDto) {
+    return this.auth.setupAdmin(dto);
   }
 
   @Post('login')

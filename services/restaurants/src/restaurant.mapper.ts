@@ -1,5 +1,5 @@
 import { ReportCategory, VenueStatus } from '@prisma/client';
-import { photoUrlList, publicUploadPath } from '@yemesek/evidence';
+import { photoUrlList } from '@yemesek/evidence';
 import { CATEGORY_LABEL, computeEvilScore, foldTr, scoreLabel, type ScoreInput } from '@yemesek/shared';
 
 export type ScoredReport = {
@@ -75,7 +75,7 @@ export type ReportView = {
   createdAt: string;
   helpfulCount: number;
   photoUrls: string[];
-  receiptUrl: string;
+  hasReceipt: boolean;
   evidenceVerified: boolean;
   moderationStatus: string;
   replies: { body: string; onBehalf: boolean; createdAt: string }[];
@@ -138,8 +138,8 @@ export function toReportView(report: ReportRow): ReportView {
     nickname: report.nickname,
     createdAt: report.createdAt.toISOString(),
     helpfulCount: report._count.votes,
-    photoUrls: photoUrlList(report.photoUrls),
-    receiptUrl: publicUploadPath(report.receiptUrl) ?? '',
+    photoUrls: photoUrlList(report.photoUrls).map((_, index) => `/media/photos/${report.id}/${index}`),
+    hasReceipt: Boolean(photoUrlList([report.receiptUrl])[0]),
     evidenceVerified: report.evidenceVerified,
     moderationStatus: report.moderationStatus,
     replies: (report.replies ?? []).map((reply) => ({

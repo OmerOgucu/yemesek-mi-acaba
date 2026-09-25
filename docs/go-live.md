@@ -10,7 +10,7 @@ Süreç `NODE_ENV=production` iken açılmaz, şu dördü gerçek olana kadar: `
 2. Sunucuda `apps/api/.env` doldur. Şablon `apps/api/.env.example`. Web `apps/web/.env` yalnızca `NEXT_PUBLIC_API_URL`. Mobil derlemede `EXPO_PUBLIC_API_URL`.
 3. `JWT_ACCESS_SECRET` üret: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. Örnek `change-me-to-a-long-random-string` production’da reddedilir.
 4. Postgres bağlantısını `DATABASE_URL`e yaz. SQLite’ı yayına taşıma.
-5. `pnpm db:migrate` (deploy). `pnpm db:seed` çalıştırma. Production’da seed, `ALLOW_PRODUCTION_SEED=true` olmadan durur ve veriyi silmez.
+5. `pnpm db:migrate` (deploy). `pnpm db:seed` çalıştırma. Production’da demo seed hiç çalışmaz; `ALLOW_PRODUCTION_SEED` bu yasağı açmaz. İlk yönetici `pnpm --filter @yemesek/database db:bootstrap` ve `POST /auth/admin/setup` ile kurulur.
 6. DNS: `yemesekmiacaba.com` web’e, API’nin hostu `APP_PUBLIC_URL` ve `NEXT_PUBLIC_API_URL` / `EXPO_PUBLIC_API_URL` ile aynı ailede. TLS zorunlu.
 7. Brevo: anahtar yalnızca API ortamında. SPF, DKIM, DMARC: `docs/email-dns.md`. `BREVO_SENDER_EMAIL` doğrulanmış gönderen olsun.
 8. `CORS_ORIGINS=https://yemesekmiacaba.com`. www varsa virgülle ekle. Boş bırakılırsa süreç açılmaz.

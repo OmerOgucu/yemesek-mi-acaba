@@ -1,6 +1,12 @@
 import type { PrismaService } from '@yemesek/database';
 
 export async function resetDb(prisma: PrismaService): Promise<void> {
+  await prisma.cleanupJob.deleteMany();
+  await prisma.mailJob.deleteMany();
+  await prisma.rateBucket.deleteMany();
+  await prisma.adminInvite.deleteMany();
+  await prisma.userBlock.deleteMany();
+  await prisma.evidenceObject.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.appeal.deleteMany();
   await prisma.contentFlag.deleteMany();

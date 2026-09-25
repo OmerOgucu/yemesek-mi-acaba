@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import {
   assertEvidenceFiles,
   photoUrlList,
-  publicUploadPath,
   removeStoredFile,
   type IncomingImage,
 } from './evidence-files';
@@ -13,8 +12,8 @@ export class EvidenceService {
     return assertEvidenceFiles(photos, receipt);
   }
 
-  remove(url: string): void {
-    removeStoredFile(url);
+  remove(key: string): Promise<boolean> {
+    return removeStoredFile(key);
   }
 
   photoUrls(value: unknown): string[] {
@@ -22,6 +21,6 @@ export class EvidenceService {
   }
 
   publicPath(value: unknown): string | null {
-    return publicUploadPath(value);
+    return photoUrlList([value])[0] ?? null;
   }
 }

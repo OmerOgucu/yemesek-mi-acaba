@@ -4,7 +4,7 @@ import { readConfig } from '@yemesek/config';
 import { PrismaService } from '@yemesek/database';
 import type { AuthUser } from './auth.types';
 
-type AccessPayload = { sub?: string; iat?: number; purpose?: string };
+type AccessPayload = { sub?: string; iat?: number; purpose?: string; mfa?: boolean; tv?: number };
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -35,6 +35,9 @@ export class JwtAuthGuard implements CanActivate {
     const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
     if (!user || user.deletedAt) throw new UnauthorizedException('Giriş gerekli.');
     if (user.disabledAt) throw new ForbiddenException('Bu hesap askıya alındı.');
+    if (typeof payload.tv !== 'number' || payload.tv !== user.tokenVersion) {
+      throw new UnauthorizedException('Oturum kapatıldı. Yeniden gir.');
+    }
     if (user.sessionsRevokedAt && typeof payload.iat === 'number') {
       if (payload.iat < Math.floor(user.sessionsRevokedAt.getTime() / 1000)) {
         throw new UnauthorizedException('Oturum kapatıldı. Yeniden gir.');
@@ -46,6 +49,7 @@ export class JwtAuthGuard implements CanActivate {
       displayName: user.displayName,
       role: user.role,
       emailVerified: Boolean(user.emailVerifiedAt),
+      mfa: payload.mfa === true,
     };
     return true;
   }

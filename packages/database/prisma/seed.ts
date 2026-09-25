@@ -146,7 +146,7 @@ async function main(): Promise<void> {
     );
   }
 
-  const evidence = writeSeedPlaceholders();
+  const evidence = await writeSeedPlaceholders();
 
   for (const restaurant of SEED_RESTAURANTS) {
     const location = await findOrCreateLocation(prisma, restaurant.city, restaurant.district);

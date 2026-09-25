@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -23,7 +23,9 @@ model User {
   totpSecret          String?
   totpEnabledAt       DateTime?
   sessionsRevokedAt   DateTime?
+  tokenVersion        Int                 @default(0)
   deletedAt           DateTime?
+  mustSetupPassword   Boolean             @default(false)
   createdAt           DateTime            @default(now())
   reports             Report[]
   votes               Vote[]
@@ -39,6 +41,8 @@ model User {
   pushTokens          PushToken[]
   auditLogs           AuditLog[]
   replies             ReportReply[]
+  blocksMade          UserBlock[]         @relation("blocksMade")
+  blocksReceived      UserBlock[]         @relation("blocksReceived")
 }
 
 model RefreshToken {
@@ -379,6 +383,84 @@ enum BadgeMetric {
 enum BadgeAwardSource {
   AUTO
   MANUAL
+}
+
+model EvidenceObject {
+  id          String    @id @default(cuid())
+  objectKey   String    @unique
+  kind        String
+  contentType String
+  byteSize    Int
+  ownerId     String
+  reportId    String?
+  status      String    @default("STAGED")
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  @@index([reportId])
+  @@index([status, createdAt])
+}
+
+model MailJob {
+  id            String    @id @default(cuid())
+  dedupeKey     String    @unique
+  toEmail       String
+  subject       String
+  textBody      String
+  htmlBody      String
+  status        String    @default("PENDING")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  leaseUntil    DateTime?
+  lastError     String?
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+  sentAt        DateTime?
+
+  @@index([status, nextAttemptAt])
+}
+
+model RateBucket {
+  key         String   @id
+  hits        Int      @default(0)
+  windowStart DateTime
+  updatedAt   DateTime @updatedAt
+}
+
+model AdminInvite {
+  id         String    @id @default(cuid())
+  email      String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email])
+}
+
+model UserBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blocker   User     @relation("blocksMade", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   User     @relation("blocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+}
+
+model CleanupJob {
+  id            String    @id @default(cuid())
+  objectKey     String
+  status        String    @default("PENDING")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  lastError     String?
+  createdAt     DateTime  @default(now())
+
+  @@index([status, nextAttemptAt])
+  @@index([objectKey])
 }
 
 enum ReportCategory {

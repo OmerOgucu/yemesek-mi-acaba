@@ -159,7 +159,7 @@ export function ProfilePanel() {
       <section className="rounded-2xl border border-chili/30 p-4">
         <h2 className="font-display text-2xl">Hesabı sil</h2>
         <p className="mt-1 text-sm text-muted">
-          Şikayetlerin ve oyların da silinir. Bu, KVKK kapsamındaki silme hakkının uygulama içindeki karşılığıdır.
+          Hesap kapanır, oturum ve bildirim kaydı silinir, adın “Silinmiş kullanıcı” olur. Şikayet metni tahtada kalabilir. Fotoğraf ve fiş, saklama süresi bitince silinir; düğmeye basınca dosyalar anında yok olmaz.
         </p>
         <label className="mt-3 block text-sm" htmlFor="delete-password">
           Parola

@@ -4,16 +4,16 @@ import { mediaUrl } from '@/lib/api/client';
 
 export function ReportEvidence({
   photoUrls,
-  receiptUrl,
+  hasReceipt,
   evidenceVerified,
   moderationStatus,
 }: {
   photoUrls: string[];
-  receiptUrl: string;
+  hasReceipt?: boolean;
   evidenceVerified: boolean;
   moderationStatus?: string;
 }) {
-  if (!photoUrls.length && !receiptUrl) return null;
+  if (!photoUrls.length && !hasReceipt) return null;
   const approved = moderationStatus === 'APPROVED' || evidenceVerified;
   return (
     <div className="mt-3">
@@ -29,11 +29,7 @@ export function ReportEvidence({
             <img src={mediaUrl(url)} alt="Yemek veya mekan fotoğrafı" className="h-24 w-24 rounded-xl object-cover" />
           </a>
         ))}
-        {receiptUrl ? (
-          <a href={mediaUrl(receiptUrl)} target="_blank" rel="noreferrer">
-            <img src={mediaUrl(receiptUrl)} alt="Fiş veya fatura" className="h-24 w-24 rounded-xl object-cover" />
-          </a>
-        ) : null}
+        {hasReceipt ? <p className="text-xs text-muted">Fiş yüklendi. Dosya herkese açık değil.</p> : null}
       </div>
     </div>
   );

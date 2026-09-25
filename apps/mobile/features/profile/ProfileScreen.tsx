@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, Share, StyleSheet, Text } from 'react-native';
+import { Platform, Pressable, ScrollView, Share, StyleSheet, Text, TextInput } from 'react-native';
 import { LEGAL_SLUGS, getDocument } from '@yemesek/legal';
 import { readSession, type SessionUser } from '../auth/session';
 import { useSession } from '../auth/SessionProvider';
@@ -13,6 +13,23 @@ export default function ProfileScreen() {
   const { show } = useOnboarding();
   const { user, signOut, refreshUser } = useSession();
   const [info, setInfo] = useState('');
+  const [password, setPassword] = useState('');
+
+  async function removeAccount() {
+    setInfo('');
+    try {
+      const result = await postJson<{ deletion?: string; evidencePurgeAfter?: string }>('/auth/me/delete', { password }, true);
+      setPassword('');
+      setInfo(
+        result.deletion === 'scheduled'
+          ? 'Hesap kapatıldı. Kanıt dosyaları saklama süresi bitince silinir.'
+          : 'Hesap kapatıldı.',
+      );
+      await signOut();
+    } catch (caught) {
+      setInfo(caught instanceof ApiError ? caught.message : 'Hesap silinemedi.');
+    }
+  }
 
   async function logout() {
     const session = await readSession();
@@ -70,6 +87,21 @@ export default function ProfileScreen() {
           <Pressable style={styles.ghost} accessibilityLabel="Pazarlama rızasını geri al" onPress={() => void withdrawMarketing()}>
             <Text style={styles.ghostText}>Pazarlama rızasını geri al</Text>
           </Pressable>
+          <Text style={styles.meta}>
+            Hesap kapanır ve oturum silinir. Şikayet metni kalabilir. Fotoğraf ve fiş, saklama süresi bitince silinir.
+          </Text>
+          <TextInput
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholder="Silmek için parola"
+            accessibilityLabel="Hesabı silmek için parola"
+            style={styles.input}
+            autoCapitalize="none"
+          />
+          <Pressable style={styles.primary} accessibilityLabel="Hesabı sil" onPress={() => void removeAccount()}>
+            <Text style={styles.primaryText}>Hesabı sil</Text>
+          </Pressable>
           <Pressable style={styles.ghost} accessibilityLabel="Çıkış" onPress={() => void logout()}>
             <Text style={styles.ghostText}>Çıkış</Text>
           </Pressable>
@@ -108,4 +140,5 @@ const styles = StyleSheet.create({
   primaryText: { color: colors.card, fontWeight: '700' },
   ghost: { borderWidth: 1, borderColor: colors.ink, borderRadius: 999, padding: 14, alignItems: 'center' },
   ghostText: { color: colors.ink, fontWeight: '700' },
+  input: { borderWidth: 1, borderColor: colors.ink, borderRadius: 12, padding: 12, color: colors.ink },
 });

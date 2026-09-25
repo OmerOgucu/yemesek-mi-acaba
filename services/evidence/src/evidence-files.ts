@@ -1,10 +1,8 @@
 import { randomBytes } from 'crypto';
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'fs';
-import { basename, join } from 'path';
 import { BadRequestException } from '@nestjs/common';
 import { uploadsDir } from '@yemesek/config';
 import { MAX_IMAGE_BYTES, MAX_PHOTOS } from './dto/upload-limits';
-import { storeReportImage } from './object-storage';
+import { contentTypeForKey, deleteObject, isObjectKey, putObject } from './object-storage';
 import { stripImageMetadata } from './strip-metadata';
 
 export { MAX_IMAGE_BYTES, MAX_PHOTOS };
@@ -41,69 +39,108 @@ export function detectImage(buffer: Buffer): ImageExt | null {
   return null;
 }
 
-export function publicUploadPath(value: unknown): string | null {
-  if (typeof value !== 'string' || !value.startsWith('/uploads/')) return null;
-  if (value.includes('..') || value.includes('\\') || value.includes('\0')) return null;
+export function storedObjectKey(value: unknown): string | null {
+  if (typeof value !== 'string' || !isObjectKey(value)) return null;
   return value;
 }
 
 export function photoUrlList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return value.map(publicUploadPath).filter((item): item is string => Boolean(item));
+  return value.map(storedObjectKey).filter((item): item is string => Boolean(item));
+}
+
+let inflight = 0;
+const MAX_INFLIGHT = 4;
+
+function isHeic(buffer: Buffer): boolean {
+  if (buffer.length < 12) return false;
+  return buffer.toString('ascii', 4, 8) === 'ftyp' && /heic|heif|mif1|msf1/.test(buffer.toString('ascii', 8, 12));
 }
 
 export async function prepareEvidenceBuffer(buffer: Buffer): Promise<{ ext: ImageExt; bytes: Buffer }> {
-  const ext = detectImage(buffer);
-  if (!ext) {
-    throw new BadRequestException('Yalnızca JPEG, PNG veya WebP yükleyebilirsin.');
+  if (inflight >= MAX_INFLIGHT) {
+    throw new BadRequestException('Çok fazla yükleme aynı anda. Biraz bekle.');
   }
-  let bytes = stripImageMetadata(buffer, ext);
+  inflight += 1;
   try {
-    const sharp = (await import('sharp')).default;
-    let image = sharp(bytes, { failOn: 'none' }).rotate();
-    const meta = await image.metadata();
-    if ((meta.width ?? 0) > 1600 || (meta.height ?? 0) > 1600) {
-      image = image.resize(1600, 1600, { fit: 'inside', withoutEnlargement: true });
+    if (isHeic(buffer)) {
+      try {
+        const sharp = (await import('sharp')).default;
+        const bytes = await sharp(buffer, { failOn: 'error', limitInputPixels: 24_000_000 }).rotate().jpeg({ quality: 82 }).toBuffer();
+        return { ext: 'jpg', bytes };
+      } catch {
+        throw new BadRequestException('HEIC okunamadı. Fotoğrafı JPEG olarak seç.');
+      }
     }
-    if (ext === 'jpg') bytes = await image.jpeg({ quality: 82 }).toBuffer();
-    else if (ext === 'png') bytes = await image.png({ compressionLevel: 9 }).toBuffer();
-    else bytes = await image.webp({ quality: 82 }).toBuffer();
-  } catch {
-    // Metadata is already stripped. Resize is best-effort when sharp is unavailable.
+    const ext = detectImage(buffer);
+    if (!ext) {
+      throw new BadRequestException('Yalnızca JPEG, PNG veya WebP yükleyebilirsin.');
+    }
+    const stripped = stripImageMetadata(buffer, ext);
+    try {
+      const sharp = (await import('sharp')).default;
+      let image = sharp(stripped, { failOn: 'error', limitInputPixels: 24_000_000 }).rotate();
+      const meta = await image.metadata();
+      const width = meta.width ?? 0;
+      const height = meta.height ?? 0;
+      if (!width || !height) throw new Error('decode');
+      if (width * height > 24_000_000) {
+        throw new BadRequestException('Görsel çok büyük. Daha küçük bir fotoğraf seç.');
+      }
+      if (width > 1600 || height > 1600) {
+        image = image.resize(1600, 1600, { fit: 'inside', withoutEnlargement: true });
+      }
+      const bytes =
+        ext === 'jpg'
+          ? await image.jpeg({ quality: 82 }).toBuffer()
+          : ext === 'png'
+            ? await image.png({ compressionLevel: 9 }).toBuffer()
+            : await image.webp({ quality: 82 }).toBuffer();
+      return { ext, bytes };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      throw new BadRequestException('Görsel okunamadı. JPEG, PNG veya WebP yükle.');
+    }
+  } finally {
+    inflight -= 1;
   }
-  return { ext, bytes };
 }
 
-export async function saveEvidenceFile(buffer: Buffer): Promise<string> {
+export async function saveEvidenceFile(buffer: Buffer): Promise<{ key: string; byteSize: number; contentType: string }> {
   const prepared = await prepareEvidenceBuffer(buffer);
-  const name = `${randomBytes(16).toString('hex')}.${prepared.ext}`;
-  return storeReportImage(name, prepared.bytes);
+  const key = `evidence/${randomBytes(16).toString('hex')}.${prepared.ext}`;
+  const contentType = contentTypeForKey(key);
+  await putObject(key, prepared.bytes, contentType);
+  return { key, byteSize: prepared.bytes.length, contentType };
 }
 
-export function removeStoredFile(url: string): void {
-  if (!url.startsWith('/uploads/reports/')) return;
-  const name = basename(url);
-  if (!/^[a-f0-9]{32}\.(jpg|png|webp)$/.test(name)) return;
-  const full = join(uploadsRoot(), 'reports', name);
-  if (!existsSync(full)) return;
+export async function removeStoredFile(key: string): Promise<boolean> {
+  if (!isObjectKey(key)) return false;
   try {
-    unlinkSync(full);
+    await deleteObject(key);
+    return true;
   } catch {
-    // The account is already gone. A leftover file is better than a failed deletion.
+    return false;
   }
 }
 
-export function writeSeedPlaceholders(): { photoUrl: string; receiptUrl: string } {
-  const dir = join(uploadsRoot(), 'seed');
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, 'venue.png'), VENUE_PNG);
-  writeFileSync(join(dir, 'receipt.png'), RECEIPT_PNG);
-  return { photoUrl: '/uploads/seed/venue.png', receiptUrl: '/uploads/seed/receipt.png' };
+export async function writeSeedPlaceholders(): Promise<{ photoUrl: string; receiptUrl: string }> {
+  const photo = await saveEvidenceFile(VENUE_PNG);
+  const receipt = await saveEvidenceFile(RECEIPT_PNG);
+  return { photoUrl: photo.key, receiptUrl: receipt.key };
 }
+
+export type StoredEvidence = {
+  key: string;
+  kind: 'photo' | 'receipt';
+  contentType: string;
+  byteSize: number;
+};
 
 export async function assertEvidenceFiles(photos: IncomingImage[] | undefined, receipt: IncomingImage[] | undefined): Promise<{
   photoUrls: string[];
   receiptUrl: string;
+  objects: StoredEvidence[];
 }> {
   if (!photos?.length) {
     throw new BadRequestException('En az bir yemek veya mekan fotoğrafı gerekli.');
@@ -118,19 +155,19 @@ export async function assertEvidenceFiles(photos: IncomingImage[] | undefined, r
     throw new BadRequestException('Tek bir fiş veya fatura yükleyebilirsin.');
   }
 
-  const written: string[] = [];
+  const written: StoredEvidence[] = [];
   try {
     const photoUrls: string[] = [];
     for (const file of photos) {
-      const url = await saveEvidenceFile(file.buffer);
-      written.push(url);
-      photoUrls.push(url);
+      const saved = await saveEvidenceFile(file.buffer);
+      written.push({ ...saved, kind: 'photo' });
+      photoUrls.push(saved.key);
     }
-    const receiptUrl = await saveEvidenceFile(receipt[0].buffer);
-    written.push(receiptUrl);
-    return { photoUrls, receiptUrl };
+    const savedReceipt = await saveEvidenceFile(receipt[0].buffer);
+    written.push({ ...savedReceipt, kind: 'receipt' });
+    return { photoUrls, receiptUrl: savedReceipt.key, objects: written };
   } catch (error) {
-    for (const url of written) removeStoredFile(url);
+    for (const item of written) await removeStoredFile(item.key);
     throw error;
   }
 }

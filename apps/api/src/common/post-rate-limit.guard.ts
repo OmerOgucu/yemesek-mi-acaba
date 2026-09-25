@@ -6,28 +6,24 @@ import {
   Injectable,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { MemoryRateLimiter } from '@yemesek/shared';
+import { consumeBucket, PrismaService } from '@yemesek/database';
 
 @Injectable()
 export class PostRateLimitGuard implements CanActivate {
-  private readonly limiter = new MemoryRateLimiter(20, 60_000);
-  private readonly sensitive = new MemoryRateLimiter(5, 10 * 60_000);
+  constructor(private readonly prisma: PrismaService) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    if (process.env.NODE_ENV === 'test') return true;
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    if (process.env.NODE_ENV === 'test' && process.env.RATE_LIMIT_FORCE !== '1') return true;
     const request = context.switchToHttp().getRequest<Request>();
     if (request.method !== 'POST') return true;
-    const ip = request.ip || request.socket.remoteAddress || 'unknown';
+    const ip = (request.ip || request.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
     const path = (request.path || request.url || '').split('?')[0];
     const tight = sensitiveBucket(path);
-    if (tight && !this.sensitive.allow(`${tight}:${ip}`)) {
+    if (tight && !(await consumeBucket(this.prisma, `${tight}:${ip}`, 5, 10 * 60_000))) {
       throw new HttpException('Çok fazla deneme. On dakika sonra tekrar dene.', HttpStatus.TOO_MANY_REQUESTS);
     }
-    if (this.limiter.allow(ip)) return true;
-    throw new HttpException(
-      'Çok sık yazıyorsun. Bir dakika sonra tekrar dene.',
-      HttpStatus.TOO_MANY_REQUESTS,
-    );
+    if (await consumeBucket(this.prisma, `post:${ip}`, 20, 60_000)) return true;
+    throw new HttpException('Çok sık yazıyorsun. Bir dakika sonra tekrar dene.', HttpStatus.TOO_MANY_REQUESTS);
   }
 }
 

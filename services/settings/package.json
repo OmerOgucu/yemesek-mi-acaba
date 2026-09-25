@@ -10,11 +10,13 @@
   "dependencies": {
     "@nestjs/common": "^11.1.6",
     "@prisma/client": "^6.16.2",
+    "@yemesek/config": "workspace:*",
     "@yemesek/database": "workspace:*",
     "@yemesek/moderation": "workspace:*",
     "class-validator": "^0.14.2"
   },
   "devDependencies": {
+    "@types/node": "^22.18.6",
     "typescript": "^5.9.2"
   }
 }

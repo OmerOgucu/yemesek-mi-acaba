@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable } 
 import { SettingsService } from '@yemesek/settings';
 import type { Request } from 'express';
 
-const OPEN_WRITES = new Set(['/auth/login', '/auth/refresh', '/auth/2fa/challenge']);
+const OPEN_WRITES = new Set(['/auth/login', '/auth/refresh', '/auth/2fa/challenge', '/auth/admin/setup']);
 
 @Injectable()
 export class MaintenanceGuard implements CanActivate {

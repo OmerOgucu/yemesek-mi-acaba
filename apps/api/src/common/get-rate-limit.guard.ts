@@ -1,26 +1,24 @@
 import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import type { Request } from 'express';
-import { MemoryRateLimiter } from '@yemesek/shared';
+import { consumeBucket, PrismaService } from '@yemesek/database';
 
 @Injectable()
 export class GetRateLimitGuard implements CanActivate {
-  private readonly anonymous = new MemoryRateLimiter(120, 60_000);
-  private readonly keyed = new MemoryRateLimiter(600, 60_000);
-  private readonly exports = new MemoryRateLimiter(5, 10 * 60_000);
+  constructor(private readonly prisma: PrismaService) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    if (process.env.NODE_ENV === 'test') return true;
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    if (process.env.NODE_ENV === 'test' && process.env.RATE_LIMIT_FORCE !== '1') return true;
     const request = context.switchToHttp().getRequest<Request>();
-    if (request.method !== 'GET' || request.path === '/health') return true;
-    const ip = request.ip || request.socket.remoteAddress || 'unknown';
+    if (request.method !== 'GET' || request.path === '/health' || request.path === '/ready') return true;
+    const ip = (request.ip || request.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
     const path = (request.path || request.url || '').split('?')[0];
-    if (path === '/auth/me/export' && !this.exports.allow(`export:${ip}`)) {
+    if (path === '/auth/me/export' && !(await consumeBucket(this.prisma, `export:${ip}`, 5, 10 * 60_000))) {
       throw new HttpException('Veri indirme çok sık. On dakika sonra tekrar dene.', HttpStatus.TOO_MANY_REQUESTS);
     }
     const bulkKey = process.env.BULK_API_KEY?.trim();
     const presented = request.header('x-api-key');
-    const limiter = bulkKey && presented === bulkKey ? this.keyed : this.anonymous;
-    if (limiter.allow(`get:${ip}`)) return true;
+    const max = bulkKey && presented === bulkKey ? 600 : 120;
+    if (await consumeBucket(this.prisma, `get:${ip}`, max, 60_000)) return true;
     throw new HttpException('Çok fazla okuma. Bir dakika sonra tekrar dene.', HttpStatus.TOO_MANY_REQUESTS);
   }
 }
