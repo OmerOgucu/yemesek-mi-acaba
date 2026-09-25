@@ -66,15 +66,25 @@ export class AdminService {
     ]
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, 8);
+    return { members, restaurants, reports, recent };
+  }
+
+  async ops() {
     const config = readConfig();
+    const [maintenance, minMobileVersion, minIosBuild, minAndroidBuild] = await Promise.all([
+      this.settings.flag('maintenanceMode'),
+      this.settings.get('minMobileVersion'),
+      this.settings.number('minIosBuild'),
+      this.settings.number('minAndroidBuild'),
+    ]);
     return {
-      members,
-      restaurants,
-      reports,
-      recent,
+      status: 'ok' as const,
+      uptime: Math.round(process.uptime()),
+      maintenance,
       mailConfigured: Boolean(config.brevoApiKey),
-      storageDriver: (process.env.STORAGE_DRIVER ?? 'local').trim() || 'local',
-      sentryConfigured: Boolean(process.env.SENTRY_DSN?.trim()),
+      minMobileVersion,
+      minIosBuild,
+      minAndroidBuild,
     };
   }
 
@@ -404,7 +414,7 @@ export class AdminService {
   }
 
   listSettings() {
-    return this.settings.publicList();
+    return this.settings.listAll();
   }
 
   async locations() {

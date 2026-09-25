@@ -83,8 +83,9 @@ describe('maturity controls', () => {
     await prisma.siteSetting.create({ data: { key: 'maintenanceMode', value: 'true' } });
 
     const health = await request(app.getHttpServer()).get('/health').expect(200);
-    expect(health.body.maintenance).toBe(true);
-    expect(health.body.status).toBe('ok');
+    expect(health.body).toEqual({ status: 'ok', uptime: expect.any(Number) });
+    const signal = await request(app.getHttpServer()).get('/site/maintenance').expect(200);
+    expect(signal.body).toEqual({ active: true });
 
     await request(app.getHttpServer()).get('/restaurants').expect(200);
     await request(app.getHttpServer())
@@ -98,6 +99,23 @@ describe('maturity controls', () => {
       .set('Authorization', `Bearer ${author.accessToken}`)
       .send({ value: 'false' })
       .expect(200);
+
+    const ops = await request(app.getHttpServer())
+      .get('/admin/ops')
+      .set('Authorization', `Bearer ${author.accessToken}`)
+      .expect(200);
+    expect(ops.body.maintenance).toBe(false);
+    expect(ops.body.mailConfigured).toBe(false);
+    await request(app.getHttpServer()).get('/admin/ops').expect(401);
+
+    const settings = await request(app.getHttpServer()).get('/settings').expect(200);
+    const keys = settings.body.map((row: { key: string }) => row.key);
+    expect(keys).toEqual(['indexPublicReports']);
+    expect(keys).not.toContain('maintenanceMode');
+    expect(keys).not.toContain('allowedCities');
+
+    await request(app.getHttpServer()).get('/uploads/').expect(404);
+    await request(app.getHttpServer()).get('/uploads/reports/').expect(404);
   });
 
   it('rejects a venue outside the soft-launch city list', async () => {
@@ -121,7 +139,7 @@ describe('maturity controls', () => {
     const author = await register('surum@example.com');
     await app.get(PrismaService).siteSetting.create({ data: { key: 'minMobileVersion', value: '2.0.0' } });
     const health = await request(app.getHttpServer()).get('/health').expect(200);
-    expect(health.body.minMobileVersion).toBe('2.0.0');
+    expect(health.body.minMobileVersion).toBeUndefined();
     await request(app.getHttpServer())
       .post('/restaurants')
       .set('Authorization', `Bearer ${author.accessToken}`)

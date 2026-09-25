@@ -196,6 +196,19 @@ describe('trust and abuse controls', () => {
       .get('/admin/reports')
       .set('Authorization', `Bearer ${login.body.accessToken}`)
       .expect(200);
+    await request(app.getHttpServer())
+      .get('/admin/settings')
+      .set('Authorization', `Bearer ${login.body.accessToken}`)
+      .expect(403);
+    await request(app.getHttpServer())
+      .get('/admin/ops')
+      .set('Authorization', `Bearer ${login.body.accessToken}`)
+      .expect(403);
+    await request(app.getHttpServer())
+      .patch('/admin/users/someone')
+      .set('Authorization', `Bearer ${login.body.accessToken}`)
+      .send({ role: 'ADMIN' })
+      .expect(403);
   });
 
   it('enables admin totp and requires it on the next login', async () => {

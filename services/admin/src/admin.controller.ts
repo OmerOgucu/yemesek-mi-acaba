@@ -36,6 +36,12 @@ export class AdminController {
     return this.admin.dashboard();
   }
 
+  @Get('ops')
+  @Roles(UserRole.ADMIN)
+  ops() {
+    return this.admin.ops();
+  }
+
   @Get('users')
   @Roles(UserRole.ADMIN)
   users(@Query() query: AdminUserQuery) {

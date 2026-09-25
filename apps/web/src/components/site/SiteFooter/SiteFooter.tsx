@@ -11,8 +11,6 @@ const LINKS = [
   { href: '/basin', label: 'Basın' },
   { href: '/destek', label: 'Destek' },
   { href: '/harita', label: 'Harita' },
-  { href: '/durum', label: 'Durum' },
-  { href: '/ihlal', label: 'İhlal adımları' },
 ];
 
 export function SiteFooter() {

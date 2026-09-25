@@ -28,4 +28,4 @@ Bu dosya işletme içi adımdır. Avukat görüşü veya Kurul formu değildir. 
 
 - Denetim kaydına kim, ne zaman, hangi uç yazıldı.
 - Düzeltmeyi ve tekrarını not et. Yedekten dönülecekse `docs/backup-restore-drill.md`.
-- Kısa hal sitede `/ihlal` sayfasındadır.
+- Bu liste sitede yayımlanmaz. Yalnızca depoda durur.

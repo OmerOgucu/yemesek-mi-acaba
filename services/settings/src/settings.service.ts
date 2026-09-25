@@ -36,8 +36,15 @@ export class SettingsService {
     return Number.isInteger(parsed) ? parsed : Number(SETTING_DEFS[key].defaultValue);
   }
 
+  async listAll(): Promise<{ key: SettingKey; value: string; label: string }[]> {
+    return this.rowsFor(Object.keys(SETTING_DEFS) as SettingKey[]);
+  }
+
   async publicList(): Promise<{ key: SettingKey; value: string; label: string }[]> {
-    const keys = Object.keys(SETTING_DEFS) as SettingKey[];
+    return this.rowsFor(['indexPublicReports']);
+  }
+
+  private async rowsFor(keys: SettingKey[]): Promise<{ key: SettingKey; value: string; label: string }[]> {
     const rows = await Promise.all(
       keys.map(async (key) => ({
         key,

@@ -14,6 +14,7 @@ const LINKS = [
   ['/admin/konumlar', 'Konumlar'],
   ['/admin/eposta', 'E-posta'],
   ['/admin/ayarlar', 'Ayarlar'],
+  ['/admin/durum', 'Durum'],
   ['/admin/denetim', 'Denetim'],
   ['/admin/destek', 'Destek'],
 ];

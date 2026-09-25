@@ -6,15 +6,20 @@ import { MemoryRateLimiter } from '@yemesek/shared';
 export class GetRateLimitGuard implements CanActivate {
   private readonly anonymous = new MemoryRateLimiter(120, 60_000);
   private readonly keyed = new MemoryRateLimiter(600, 60_000);
+  private readonly exports = new MemoryRateLimiter(5, 10 * 60_000);
 
   canActivate(context: ExecutionContext): boolean {
     if (process.env.NODE_ENV === 'test') return true;
     const request = context.switchToHttp().getRequest<Request>();
     if (request.method !== 'GET' || request.path === '/health') return true;
+    const ip = request.ip || request.socket.remoteAddress || 'unknown';
+    const path = (request.path || request.url || '').split('?')[0];
+    if (path === '/auth/me/export' && !this.exports.allow(`export:${ip}`)) {
+      throw new HttpException('Veri indirme çok sık. On dakika sonra tekrar dene.', HttpStatus.TOO_MANY_REQUESTS);
+    }
     const bulkKey = process.env.BULK_API_KEY?.trim();
     const presented = request.header('x-api-key');
     const limiter = bulkKey && presented === bulkKey ? this.keyed : this.anonymous;
-    const ip = request.ip || request.socket.remoteAddress || 'unknown';
     if (limiter.allow(`get:${ip}`)) return true;
     throw new HttpException('Çok fazla okuma. Bir dakika sonra tekrar dene.', HttpStatus.TOO_MANY_REQUESTS);
   }

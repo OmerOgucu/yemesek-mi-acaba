@@ -106,7 +106,7 @@ pnpm audit:deps
 
 | Yöntem | Yol | Kim |
 | --- | --- | --- |
-| GET | `/health` | Herkes. Bakım, e-posta yapılandırması ve en düşük mobil sürüm bayraklarını da döner. Gizli yok. |
+| GET | `/health` | Herkes. Yalnızca `ok` ve çalışma süresi. |
 | GET | `/auth/me/export` | Giriş. Yalnızca çağıranın verisi. |
 | POST | `/auth/me/marketing` | Giriş. Pazarlama rızasını verir veya geri alır. |
 | POST | `/auth/register` | Herkes, aydınlatma + koşullar zorunlu |
@@ -125,7 +125,8 @@ pnpm audit:deps
 | POST | `/auth/verify-link` | Sihirli bağlantı jetonu |
 | POST | `/auth/verify/resend` | Giriş, hız sınırlı |
 | GET | `/auth/dev/verification` | Yalnızca geliştirme, Brevo anahtarı yokken |
-| GET | `/admin/*` | Rol `ADMIN` |
+| GET | `/admin/ops` | Yalnızca `ADMIN`. Bakım ve e-posta yapılandırması burada. |
+| GET | `/admin/*` | `ADMIN` veya `MODERATOR`. Ayar ve rol yalnızca `ADMIN`. |
 
 Şehir ve ilçe ikisi de zorunludur. Eşleşme: boşluklar kırpılır, art arda boşluk teke iner, Türkçe küçük harfe katlanır (`toLocaleLowerCase('tr-TR')`). Aynı anahtara düşen sonraki mekan yeni şehir veya ilçe açmaz; ilk kaydın yazımına bağlanır. Örnek: `Ankara` / `Çankaya` ile ` ankara ` / `çankaya` tek konumdur. Filtre bu tablodan şehir → ilçe listesi döner.
 
@@ -137,10 +138,23 @@ Katkı puanı: şikayet × 10, alınan yararlı oy × 3, eklenen mekan × 8, ver
 
 Yayın notları: [docs/deploy.md](docs/deploy.md).
 
-Parola bcrypt ile özetlenir. Erişim jetonu 15 dakika, yenileme jetonu 30 gün; yenileme jetonunun yalnızca özeti saklanır. Giriş uçları 10 dakikada 8 deneme ile sınırlıdır. Diğer POST istekleri dakikada 20 ile sınırlıdır. Hata gövdesi `statusCode`, `message`, varsa `details` döner; yığın izi dönmez.
+Parola bcrypt ile özetlenir. Erişim jetonu 15 dakika, yenileme jetonu 30 gün; yenileme jetonunun yalnızca özeti saklanır. Giriş uçları 10 dakikada 8 deneme ile sınırlıdır. Veri indirme, destek formu ve işletme talebi 10 dakikada 5. Diğer POST istekleri dakikada 20 ile sınırlıdır. Hata gövdesi `statusCode`, `message`, varsa `details` döner; yığın izi dönmez.
 
 Kötülük skoru: şiddet × kategori ağırlığı toplanır, × 8; şikayet sayısı × 6 ve yararlı oy × 2 eklenir. Zehirlenme şüphesi ve hijyen daha ağır basar.
 
 Yasal sayfalar: `/kvkk`, `/gizlilik`, `/kullanim-kosullari`, `/cerez-politikasi`. Aynı metinler mobil uygulamada Profil sekmesinden açılır.
 
-Kanıt dosyaları bu MVP'de depo kökündeki `uploads/` klasöründe durur ve API üzerinden `/uploads/...` adresinden sunulur. JPEG, PNG ve WebP kabul edilir; dosya başı sınır 5 MB'dir. Dosya adı istemciden alınmaz. `evidenceVerified` varsayılanı kapalıdır: yükleme, bir incelemenin geçtiği anlamına gelmez. Yayında bu klasörün yerine sahiplik kontrolü olan bir nesne deposu kullanılmalıdır. Seed, örnek şikayetlere yer tutucu görseller yazar.
+Kanıt dosyaları bu MVP'de depo kökündeki `uploads/` klasöründe durur ve API üzerinden `/uploads/reports/<32 hex>.jpg|png|webp` adresinden sunulur. Dizin listelenmez. JPEG, PNG ve WebP kabul edilir; dosya başı sınır 5 MB'dir. Dosya adı istemciden alınmaz. `evidenceVerified` varsayılanı kapalıdır: yükleme, bir incelemenin geçtiği anlamına gelmez. Yayında bu klasörün yerine sahiplik kontrolü olan bir nesne deposu kullanılmalıdır. Seed, örnek şikayetlere yer tutucu görseller yazar ve production’da `ALLOW_PRODUCTION_SEED=true` olmadan çalışmaz.
+
+Herkese açık yüzey: [docs/public-surface.md](docs/public-surface.md).
+
+## Android deneme APK
+
+Telefonda `localhost` API’ye ulaşmaz. Derlemeden önce makinenin yerel IP’sini yaz:
+
+```bash
+cd apps/mobile
+EXPO_PUBLIC_API_URL=http://192.168.1.10:3001 npx eas-cli build -p android --profile preview
+```
+
+Profil `apps/mobile/eas.json` içinde `preview` ve APK üretir. Bilinmeyen kaynaklardan yüklemeyi telefonda aç. Aynı komutun yerel karşılığı, Android SDK kuruluysa: `npx expo run:android --variant release`.

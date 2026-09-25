@@ -1,17 +1,13 @@
 import { mkdirSync } from 'fs';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import type { NextFunction, Request, Response } from 'express';
+import { readConfig } from '@yemesek/config';
+import { uploadsRoot } from '@yemesek/evidence';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
+import { resolveCorsOrigins } from './common/cors-origins';
 import { createValidationPipe } from './common/validation';
-import { uploadsRoot } from '@yemesek/evidence';
-
-const LOCAL_ORIGINS = [
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'http://localhost:8081',
-  'http://127.0.0.1:8081',
-];
 
 export async function createApp(): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -20,8 +16,20 @@ export async function createApp(): Promise<NestExpressApplication> {
   });
   app.disable('x-powered-by');
   app.useBodyParser('json', { limit: '32kb' });
+  const config = readConfig();
+  const origins = resolveCorsOrigins();
+  if (config.isProduction && !process.env.CORS_ORIGINS?.trim()) {
+    console.warn('CORS_ORIGINS boş. Production için https://yemesekmiacaba.com yazılmalı. Şu an yalnızca localhost kabul edilir.');
+  }
   const uploads = uploadsRoot();
   mkdirSync(uploads, { recursive: true });
+  app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
+    if (!req.path || req.path === '/' || req.path.endsWith('/')) {
+      res.sendStatus(404);
+      return;
+    }
+    next();
+  });
   app.useStaticAssets(uploads, {
     prefix: '/uploads/',
     index: false,
@@ -35,9 +43,9 @@ export async function createApp(): Promise<NestExpressApplication> {
     },
   });
   app.enableCors({
-    origin: LOCAL_ORIGINS,
+    origin: origins,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'X-Api-Key'],
+    allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'X-Api-Key', 'x-app-version', 'x-ios-build', 'x-android-build'],
   });
   app.useGlobalPipes(createValidationPipe());
   app.useGlobalFilters(new AllExceptionsFilter());

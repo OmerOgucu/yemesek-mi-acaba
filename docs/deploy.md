@@ -74,4 +74,4 @@ Brevo ücretsiz kotası doğrulama ve sıfırlama postası için yetmeyebilir. D
 5. Şikayet sayfaları noindex. Ayrıntı `docs/indexing.md`.
 6. Staging `docs/staging.md`. Mağaza notu `docs/store-checklist.md`.
 
-CORS’a üretim web kökenini eklemeden tarayıcı API’ye ulaşamaz. Bu turda izinli kökenler localhost ve 127.0.0.1’dir.
+CORS: `CORS_ORIGINS` virgüllü liste. Boşsa yalnızca localhost:3000 ve localhost:8081. Production’da `https://yemesekmiacaba.com` yazılmadan tarayıcı API’ye ulaşamaz. Kaynak haritası Next ayarında kapalıdır.

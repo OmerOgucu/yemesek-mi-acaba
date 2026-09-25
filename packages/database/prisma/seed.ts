@@ -1,4 +1,5 @@
 import { PrismaClient, type BadgeMetric } from '@prisma/client';
+import { assertProductionSeedAllowed } from '../src/seed-guard';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import { syncUserBadges } from '../../../services/badges/src/sync-user-badges';
@@ -55,6 +56,7 @@ const TEMPLATES = [
 ];
 
 async function main(): Promise<void> {
+  assertProductionSeedAllowed();
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL tanımlı değil.');
   }

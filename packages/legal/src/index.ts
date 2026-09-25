@@ -67,7 +67,7 @@ export const DOCUMENTS: LegalDocument[] = [
         paragraphs: [
           'Şikayet metni siteyi açan herkese açıktır. Bunu aktarım değil, sizin yayımladığınız içerik sayın.',
           'Yer tutucu işleyenler, anahtarlar bağlanınca devreye girer: e-posta için Brevo, dosya deposu için S3 veya uyumlu kova, uygulamanın çalıştığı barındırıcı. İsimler ve ülkeler sözleşme imzalanınca bu metne yazılır.',
-          'İhlal adımlarının kısa hali sitede /ihlal sayfasındadır. İşletme kontrol listesi docs/breach-response.md dosyasındadır. Bu bir hukuk görüşü değildir.',
+          'Kişisel veri ihlalinde işletme içi prosedür işletilir. Bu metin hukuk görüşü değildir ve iç kontrol listesini yayımlamaz.',
         ],
       },
       {

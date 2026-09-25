@@ -17,7 +17,8 @@
 | Kategori, skor, hız sayacı, ortak hata metni | `packages/shared` |
 | `DATABASE_URL`, JWT, port, uploads yolu | `packages/config` |
 | KVKK ve diğer yasal metin | `packages/legal` |
-| Durum, bakım kapısı, çerez tercihi | `apps/web` `/durum`, `MaintenanceGate`, `CookieNotice` |
+| Yönetici durum, bakım kapısı, çerez tercihi | `apps/web` `/admin/durum`, `MaintenanceGate`, `CookieNotice` |
+| Herkese açık yüzey listesi | `docs/public-surface.md` |
 | İhlal, yedek, DNS, yayın listesi | `docs/breach-response.md`, `docs/backup-restore-drill.md`, `docs/email-dns.md`, `docs/go-live.md` |
 | Site sayfaları | `apps/web/src/app/(public)`, `app/(auth)`, `app/admin` |
 | Site arayüzü | `apps/web/src/components/<alan>` |

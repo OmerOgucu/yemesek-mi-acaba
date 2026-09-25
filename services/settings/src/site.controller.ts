@@ -41,6 +41,11 @@ export class SiteController {
     private readonly moderation: ModerationService,
   ) {}
 
+  @Get('site/maintenance')
+  async maintenance() {
+    return { active: await this.settings.flag('maintenanceMode') };
+  }
+
   @Get('content/guidelines')
   async guidelines() {
     const row = await this.prisma.siteContent.findUnique({ where: { key: 'community_guidelines' } });
