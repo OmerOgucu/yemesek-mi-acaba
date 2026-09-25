@@ -51,6 +51,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return { statusCode, message: 'İstek tamamlanamadı.' };
     }
 
+    if (exception instanceof Error && exception.name === 'NotFoundError') {
+      return { statusCode: HttpStatus.NOT_FOUND, message: 'Dosya bulunamadı.' };
+    }
+
+    if (isMulterError(exception)) {
+      if (exception.code === 'LIMIT_FILE_SIZE') {
+        return { statusCode: HttpStatus.BAD_REQUEST, message: 'Her dosya en fazla 5 MB olabilir.' };
+      }
+      if (exception.code === 'LIMIT_FILE_COUNT' || exception.code === 'LIMIT_UNEXPECTED_FILE') {
+        return { statusCode: HttpStatus.BAD_REQUEST, message: 'En fazla 3 fotoğraf ve 1 fiş yükleyebilirsin.' };
+      }
+      return { statusCode: HttpStatus.BAD_REQUEST, message: 'Dosya yüklenemedi.' };
+    }
+
     if (exception instanceof Prisma.PrismaClientInitializationError) {
       return { statusCode: HttpStatus.SERVICE_UNAVAILABLE, message: 'Veritabanına bağlanılamadı.' };
     }
@@ -69,4 +83,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message: 'Bir şeyler karıştı. Biraz sonra tekrar dene.',
     };
   }
+}
+
+function isMulterError(exception: unknown): exception is { code: string } {
+  return (
+    typeof exception === 'object' &&
+    exception !== null &&
+    (exception as { name?: string }).name === 'MulterError' &&
+    typeof (exception as { code?: unknown }).code === 'string'
+  );
 }

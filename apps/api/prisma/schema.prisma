@@ -54,10 +54,13 @@ model Report {
   author       User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   category     ReportCategory
   severity     Int
-  title        String
-  body         String
-  nickname     String         @default("anonim")
-  createdAt    DateTime       @default(now())
+  title              String
+  body               String
+  nickname           String         @default("anonim")
+  photoUrls          Json
+  receiptUrl         String
+  evidenceVerified   Boolean        @default(false)
+  createdAt          DateTime       @default(now())
   votes        Vote[]
 
   @@index([restaurantId, createdAt])

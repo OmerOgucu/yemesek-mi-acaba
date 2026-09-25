@@ -14,6 +14,10 @@ export function apiBaseUrl(): string {
   return process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001';
 }
 
+export function mediaUrl(path: string): string {
+  return new URL(path, apiBaseUrl()).toString();
+}
+
 async function readError(response: Response): Promise<ApiError> {
   try {
     const body = (await response.json()) as { message?: string; details?: string[] };
@@ -69,6 +73,24 @@ export function getJson<T>(path: string, auth = false): Promise<T> {
 
 export function postJson<T>(path: string, body: unknown, auth = false): Promise<T> {
   return request<T>(path, 'POST', body, auth);
+}
+
+export async function postForm<T>(path: string, body: FormData, auth = false): Promise<T> {
+  const send = async () => {
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (auth) {
+      const session = await readSession();
+      if (!session) throw new ApiError('Giriş gerekli.', 401);
+      headers.Authorization = `Bearer ${session.accessToken}`;
+    }
+    return fetch(`${apiBaseUrl()}${path}`, { method: 'POST', headers, body });
+  };
+  let response = await send();
+  if (auth && response.status === 401 && (await refreshSession())) {
+    response = await send();
+  }
+  if (!response.ok) throw await readError(response);
+  return (await response.json()) as T;
 }
 
 export type { SessionUser };

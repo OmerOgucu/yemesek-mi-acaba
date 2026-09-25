@@ -1,6 +1,7 @@
 import { ReportCategory } from '@prisma/client';
 import { CATEGORY_LABEL } from '../scoring/categories';
 import { computeEvilScore, scoreLabel, type ScoreInput } from '../scoring/evil-score';
+import { photoUrlList, publicUploadPath } from '../uploads/evidence-files';
 
 export type ScoredReport = {
   category: ReportCategory;
@@ -14,6 +15,9 @@ export type ReportRow = ScoredReport & {
   body: string;
   nickname: string;
   createdAt: Date;
+  photoUrls: unknown;
+  receiptUrl: string;
+  evidenceVerified: boolean;
 };
 
 export type RestaurantBase = {
@@ -61,6 +65,9 @@ export type ReportView = {
   nickname: string;
   createdAt: string;
   helpfulCount: number;
+  photoUrls: string[];
+  receiptUrl: string;
+  evidenceVerified: boolean;
 };
 
 function toScoreInput(reports: ScoredReport[]): ScoreInput[] {
@@ -116,6 +123,9 @@ export function toReportView(report: ReportRow): ReportView {
     nickname: report.nickname,
     createdAt: report.createdAt.toISOString(),
     helpfulCount: report._count.votes,
+    photoUrls: photoUrlList(report.photoUrls),
+    receiptUrl: publicUploadPath(report.receiptUrl) ?? '',
+    evidenceVerified: report.evidenceVerified,
   };
 }
 

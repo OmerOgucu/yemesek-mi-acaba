@@ -38,6 +38,7 @@ export const DOCUMENTS: LegalDocument[] = [
           'Hesap: e-posta, görünen ad, parola özeti (düz parola saklanmaz), kayıt zamanı.',
           'Rıza kayıtları: KVKK aydınlatma kabul zamanı, kullanım koşulları kabul zamanı, varsa pazarlama açık rızasının verilme veya geri alınma zamanı.',
           'İçerik: yazdığınız şikayet başlığı ve metni, takma ad, yararlı oy. Şikayet herkese açıktır; e-postanız şikayetin yanında gösterilmez.',
+          'Kanıt: en az bir yemek veya mekan fotoğrafı ve fiş/fatura görseli. Bu dosyalar şikayetle birlikte herkese gösterilir. Fişte ad, telefon veya kart numarası bırakmayın; mümkünse karalayın.',
           'Oturum: kısa ömürlü erişim jetonu ve sunucuda yalnızca özeti tutulan yenileme jetonu.',
           'Güvenlik: hız sınırı için IP adresi yalnızca bellekte, kısa süre tutulur; veritabanına yazılmaz.',
           'İstemediğimiz veriler: telefon, T.C. kimlik numarası, tam açık adres, ödeme bilgisi, konum.',
@@ -71,7 +72,7 @@ export const DOCUMENTS: LegalDocument[] = [
       {
         heading: 'Saklama',
         paragraphs: [
-          'Hesap verisi, siz hesabı silene kadar durur. Silince hesap, şikayetler, oylar ve yenileme jetonları silinir.',
+          'Hesap verisi, siz hesabı silene kadar durur. Silince hesap, şikayetler, yüklediğiniz kanıt dosyaları, oylar ve yenileme jetonları silinir.',
           'Şikayetin konusu olan mekan kaydı, başkalarının şikayetleri duruyorsa kalabilir. Yalnızca sizin yazdığınız kayıtlar silinir.',
         ],
       },
@@ -110,7 +111,8 @@ export const DOCUMENTS: LegalDocument[] = [
       {
         heading: 'Şikayet',
         paragraphs: [
-          'Şikayet bir iddiadır, resmi tespit değildir. Telefon, e-posta, kimlik numarası, kapı numarası ve tehdit içeren metin reddedilir.',
+          'Şikayet bir iddiadır, resmi tespit değildir. Yayımlanması için en az bir fotoğraf ve fiş veya fatura görseli gerekir. Telefon, e-posta, kimlik numarası, kapı numarası ve tehdit içeren metin reddedilir.',
+          'Kanıt dosyaları şikayetle birlikte görünür. İnceleme bayrağı varsayılan olarak kapalıdır; yükleme, bir moderatörün doğruladığı anlamına gelmez.',
           'Başka bir kişinin özel hayatını ifşa etmek kullanım koşullarına aykırıdır. Böyle bir metin yayından kaldırılabilir.',
         ],
       },
@@ -152,6 +154,7 @@ export const DOCUMENTS: LegalDocument[] = [
         heading: 'İçerik kuralları',
         paragraphs: [
           'Yaşadığınızı anlatın. Kişi adı, telefon, tam adres, kimlik numarası yazmayın. Hakaret, nefret söylemi ve tehdit yasaktır.',
+          'Fotoğrafsız veya fişsiz şikayet kabul edilmez. Fiş görselinde kendi adınızı, telefonunuzu ve kart numaranızı karalayın. Başkasının yüzünü gereksiz yere göstermeyin.',
           'Uydurma zehirlenme iddiası veya bir işletmeyi haksız yere itibarsızlaştırma sizin sorumluluğunuzdadır. Gerçeğe aykırı içerikten doğan taleplerde yazan kişi muhataptır.',
           'Kendi şikayetinize yararlı oyu veremezsiniz.',
         ],

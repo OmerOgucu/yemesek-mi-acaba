@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { ApiError, getJson } from '../../src/api/client';
+import { ApiError, getJson, mediaUrl } from '../../src/api/client';
 import { useSelection } from '../../src/state/SelectionProvider';
 import { colors } from '../../src/theme/theme';
 
@@ -13,6 +13,9 @@ type Report = {
   categoryLabel: string;
   severity: number;
   helpfulCount: number;
+  photoUrls: string[];
+  receiptUrl: string;
+  evidenceVerified: boolean;
 };
 
 type Detail = {
@@ -76,6 +79,16 @@ export default function DetailScreen() {
             {report.categoryLabel} · {report.severity}/5 · {report.nickname} · {report.helpfulCount} yararlı
           </Text>
           <Text style={styles.body}>{report.body}</Text>
+          <Text style={styles.badge}>Kanıtlı şikayet</Text>
+          {report.evidenceVerified ? null : (
+            <Text style={styles.meta}>Kanıt kullanıcı tarafından yüklendi, henüz incelenmedi.</Text>
+          )}
+          <View style={styles.row}>
+            {report.photoUrls.map((url) => (
+              <Image key={url} source={{ uri: mediaUrl(url) }} style={styles.thumb} />
+            ))}
+            {report.receiptUrl ? <Image source={{ uri: mediaUrl(report.receiptUrl) }} style={styles.thumb} /> : null}
+          </View>
         </View>
       ))}
     </ScrollView>
@@ -101,4 +114,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: { color: colors.ink, fontSize: 18, fontWeight: '600' },
   body: { color: colors.ink, lineHeight: 22 },
+  badge: { color: '#2f6b45', fontWeight: '700', fontSize: 12 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  thumb: { width: 72, height: 72, borderRadius: 12, backgroundColor: colors.line },
 });

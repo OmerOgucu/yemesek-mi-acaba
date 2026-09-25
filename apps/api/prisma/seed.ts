@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
+import { writeSeedPlaceholders } from '../src/uploads/evidence-files';
 import { SEED_RESTAURANTS } from './seed-data';
 
 export const DEMO_EMAIL = 'demo@yemesek.local';
@@ -53,6 +54,8 @@ async function main(): Promise<void> {
     );
   }
 
+  const evidence = writeSeedPlaceholders();
+
   for (const restaurant of SEED_RESTAURANTS) {
     await prisma.restaurant.create({
       data: {
@@ -70,6 +73,8 @@ async function main(): Promise<void> {
             title: report.title,
             body: report.body,
             nickname: report.nickname,
+            photoUrls: [evidence.photoUrl],
+            receiptUrl: evidence.receiptUrl,
             createdAt: daysAgo(report.daysAgo),
             votes: {
               create: voters.slice(0, report.votes).map((voter) => ({

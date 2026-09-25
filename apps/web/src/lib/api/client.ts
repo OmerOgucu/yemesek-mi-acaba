@@ -16,6 +16,10 @@ export function apiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 }
 
+export function mediaUrl(path: string): string {
+  return new URL(path, apiBaseUrl()).toString();
+}
+
 async function readError(response: Response): Promise<ApiError> {
   try {
     const body = (await response.json()) as ApiErrorBody;
@@ -87,6 +91,30 @@ async function withAuth(path: string, method: string, body: unknown, auth: boole
       response = await send(path, method, body, auth);
     }
     return response;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError('İstek tamamlanamadı.', 0);
+  }
+}
+
+async function sendForm(path: string, body: FormData, auth: boolean): Promise<Response> {
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (auth) {
+    const session = readSession();
+    if (!session) throw new ApiError('Giriş gerekli.', 401);
+    headers.Authorization = `Bearer ${session.accessToken}`;
+  }
+  return fetch(new URL(path, apiBaseUrl()), { method: 'POST', headers, body });
+}
+
+export async function postForm<T>(path: string, body: FormData, auth = false): Promise<T> {
+  try {
+    let response = await sendForm(path, body, auth);
+    if (auth && response.status === 401 && (await refreshSession())) {
+      response = await sendForm(path, body, auth);
+    }
+    if (!response.ok) throw await readError(response);
+    return (await response.json()) as T;
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError('İstek tamamlanamadı.', 0);

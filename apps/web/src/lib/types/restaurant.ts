@@ -35,6 +35,9 @@ export type ReportView = {
   nickname: string;
   createdAt: string;
   helpfulCount: number;
+  photoUrls: string[];
+  receiptUrl: string;
+  evidenceVerified: boolean;
 };
 
 export type RestaurantDetail = RestaurantSummary & {

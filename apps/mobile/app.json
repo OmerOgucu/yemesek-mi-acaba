@@ -6,7 +6,16 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
-    "plugins": ["expo-router", "expo-secure-store"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Şikayete yemek, mekan ve fiş fotoğrafı eklemek için galeri izni gerekir."
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": false
     },

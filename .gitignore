@@ -11,6 +11,8 @@ coverage/
 *.tsbuildinfo
 .turbo/
 .expo/
+apps/api/uploads/
+apps/api/uploads-test/
 .DS_Store
 npm-debug.log*
 pnpm-debug.log*

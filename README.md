@@ -2,7 +2,7 @@
 
 Kötü restoran deneyimlerini toplayan kara liste. İstanbul ve KKTC örnekleriyle gelir. Övgü değil, şikayet sıralanır: yüksek **kötülük skoru** daha kötü demektir.
 
-Şikayetler kullanıcı metnidir. Resmi tespit, laboratuvar sonucu veya mahkeme kararı değildir. Telefon, tam adres ve kimlik yazılmaz. Liste herkese açıktır. Şikayet ve yararlı oy için hesap gerekir.
+Şikayetler kullanıcı metnidir. Resmi tespit, laboratuvar sonucu veya mahkeme kararı değildir. Telefon, tam adres ve kimlik yazılmaz. Liste herkese açıktır. Şikayet ve yararlı oy için hesap gerekir. Şikayet ancak en az bir fotoğraf ve fiş/fatura görseliyle açılır.
 
 ## Çalıştırma
 
@@ -72,7 +72,7 @@ pnpm build
 | GET | `/restaurants?q=&city=` | Herkes, en kötü önce |
 | GET | `/restaurants/:id` | Herkes |
 | POST | `/restaurants` | Herkes |
-| POST | `/restaurants/:id/reports` | Giriş |
+| POST | `/restaurants/:id/reports` | Giriş, multipart: en az 1 fotoğraf (`photos`) ve fiş (`receipt`) |
 | POST | `/reports/:id/votes` | Giriş, kendi şikayetine oy yok |
 
 Parola bcrypt ile özetlenir. Erişim jetonu 15 dakika, yenileme jetonu 30 gün; yenileme jetonunun yalnızca özeti saklanır. Giriş uçları 10 dakikada 8 deneme ile sınırlıdır. Diğer POST istekleri dakikada 20 ile sınırlıdır. Hata gövdesi `statusCode`, `message`, varsa `details` döner; yığın izi dönmez.
@@ -80,3 +80,5 @@ Parola bcrypt ile özetlenir. Erişim jetonu 15 dakika, yenileme jetonu 30 gün;
 Kötülük skoru: şiddet × kategori ağırlığı toplanır, × 8; şikayet sayısı × 6 ve yararlı oy × 2 eklenir. Zehirlenme şüphesi ve hijyen daha ağır basar.
 
 Yasal sayfalar: `/kvkk`, `/gizlilik`, `/kullanim-kosullari`, `/cerez-politikasi`. Aynı metinler mobil uygulamada Profil sekmesinden açılır.
+
+Kanıt dosyaları bu MVP'de API'nin yerel `uploads/` klasöründe durur ve `/uploads/...` adresinden sunulur. JPEG, PNG ve WebP kabul edilir; dosya başı sınır 5 MB'dir. Dosya adı istemciden alınmaz. `evidenceVerified` varsayılanı kapalıdır: yükleme, bir incelemenin geçtiği anlamına gelmez. Yayında bu klasörün yerine sahiplik kontrolü olan bir nesne deposu kullanılmalıdır. Seed, örnek şikayetlere yer tutucu görseller yazar.

@@ -3,6 +3,7 @@ import { ReportCategory } from '@prisma/client';
 import request from 'supertest';
 import { createApp } from '../src/create-app';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { VENUE_PNG, RECEIPT_PNG } from '../src/uploads/evidence-files';
 
 describe('Yemesek API', () => {
   let app: INestApplication;
@@ -45,6 +46,14 @@ describe('Yemesek API', () => {
       refreshToken: string;
       user: { id: string; email: string };
     };
+  }
+
+  function withEvidence(token: string, restaurantId: string) {
+    return request(app.getHttpServer())
+      .post(`/restaurants/${restaurantId}/reports`)
+      .set('Authorization', `Bearer ${token}`)
+      .attach('photos', VENUE_PNG, { filename: 'yemek.png', contentType: 'image/png' })
+      .attach('receipt', RECEIPT_PNG, { filename: 'fis.png', contentType: 'image/png' });
   }
 
   async function createRestaurant(name = 'Test Lokantası', city = 'İstanbul') {
@@ -109,30 +118,28 @@ describe('Yemesek API', () => {
       })
       .expect(401);
 
-    await request(app.getHttpServer())
-      .post(`/restaurants/${mild.id}/reports`)
-      .set('Authorization', `Bearer ${author.accessToken}`)
-      .send({
-        category: ReportCategory.RUDE_SERVICE,
-        severity: 2,
-        title: 'Garson ters baktı',
-        body: 'Sipariş gecikti, ardından kısa ve kaba bir cevap geldi.',
-        nickname: 'çay içen',
-      })
+    await withEvidence(author.accessToken, mild.id)
+      .field('category', ReportCategory.RUDE_SERVICE)
+      .field('severity', '2')
+      .field('title', 'Garson ters baktı')
+      .field('body', 'Sipariş gecikti, ardından kısa ve kaba bir cevap geldi.')
+      .field('nickname', 'çay içen')
       .expect(201);
 
-    const report = await request(app.getHttpServer())
-      .post(`/restaurants/${harsh.id}/reports`)
-      .set('Authorization', `Bearer ${author.accessToken}`)
-      .send({
-        category: ReportCategory.FOOD_POISONING,
-        severity: 5,
-        title: 'Gece rahatsızlandık',
-        body: 'Üç kişilik masada balık yedik, sabaha kadar mide bulantısı sürdü. Teşhis yok, şüphe var.',
-      })
+    const report = await withEvidence(author.accessToken, harsh.id)
+      .field('category', ReportCategory.FOOD_POISONING)
+      .field('severity', '5')
+      .field('title', 'Gece rahatsızlandık')
+      .field('body', 'Üç kişilik masada balık yedik, sabaha kadar mide bulantısı sürdü. Teşhis yok, şüphe var.')
       .expect(201);
 
     expect(report.body.nickname).toBe('Yazar');
+    expect(report.body.photoUrls).toHaveLength(1);
+    expect(report.body.receiptUrl).toMatch(/^\/uploads\/reports\/[a-f0-9]{32}\.png$/);
+    expect(report.body.evidenceVerified).toBe(false);
+    const photo = await request(app.getHttpServer()).get(report.body.photoUrls[0]).expect(200);
+    expect(photo.headers['x-content-type-options']).toBe('nosniff');
+    expect(photo.headers['content-type']).toMatch(/image\/png/);
     expect(report.body.categoryLabel).toBe('Gıda zehirlenmesi şüphesi');
     expect(JSON.stringify(report.body)).not.toContain(author.user.email);
 
@@ -177,6 +184,8 @@ describe('Yemesek API', () => {
     const detail = await request(app.getHttpServer()).get(`/restaurants/${harsh.id}`).expect(200);
     expect(detail.body.reports).toHaveLength(1);
     expect(detail.body.reports[0].helpfulCount).toBe(1);
+    expect(detail.body.reports[0].receiptUrl).toMatch(/^\/uploads\/reports\//);
+    expect(detail.body.reports[0].photoUrls.length).toBeGreaterThan(0);
     expect(detail.body.evilScore).toBeGreaterThan(0);
 
     const filtered = await request(app.getHttpServer())
@@ -199,17 +208,40 @@ describe('Yemesek API', () => {
     expect(invalid.body.details.join(' ')).not.toMatch(/stack/i);
     expect(JSON.stringify(invalid.body)).not.toContain('at ');
 
-    const phone = await request(app.getHttpServer())
-      .post(`/restaurants/${restaurant.id}/reports`)
-      .set('Authorization', `Bearer ${author.accessToken}`)
-      .send({
-        category: ReportCategory.HYGIENE,
-        severity: 4,
-        title: 'Telefon yazdım diye',
-        body: 'Garson beni 0532 111 22 33 numarasından aradı ve bağırdı.',
-      })
+    const phone = await withEvidence(author.accessToken, restaurant.id)
+      .field('category', ReportCategory.HYGIENE)
+      .field('severity', '4')
+      .field('title', 'Telefon yazdım diye')
+      .field('body', 'Garson beni 0532 111 22 33 numarasından aradı ve bağırdı.')
       .expect(400);
     expect(phone.body.message).toBe('Gönderilen bilgiler geçersiz.');
+
+    const missing = await request(app.getHttpServer())
+      .post(`/restaurants/${restaurant.id}/reports`)
+      .set('Authorization', `Bearer ${author.accessToken}`)
+      .field('category', ReportCategory.HYGIENE)
+      .field('severity', '3')
+      .field('title', 'Fotoğrafsız şikayet')
+      .field('body', 'Metin var ama fiş ve fotoğraf yok, bu yüzden kaydolmamalı.')
+      .attach('photos', VENUE_PNG, { filename: 'yemek.png', contentType: 'image/png' })
+      .expect(400);
+    expect(missing.body.message).toBe('Fiş veya fatura fotoğrafı gerekli.');
+
+    const fake = await request(app.getHttpServer())
+      .post(`/restaurants/${restaurant.id}/reports`)
+      .set('Authorization', `Bearer ${author.accessToken}`)
+      .field('category', ReportCategory.HYGIENE)
+      .field('severity', '3')
+      .field('title', 'Dosya aslında metin')
+      .field('body', 'Uzantısı resim gibi duran bir metin dosyası kanıt sayılmamalı.')
+      .attach('photos', Buffer.from('this is not an image'), { filename: 'yemek.png', contentType: 'image/png' })
+      .attach('receipt', RECEIPT_PNG, { filename: 'fis.png', contentType: 'image/png' })
+      .expect(400);
+    expect(fake.body.message).toBe('Yalnızca JPEG, PNG veya WebP yükleyebilirsin.');
+
+    const listing = await request(app.getHttpServer()).get('/uploads/').expect(404);
+    expect(JSON.stringify(listing.body)).not.toContain('stack');
+    await request(app.getHttpServer()).get('/uploads/../package.json').expect(404);
 
     const extra = await request(app.getHttpServer())
       .post('/restaurants')

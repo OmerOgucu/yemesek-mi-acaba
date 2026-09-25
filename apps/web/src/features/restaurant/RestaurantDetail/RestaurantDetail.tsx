@@ -1,4 +1,5 @@
 import { HelpfulVote } from '@/features/restaurant/HelpfulVote/HelpfulVote';
+import { ReportEvidence } from '@/features/restaurant/ReportEvidence/ReportEvidence';
 import { ReportForm } from '@/features/restaurant/ReportForm/ReportForm';
 import { ScoreSeal } from '@/features/score/ScoreSeal/ScoreSeal';
 import { severityLabel } from '@/lib/categories/categories';
@@ -33,7 +34,7 @@ export function RestaurantDetail({ restaurant }: { restaurant: RestaurantDetailD
 
         <h2 className="mt-10 font-display text-3xl">Şikayetler</h2>
         {restaurant.reports.length === 0 ? (
-          <p className="mt-4 text-muted">Henüz şikayet yok. İlk notu sen düş, ama uydurma.</p>
+          <p className="mt-4 text-muted">Henüz şikayet yok. İlk not için fotoğraf ve fiş gerekir.</p>
         ) : (
           <ol className="mt-4 space-y-4">
             {restaurant.reports.map((report) => (
@@ -48,6 +49,11 @@ export function RestaurantDetail({ restaurant }: { restaurant: RestaurantDetailD
                   {report.categoryLabel} · {report.nickname} · {formatDate(report.createdAt)}
                 </p>
                 <p className="mt-3 leading-relaxed">{report.body}</p>
+                <ReportEvidence
+                  photoUrls={report.photoUrls}
+                  receiptUrl={report.receiptUrl}
+                  evidenceVerified={report.evidenceVerified}
+                />
                 <div className="mt-4">
                   <HelpfulVote reportId={report.id} initialCount={report.helpfulCount} />
                 </div>

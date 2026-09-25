@@ -9,6 +9,7 @@ import { User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { createHash, randomBytes } from 'crypto';
 import { collectPolicyIssues } from '../moderation/content-policy';
+import { photoUrlList, publicUploadPath, removeStoredFile } from '../uploads/evidence-files';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthSession, PublicUser } from './auth.types';
 import { DeleteAccountDto } from './dto/delete-account.dto';
@@ -153,7 +154,16 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Giriş gerekli.');
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) throw new UnauthorizedException('Parola hatalı.');
+    const reports = await this.prisma.report.findMany({
+      where: { authorId: userId },
+      select: { photoUrls: true, receiptUrl: true },
+    });
     await this.prisma.user.delete({ where: { id: userId } });
+    for (const report of reports) {
+      for (const url of photoUrlList(report.photoUrls)) removeStoredFile(url);
+      const receipt = publicUploadPath(report.receiptUrl);
+      if (receipt) removeStoredFile(receipt);
+    }
     return { ok: true };
   }
 

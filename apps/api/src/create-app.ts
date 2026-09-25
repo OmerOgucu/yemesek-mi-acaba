@@ -1,8 +1,10 @@
+import { mkdirSync } from 'fs';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { createValidationPipe } from './common/validation';
+import { uploadsRoot } from './uploads/evidence-files';
 
 const LOCAL_ORIGINS = [
   'http://localhost:3000',
@@ -18,6 +20,19 @@ export async function createApp(): Promise<NestExpressApplication> {
   });
   app.disable('x-powered-by');
   app.useBodyParser('json', { limit: '32kb' });
+  const uploads = uploadsRoot();
+  mkdirSync(uploads, { recursive: true });
+  app.useStaticAssets(uploads, {
+    prefix: '/uploads/',
+    index: false,
+    dotfiles: 'deny',
+    redirect: false,
+    fallthrough: true,
+    setHeaders(res) {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    },
+  });
   app.enableCors({
     origin: LOCAL_ORIGINS,
     methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],

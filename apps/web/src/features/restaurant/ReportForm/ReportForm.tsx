@@ -1,10 +1,13 @@
 'use client';
 
+/* Local file previews are blob URLs, which next/image does not load. */
+/* eslint-disable @next/next/no-img-element */
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { CATEGORIES, SEVERITY_OPTIONS } from '@/lib/categories/categories';
-import { ApiError, postJson } from '@/lib/api/client';
+import { ApiError, postForm } from '@/lib/api/client';
 import { readSession } from '@/features/auth/session/session';
 
 const EMPTY = {
@@ -15,6 +18,25 @@ const EMPTY = {
   nickname: '',
 };
 
+const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_BYTES = 5 * 1024 * 1024;
+
+type LocalImage = { file: File; preview: string };
+
+function readImages(list: FileList | null, limit: number): { files: LocalImage[]; rejected: string } {
+  if (!list?.length) return { files: [], rejected: '' };
+  const accepted: LocalImage[] = [];
+  let rejected = '';
+  for (const file of list) {
+    if (!IMAGE_TYPES.has(file.type) || file.size > MAX_BYTES) {
+      rejected = 'Yalnızca 5 MB altı JPEG, PNG veya WebP.';
+      continue;
+    }
+    if (accepted.length < limit) accepted.push({ file, preview: URL.createObjectURL(file) });
+  }
+  return { files: accepted, rejected };
+}
+
 export function ReportForm({ restaurantId }: { restaurantId: string }) {
   const router = useRouter();
   const [form, setForm] = useState(EMPTY);
@@ -23,6 +45,22 @@ export function ReportForm({ restaurantId }: { restaurantId: string }) {
   const [details, setDetails] = useState<string[]>([]);
   const [done, setDone] = useState(false);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [photos, setPhotos] = useState<LocalImage[]>([]);
+  const [receipt, setReceipt] = useState<LocalImage | null>(null);
+
+  function replacePhotos(next: LocalImage[]) {
+    setPhotos((current) => {
+      for (const image of current) URL.revokeObjectURL(image.preview);
+      return next;
+    });
+  }
+
+  function replaceReceipt(next: LocalImage | null) {
+    setReceipt((current) => {
+      if (current) URL.revokeObjectURL(current.preview);
+      return next;
+    });
+  }
 
   useEffect(() => {
     const sync = () => setSignedIn(Boolean(readSession()));
@@ -42,18 +80,18 @@ export function ReportForm({ restaurantId }: { restaurantId: string }) {
     setDetails([]);
     setDone(false);
     try {
-      await postJson(
-        `/restaurants/${restaurantId}/reports`,
-        {
-          category: form.category,
-          severity: Number(form.severity),
-          title: form.title,
-          body: form.body,
-          nickname: form.nickname || undefined,
-        },
-        true,
-      );
+      const payload = new FormData();
+      payload.set('category', form.category);
+      payload.set('severity', form.severity);
+      payload.set('title', form.title);
+      payload.set('body', form.body);
+      if (form.nickname) payload.set('nickname', form.nickname);
+      for (const photo of photos) payload.append('photos', photo.file);
+      if (receipt) payload.append('receipt', receipt.file);
+      await postForm(`/restaurants/${restaurantId}/reports`, payload, true);
       setForm(EMPTY);
+      replacePhotos([]);
+      replaceReceipt(null);
       setDone(true);
       router.refresh();
     } catch (caught) {
@@ -93,7 +131,7 @@ export function ReportForm({ restaurantId }: { restaurantId: string }) {
       <div>
         <h2 className="font-display text-3xl">Şikayet bırak</h2>
         <p className="mt-1 text-sm text-muted">
-          Olanı anlat. Kişi adı, telefon, tam adres yazma. Bu bir ihbar formu değil, bir uyarı notu.
+          Fotoğraf ve fiş olmadan şikayet açılmaz. Fişte ad, telefon ve kart numarasını karala. Kişi adı ve tam adres yazma.
         </p>
       </div>
 
@@ -166,6 +204,48 @@ export function ReportForm({ restaurantId }: { restaurantId: string }) {
         />
       </label>
 
+      <label className="block text-sm font-medium" htmlFor="photos">
+        Yemek veya mekan fotoğrafı
+        <input
+          id="photos"
+          className="mt-1 block w-full text-sm"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          onChange={(event) => {
+            const picked = readImages(event.target.files, 3);
+            replacePhotos(picked.files);
+            setError(picked.rejected);
+          }}
+        />
+        <span className="mt-1 block text-xs font-normal text-muted">En az 1, en fazla 3. JPEG, PNG veya WebP, dosya başı 5 MB.</span>
+      </label>
+      {photos.length ? (
+        <ul className="flex flex-wrap gap-2">
+          {photos.map((photo) => (
+            <li key={photo.preview}>
+              <img src={photo.preview} alt="" className="h-20 w-20 rounded-xl object-cover" />
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <label className="block text-sm font-medium" htmlFor="receipt">
+        Fiş veya fatura
+        <input
+          id="receipt"
+          className="mt-1 block w-full text-sm"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={(event) => {
+            const picked = readImages(event.target.files, 1);
+            replaceReceipt(picked.files[0] ?? null);
+            setError(picked.rejected);
+          }}
+        />
+      </label>
+      {receipt ? <img src={receipt.preview} alt="Fiş önizlemesi" className="h-20 w-20 rounded-xl object-cover" /> : null}
+
       <label className="block text-sm font-medium" htmlFor="nickname">
         Takma ad <span className="font-normal text-muted">(isteğe bağlı)</span>
         <input
@@ -198,7 +278,7 @@ export function ReportForm({ restaurantId }: { restaurantId: string }) {
         </p>
       ) : null}
 
-      <button className="btn btn-primary" type="submit" disabled={pending}>
+      <button className="btn btn-primary" type="submit" disabled={pending || photos.length === 0 || !receipt}>
         {pending ? 'Gönderiliyor…' : 'Şikayeti bırak'}
       </button>
     </form>
