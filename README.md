@@ -70,7 +70,9 @@ Bir özellik arıyorsan önce bu tabloya bak. Ayrıntı: [docs/folder-guide.md](
 
 ## Demo hesap
 
-Seed bir deneme kullanıcısı açar. Yalnızca yerel geliştirme içindir.
+Seed bir deneme kullanıcısı açar. Parolalar yalnızca bu makine içindir. Yayına, ekran görüntüsüne veya paylaşılan bir veritabanına taşıma. Production’da `pnpm db:seed` çalıştırma.
+
+GitHub’da `main` için dal koruması (pull request zorunlu, doğrudan itme kapalı) bu depodan açılamaz. Ayar, depo sahibi tarafından GitHub → Settings → Branches üzerinden yapılır.
 
 - E-posta: `demo@yemesek.local`
 - Parola: `Demo1234!`
@@ -97,13 +99,16 @@ pnpm test
 pnpm typecheck
 pnpm lint
 pnpm build
+pnpm audit:deps
 ```
 
 ## API
 
 | Yöntem | Yol | Kim |
 | --- | --- | --- |
-| GET | `/health` | Herkes |
+| GET | `/health` | Herkes. Bakım, e-posta yapılandırması ve en düşük mobil sürüm bayraklarını da döner. Gizli yok. |
+| GET | `/auth/me/export` | Giriş. Yalnızca çağıranın verisi. |
+| POST | `/auth/me/marketing` | Giriş. Pazarlama rızasını verir veya geri alır. |
 | POST | `/auth/register` | Herkes, aydınlatma + koşullar zorunlu |
 | POST | `/auth/login` | Herkes |
 | POST | `/auth/refresh` | Yenileme jetonu |

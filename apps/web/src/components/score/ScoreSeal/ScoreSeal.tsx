@@ -1,7 +1,7 @@
 const TONE: Record<string, string> = {
   'Uzak dur': 'border-chili-dark bg-chili text-card',
   Kaçın: 'border-chili bg-card text-chili',
-  Şüpheli: 'border-amber bg-card text-amber',
+  Şüpheli: 'border-amber bg-card text-amber-ink',
   Fısıltı: 'border-ink/40 bg-card text-ink',
   'Temiz sayfa': 'border-moss bg-card text-moss',
 };

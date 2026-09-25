@@ -66,10 +66,11 @@ export default function ListScreen() {
       ListHeaderComponent={
         <View style={styles.header}>
           <Text style={styles.tagline}>Mekanları keşfet — kararını kolaylaştır</Text>
+          <FirstTip />
           <Text style={styles.kicker}>Kara liste</Text>
           <Text style={styles.title}>En kötüden başlar.</Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Pressable style={styles.add} onPress={() => router.push('/mekan-ekle')}>
+          <Pressable style={styles.add} accessibilityLabel="Mekan ekle" onPress={() => router.push('/mekan-ekle')}>
             <Text style={styles.addText}>Mekan ekle</Text>
           </Pressable>
           <View style={styles.filters}>
@@ -136,9 +137,26 @@ export default function ListScreen() {
   );
 }
 
+function FirstTip() {
+  const [open, setOpen] = useState(true);
+  if (!open) return null;
+  return (
+    <View style={styles.tip}>
+      <Text style={styles.tipTitle}>Bu bir şikayet tahtası.</Text>
+      <Text style={styles.meta}>Yüksek kötülük skoru daha kötü demektir.</Text>
+      <Pressable accessibilityLabel="İpucunu kapat" onPress={() => setOpen(false)}>
+        <Text style={styles.tipClose}>Kapat</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   list: { padding: 16, gap: 10 },
   header: { marginBottom: 8 },
+  tip: { marginTop: 12, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, borderRadius: 16, padding: 12 },
+  tipTitle: { color: colors.ink, fontWeight: '700' },
+  tipClose: { color: colors.chili, marginTop: 8, fontWeight: '700' },
   tagline: { color: colors.gold, fontSize: 13, fontWeight: '600' },
   kicker: { color: colors.chili, letterSpacing: 1, fontSize: 12, textTransform: 'uppercase', marginTop: 10 },
   title: { color: colors.ink, fontSize: 32, fontWeight: '700', marginTop: 4 },

@@ -43,11 +43,11 @@ export function LocationsPanel() {
     }
   }
 
-  async function merge(sourceId: string, intoCityId: string) {
+  async function merge(sourceId: string, intoCityId: string, password: string, confirm: string) {
     setError('');
     setInfo('');
     try {
-      await postJson(`/admin/locations/cities/${sourceId}/merge`, { intoCityId }, true);
+      await postJson(`/admin/locations/cities/${sourceId}/merge`, { intoCityId, password, confirm }, true);
       setInfo('Şehirler birleşti. Mekanlar hedef konuma taşındı.');
       await load();
     } catch (caught) {
@@ -85,7 +85,7 @@ export function LocationsPanel() {
               onSubmit={(event) => {
                 event.preventDefault();
                 const data = new FormData(event.currentTarget);
-                void merge(city.id, String(data.get('into') ?? ''));
+                void merge(city.id, String(data.get('into') ?? ''), String(data.get('password') ?? ''), String(data.get('confirm') ?? ''));
               }}
             >
               <select name="into" className="field max-w-xs" defaultValue="">
@@ -100,6 +100,8 @@ export function LocationsPanel() {
                     </option>
                   ))}
               </select>
+              <input name="password" type="password" autoComplete="current-password" className="field max-w-40" placeholder="Parolan" aria-label="Yönetici parolası" />
+              <input name="confirm" className="field max-w-48" placeholder="SEHRI-BIRLESTIR" aria-label="Onay metni" />
               <button type="submit" className="btn btn-ghost text-sm">
                 Bu şehri taşı
               </button>

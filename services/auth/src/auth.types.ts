@@ -24,6 +24,7 @@ export type PublicUser = {
   kvkkAcceptedAt: string;
   termsAcceptedAt: string;
   marketingAcceptedAt: string | null;
+  marketingWithdrawnAt: string | null;
   createdAt: string;
 };
 

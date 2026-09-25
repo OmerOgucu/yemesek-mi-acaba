@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ApiError, getJson, putJson } from '@/lib/api/client';
+import { ApiError, getJson, postJson, putJson } from '@/lib/api/client';
 
 type Setting = { key: string; value: string; label: string };
 
@@ -68,6 +68,30 @@ export function SettingsPanel() {
           </button>
         </form>
       ))}
+      <form
+        className="space-y-2 rounded-2xl border border-chili/30 p-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const data = new FormData(event.currentTarget);
+          setError('');
+          setInfo('');
+          void postJson(
+            '/admin/maintenance/purge-evidence',
+            { password: String(data.get('password') ?? ''), confirm: String(data.get('confirm') ?? '') },
+            true,
+          )
+            .then(() => setInfo('Süresi dolan kanıtlar temizlendi.'))
+            .catch((caught) => setError(caught instanceof ApiError ? caught.message : 'Temizlik yapılamadı.'));
+        }}
+      >
+        <h2 className="font-display text-2xl">Kanıt temizliği</h2>
+        <p className="text-sm text-muted">Parolanı ve KANITI-SIL yaz. Denetim kaydı düşer.</p>
+        <input name="password" type="password" autoComplete="current-password" className="field" placeholder="Parolan" aria-label="Yönetici parolası" />
+        <input name="confirm" className="field" placeholder="KANITI-SIL" aria-label="Onay metni" />
+        <button type="submit" className="btn btn-primary text-sm">
+          Süresi dolan kanıtı sil
+        </button>
+      </form>
     </div>
   );
 }

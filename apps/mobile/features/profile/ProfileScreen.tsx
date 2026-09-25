@@ -1,14 +1,16 @@
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { useState } from 'react';
+import { Platform, Pressable, ScrollView, Share, StyleSheet, Text } from 'react-native';
 import { LEGAL_SLUGS, getDocument } from '@yemesek/legal';
-import { readSession } from '../auth/session';
+import { readSession, type SessionUser } from '../auth/session';
 import { useSession } from '../auth/SessionProvider';
-import { postJson } from '../api/client';
+import { ApiError, getJson, postJson } from '../api/client';
 import { colors } from '../theme/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, signOut } = useSession();
+  const { user, signOut, refreshUser } = useSession();
+  const [info, setInfo] = useState('');
 
   async function logout() {
     const session = await readSession();
@@ -22,14 +24,54 @@ export default function ProfileScreen() {
     await signOut();
   }
 
+  async function download() {
+    setInfo('');
+    try {
+      const data = await getJson<unknown>('/auth/me/export', true);
+      const text = JSON.stringify(data, null, 2);
+      if (Platform.OS === 'web') {
+        const blob = new Blob([text], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'yemesek-verilerim.json';
+        link.click();
+        URL.revokeObjectURL(url);
+      } else {
+        await Share.share({ message: text });
+      }
+    } catch (caught) {
+      setInfo(caught instanceof ApiError ? caught.message : 'Veri indirilemedi.');
+    }
+  }
+
+  async function withdrawMarketing() {
+    setInfo('');
+    try {
+      const fresh = await postJson<SessionUser>('/auth/me/marketing', { acceptMarketing: false }, true);
+      if (fresh) await refreshUser(fresh);
+      setInfo('Pazarlama rızası geri alındı.');
+    } catch (caught) {
+      setInfo(caught instanceof ApiError ? caught.message : 'Rıza güncellenemedi.');
+    }
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.title}>{user ? user.displayName : 'Profil'}</Text>
       <Text style={styles.meta}>{user ? user.email : 'Şikayet yazmak için giriş yap.'}</Text>
       {user ? (
-        <Pressable style={styles.ghost} onPress={() => void logout()}>
-          <Text style={styles.ghostText}>Çıkış</Text>
-        </Pressable>
+        <>
+          <Pressable style={styles.primary} accessibilityLabel="Verilerimi indir" onPress={() => void download()}>
+            <Text style={styles.primaryText}>Verilerimi indir</Text>
+          </Pressable>
+          <Pressable style={styles.ghost} accessibilityLabel="Pazarlama rızasını geri al" onPress={() => void withdrawMarketing()}>
+            <Text style={styles.ghostText}>Pazarlama rızasını geri al</Text>
+          </Pressable>
+          <Pressable style={styles.ghost} accessibilityLabel="Çıkış" onPress={() => void logout()}>
+            <Text style={styles.ghostText}>Çıkış</Text>
+          </Pressable>
+        </>
       ) : (
         <>
           <Pressable style={styles.primary} onPress={() => router.push('/giris')}>
@@ -40,6 +82,7 @@ export default function ProfileScreen() {
           </Pressable>
         </>
       )}
+      {info ? <Text style={styles.meta}>{info}</Text> : null}
       <Text style={styles.section}>Yasal</Text>
       {LEGAL_SLUGS.map((slug) => (
         <Pressable key={slug} onPress={() => router.push(`/yasal/${slug}`)}>

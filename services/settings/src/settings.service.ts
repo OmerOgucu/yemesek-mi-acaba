@@ -51,17 +51,27 @@ export class SettingsService {
   async set(key: string, value: string): Promise<{ key: SettingKey; value: string }> {
     if (!isSettingKey(key)) throw new BadRequestException('Bu ayar yok.');
     const trimmed = value.trim();
-    const def = SETTING_DEFS[key];
+    const def = SETTING_DEFS[key] as {
+      kind: string;
+      allowEmpty?: boolean;
+      min?: number;
+      max?: number;
+    };
     if (def.kind === 'boolean' && trimmed !== 'true' && trimmed !== 'false') {
       throw new BadRequestException('Bu ayar true veya false olmalı.');
     }
     if (def.kind === 'number') {
       const parsed = Number(trimmed);
-      if (!Number.isInteger(parsed) || parsed < 1 || parsed > 3650) {
-        throw new BadRequestException('Bu ayar 1 ile 3650 arasında tam sayı olmalı.');
+      const min = def.min ?? 1;
+      const max = def.max ?? 3650;
+      if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
+        throw new BadRequestException(`Bu ayar ${min} ile ${max} arasında tam sayı olmalı.`);
       }
     }
-    if (trimmed.length < 1 || trimmed.length > 500) {
+    if (key === 'minMobileVersion' && trimmed && !/^\d+\.\d+\.\d+$/.test(trimmed)) {
+      throw new BadRequestException('Sürüm 1.2.3 biçiminde olmalı.');
+    }
+    if ((!def.allowEmpty && trimmed.length < 1) || trimmed.length > 500) {
       throw new BadRequestException('Ayar metni 1 ile 500 karakter arasında olmalı.');
     }
     await this.prisma.siteSetting.upsert({

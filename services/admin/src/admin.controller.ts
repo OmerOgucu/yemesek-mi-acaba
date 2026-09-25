@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
-import { JwtAuthGuard, Roles, RolesGuard } from '@yemesek/auth';
+import { CurrentUser, JwtAuthGuard, Roles, RolesGuard, type AuthUser } from '@yemesek/auth';
 import { AdminMfaGuard } from './admin-mfa.guard';
 import { AuditInterceptor } from './audit.interceptor';
 import { AdminService } from './admin.service';
@@ -8,8 +8,10 @@ import {
   AdminReportQuery,
   AdminUserQuery,
   GrantBadgeDto,
+  DestructiveConfirmDto,
   MergeCityDto,
   ModerateReportDto,
+  ThreatReportDto,
   RenameLocationDto,
   ResolveAppealDto,
   ReviewClaimDto,
@@ -80,9 +82,19 @@ export class AdminController {
     return this.admin.deleteRestaurant(id);
   }
 
+  @Get('reports/meta')
+  reportMeta() {
+    return this.admin.reportMeta();
+  }
+
   @Get('reports')
   reports(@Query() query: AdminReportQuery) {
     return this.admin.reports(query.status);
+  }
+
+  @Post('reports/:id/threat')
+  threat(@Param('id') id: string, @Body() dto: ThreatReportDto) {
+    return this.admin.markThreat(id, dto.threat);
   }
 
   @Patch('reports/:id')
@@ -157,8 +169,14 @@ export class AdminController {
 
   @Post('locations/cities/:id/merge')
   @Roles(UserRole.ADMIN)
-  mergeCity(@Param('id') id: string, @Body() dto: MergeCityDto) {
-    return this.admin.mergeCities(id, dto.intoCityId);
+  mergeCity(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: MergeCityDto) {
+    return this.admin.mergeCities(id, dto.intoCityId, user.id, dto.password, dto.confirm);
+  }
+
+  @Post('users/:id/delete')
+  @Roles(UserRole.ADMIN)
+  deleteUser(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() dto: DestructiveConfirmDto) {
+    return this.admin.deleteUser(user.id, id, dto.password, dto.confirm);
   }
 
   @Patch('locations/districts/:id')
@@ -236,7 +254,7 @@ export class AdminController {
 
   @Post('maintenance/purge-evidence')
   @Roles(UserRole.ADMIN)
-  purge() {
-    return this.admin.purgeEvidence();
+  purge(@CurrentUser() user: AuthUser, @Body() dto: DestructiveConfirmDto) {
+    return this.admin.purgeEvidence(user.id, dto.password, dto.confirm);
   }
 }

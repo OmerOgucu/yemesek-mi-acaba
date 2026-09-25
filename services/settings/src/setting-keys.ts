@@ -59,6 +59,44 @@ export const SETTING_DEFS = {
     kind: 'number',
     label: 'Aynı mekanda günlük oy tavanı',
   },
+  maintenanceMode: {
+    defaultValue: 'false',
+    kind: 'boolean',
+    label: 'Bakım modu (herkese açık yazmalar kapalı)',
+  },
+  minMobileVersion: {
+    defaultValue: '',
+    kind: 'text',
+    allowEmpty: true,
+    label: 'En düşük mobil sürüm (boşsa zorunlu değil)',
+  },
+  minIosBuild: {
+    defaultValue: '0',
+    kind: 'number',
+    min: 0,
+    max: 999999,
+    label: 'En düşük iOS build (0 kapalı)',
+  },
+  minAndroidBuild: {
+    defaultValue: '0',
+    kind: 'number',
+    min: 0,
+    max: 999999,
+    label: 'En düşük Android build (0 kapalı)',
+  },
+  allowedCities: {
+    defaultValue: '',
+    kind: 'text',
+    allowEmpty: true,
+    label: 'Açık şehirler (virgül, boşsa hepsi)',
+  },
+  moderationSlaHours: {
+    defaultValue: '24',
+    kind: 'number',
+    min: 1,
+    max: 168,
+    label: 'Tehdit işaretli şikayet için hedef saat',
+  },
 } as const;
 
 export type SettingKey = keyof typeof SETTING_DEFS;

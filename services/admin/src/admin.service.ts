@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import bcrypt from 'bcryptjs';
 import { ModerationStatus, Prisma, UserRole } from '@prisma/client';
 import { BadgesService } from '@yemesek/badges';
 import { readConfig } from '@yemesek/config';
@@ -221,7 +222,7 @@ export class AdminService {
   async reports(status?: ModerationStatus) {
     const rows = await this.prisma.report.findMany({
       where: status ? { moderationStatus: status } : undefined,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ threat: 'desc' }, { createdAt: 'desc' }],
       take: 200,
       include: { restaurant: { select: { id: true, name: true, city: true } } },
     });
@@ -235,6 +236,8 @@ export class AdminService {
       hidden: row.hidden,
       evidenceVerified: row.evidenceVerified,
       moderationNote: row.moderationNote,
+      threat: row.threat,
+      threatAt: row.threatAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
       restaurant: row.restaurant,
     }));
@@ -463,7 +466,22 @@ export class AdminService {
     return { id, name: next.name };
   }
 
-  async mergeCities(sourceId: string, intoCityId: string) {
+  async reportMeta() {
+    return { slaHours: await this.settings.number('moderationSlaHours') };
+  }
+
+  async markThreat(id: string, threat: boolean) {
+    const current = await this.prisma.report.findUnique({ where: { id } });
+    if (!current) throw new NotFoundException('Şikayet bulunamadı.');
+    const updated = await this.prisma.report.update({
+      where: { id },
+      data: { threat, threatAt: threat ? new Date() : null },
+    });
+    return { id: updated.id, threat: updated.threat, threatAt: updated.threatAt?.toISOString() ?? null };
+  }
+
+  async mergeCities(sourceId: string, intoCityId: string, actorId: string, password: string, confirm: string) {
+    await this.assertDestructive(actorId, password, confirm, 'SEHRI-BIRLESTIR');
     if (sourceId === intoCityId) throw new BadRequestException('Şehir kendisiyle birleştirilemez.');
     const source = await this.prisma.city.findUnique({ where: { id: sourceId }, include: { districts: true } });
     const target = await this.prisma.city.findUnique({ where: { id: intoCityId }, include: { districts: true } });
@@ -631,7 +649,22 @@ export class AdminService {
     return { key, body: trimmed };
   }
 
-  async purgeEvidence() {
+  async deleteUser(actorId: string, targetId: string, password: string, confirm: string) {
+    await this.assertDestructive(actorId, password, confirm, 'KULLANICIYI-SIL');
+    if (actorId === targetId) throw new BadRequestException('Kendi hesabını buradan silme. Profildeki silmeyi kullan.');
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+      include: { reports: { select: { photoUrls: true, receiptUrl: true } } },
+    });
+    if (!target || target.deletedAt) throw new NotFoundException('Üye bulunamadı.');
+    if (target.role === UserRole.ADMIN) throw new BadRequestException('Yönetici hesabı bu uçtan silinmez.');
+    for (const report of target.reports) this.unlinkReport(report.photoUrls, report.receiptUrl);
+    await this.prisma.user.delete({ where: { id: targetId } });
+    return { ok: true };
+  }
+
+  async purgeEvidence(actorId: string, password: string, confirm: string) {
+    await this.assertDestructive(actorId, password, confirm, 'KANITI-SIL');
     const due = await this.prisma.report.findMany({
       where: { evidencePurgeAfter: { lte: new Date() } },
       select: { id: true, photoUrls: true, receiptUrl: true },
@@ -653,6 +686,14 @@ export class AdminService {
       this.prisma.report.count({ where: { withdrawnAt: { not: null } } }),
     ]);
     return { hiddenReports, verifiedEvidence, withdrawnReports };
+  }
+
+  private async assertDestructive(actorId: string, password: string, confirm: string, expected: string) {
+    if (confirm !== expected) throw new BadRequestException(`Onay metni ${expected} olmalı.`);
+    const actor = await this.prisma.user.findUnique({ where: { id: actorId } });
+    if (!actor) throw new UnauthorizedException('Giriş gerekli.');
+    const ok = await bcrypt.compare(password, actor.passwordHash);
+    if (!ok) throw new UnauthorizedException('Parola hatalı.');
   }
 
   private async recomputeAll(): Promise<void> {

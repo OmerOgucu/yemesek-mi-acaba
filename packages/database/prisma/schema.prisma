@@ -18,6 +18,7 @@ model User {
   kvkkAcceptedAt      DateTime
   termsAcceptedAt     DateTime
   marketingAcceptedAt DateTime?
+  marketingWithdrawnAt DateTime?
   ageConfirmedAt      DateTime?
   totpSecret          String?
   totpEnabledAt       DateTime?
@@ -126,6 +127,8 @@ model Report {
   moderationNote     String?
   withdrawnAt        DateTime?
   evidencePurgeAfter DateTime?
+  threat             Boolean            @default(false)
+  threatAt           DateTime?
   createdAt          DateTime           @default(now())
   votes              Vote[]
   replies            ReportReply[]

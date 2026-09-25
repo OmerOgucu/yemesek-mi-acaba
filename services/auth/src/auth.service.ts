@@ -145,6 +145,79 @@ export class AuthService {
     return { ok: true };
   }
 
+  async exportMine(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.deletedAt) throw new UnauthorizedException('Giriş gerekli.');
+    const [restaurants, reports, votes, badges] = await Promise.all([
+      this.prisma.restaurant.findMany({
+        where: { createdById: userId },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true, name: true, city: true, district: true, status: true, createdAt: true },
+      }),
+      this.prisma.report.findMany({
+        where: { authorId: userId },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          title: true,
+          body: true,
+          category: true,
+          severity: true,
+          nickname: true,
+          hidden: true,
+          withdrawnAt: true,
+          createdAt: true,
+          restaurant: { select: { id: true, name: true, city: true } },
+        },
+      }),
+      this.prisma.vote.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'asc' },
+        select: { reportId: true, createdAt: true },
+      }),
+      this.prisma.userBadge.findMany({
+        where: { userId },
+        include: { badge: true },
+        orderBy: { awardedAt: 'asc' },
+      }),
+    ]);
+    return {
+      exportedAt: new Date().toISOString(),
+      profile: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+        createdAt: user.createdAt.toISOString(),
+        emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
+        kvkkAcceptedAt: user.kvkkAcceptedAt.toISOString(),
+        termsAcceptedAt: user.termsAcceptedAt.toISOString(),
+        marketingAcceptedAt: user.marketingAcceptedAt?.toISOString() ?? null,
+        marketingWithdrawnAt: user.marketingWithdrawnAt?.toISOString() ?? null,
+        ageConfirmedAt: user.ageConfirmedAt?.toISOString() ?? null,
+      },
+      consents: {
+        kvkkAcceptedAt: user.kvkkAcceptedAt.toISOString(),
+        termsAcceptedAt: user.termsAcceptedAt.toISOString(),
+        marketingAcceptedAt: user.marketingAcceptedAt?.toISOString() ?? null,
+        marketingWithdrawnAt: user.marketingWithdrawnAt?.toISOString() ?? null,
+      },
+      restaurants: restaurants.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() })),
+      reports: reports.map((row) => ({
+        ...row,
+        createdAt: row.createdAt.toISOString(),
+        withdrawnAt: row.withdrawnAt?.toISOString() ?? null,
+      })),
+      votes: votes.map((row) => ({ reportId: row.reportId, createdAt: row.createdAt.toISOString() })),
+      badges: badges.map((row) => ({
+        slug: row.badge.slug,
+        name: row.badge.name,
+        awardedAt: row.awardedAt.toISOString(),
+        revokedAt: row.revokedAt?.toISOString() ?? null,
+      })),
+    };
+  }
+
   async me(userId: string): Promise<PublicUser> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException('Giriş gerekli.');
@@ -160,14 +233,19 @@ export class AuthService {
     if (!current) throw new UnauthorizedException('Giriş gerekli.');
 
     let marketingAcceptedAt = current.marketingAcceptedAt;
+    let marketingWithdrawnAt = current.marketingWithdrawnAt;
     if (dto.acceptMarketing === true && !current.marketingAcceptedAt) marketingAcceptedAt = new Date();
-    if (dto.acceptMarketing === false) marketingAcceptedAt = null;
+    if (dto.acceptMarketing === false && current.marketingAcceptedAt) {
+      marketingAcceptedAt = null;
+      marketingWithdrawnAt = new Date();
+    }
 
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: {
         displayName: dto.displayName ?? current.displayName,
         marketingAcceptedAt,
+        marketingWithdrawnAt,
       },
     });
     return this.toPublicUser(user);
@@ -460,6 +538,7 @@ export class AuthService {
       kvkkAcceptedAt: user.kvkkAcceptedAt.toISOString(),
       termsAcceptedAt: user.termsAcceptedAt.toISOString(),
       marketingAcceptedAt: user.marketingAcceptedAt?.toISOString() ?? null,
+      marketingWithdrawnAt: user.marketingWithdrawnAt?.toISOString() ?? null,
       createdAt: user.createdAt.toISOString(),
     };
   }

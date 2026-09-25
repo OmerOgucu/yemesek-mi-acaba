@@ -77,7 +77,10 @@ describe('Yemesek API', () => {
 
   it('GET /health', async () => {
     const response = await request(app.getHttpServer()).get('/health').expect(200);
-    expect(response.body).toEqual({ status: 'ok', service: 'yemesek-api' });
+    expect(response.body.status).toBe('ok');
+    expect(response.body.service).toBe('yemesek-api');
+    expect(response.body.maintenance).toBe(false);
+    expect(response.body.mailConfigured).toBe(false);
   });
 
   it('allows the local Next origin and ignores other origins', async () => {

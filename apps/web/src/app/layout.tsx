@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Fraunces, Outfit } from 'next/font/google';
 import { CookieNotice } from '@/components/site/CookieNotice/CookieNotice';
+import { MaintenanceGate } from '@/components/site/MaintenanceGate/MaintenanceGate';
 import { SiteFooter } from '@/components/site/SiteFooter/SiteFooter';
 import { SiteHeader } from '@/components/site/SiteHeader/SiteHeader';
 import './globals.css';
@@ -45,12 +46,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           İçeriğe geç
         </a>
-        <SiteHeader />
-        <main id="icerik" className="mx-auto max-w-5xl px-4 py-8">
-          {children}
-        </main>
-        <SiteFooter />
-        <CookieNotice />
+        <MaintenanceGate>
+          <SiteHeader />
+          <main id="icerik" className="mx-auto max-w-5xl px-4 py-8">
+            {children}
+          </main>
+          <SiteFooter />
+          <CookieNotice />
+        </MaintenanceGate>
       </body>
     </html>
   );

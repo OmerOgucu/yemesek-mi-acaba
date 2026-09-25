@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ApiError, getJson, patchJson } from '@/lib/api/client';
+import { ApiError, getJson, patchJson, postJson } from '@/lib/api/client';
 
 type UserRow = {
   id: string;
@@ -69,7 +69,12 @@ export function UsersPanel() {
           Ara
         </button>
       </form>
-      {error ? <p className="text-sm text-chili">{error}</p> : null}
+      {error ? <p className="text-sm text-chili" role="alert">{error}</p> : null}
+      {rows.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-line bg-card px-4 py-6 text-muted" role="status">
+          Bu süzgeçte üye yok.
+        </p>
+      ) : null}
       <ul className="space-y-3">
         {rows.map((user) => (
           <li key={user.id} className="rounded-2xl border border-line bg-card p-4 text-sm">
@@ -97,6 +102,28 @@ export function UsersPanel() {
                 {user.role === 'ADMIN' ? 'Üye yap' : 'Yönetici yap'}
               </button>
             </div>
+            {user.role !== 'ADMIN' ? (
+              <form
+                className="mt-3 flex flex-wrap gap-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const data = new FormData(event.currentTarget);
+                  void postJson(
+                    `/admin/users/${user.id}/delete`,
+                    { password: String(data.get('password') ?? ''), confirm: String(data.get('confirm') ?? '') },
+                    true,
+                  )
+                    .then(() => load())
+                    .catch((caught) => setError(caught instanceof ApiError ? caught.message : 'Üye silinemedi.'));
+                }}
+              >
+                <input name="password" type="password" autoComplete="current-password" className="field max-w-40" placeholder="Parolan" aria-label="Yönetici parolası" />
+                <input name="confirm" className="field max-w-48" placeholder="KULLANICIYI-SIL" aria-label="Onay metni" />
+                <button type="submit" className="btn btn-ghost text-sm">
+                  Üyeyi sil
+                </button>
+              </form>
+            ) : null}
           </li>
         ))}
       </ul>

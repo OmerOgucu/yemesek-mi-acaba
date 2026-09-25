@@ -33,7 +33,7 @@ export default function LoginScreen() {
       <TextInput style={styles.input} autoCapitalize="none" keyboardType="email-address" placeholder="E-posta" value={email} onChangeText={setEmail} />
       <TextInput style={styles.input} secureTextEntry placeholder="Parola" value={password} onChangeText={setPassword} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Pressable style={styles.primary} onPress={() => void submit()}>
+      <Pressable style={styles.primary} accessibilityLabel="Giriş yap" onPress={() => void submit()}>
         <Text style={styles.primaryText}>Giriş yap</Text>
       </Pressable>
       <Pressable onPress={() => router.push('/kayit')}>

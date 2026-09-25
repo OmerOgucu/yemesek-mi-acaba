@@ -230,10 +230,12 @@ async function main(): Promise<void> {
   });
   await prisma.siteContent.upsert({
     where: { key: 'community_guidelines' },
-    update: {},
+    update: {
+      body: 'Hakaret yok. Kişisel veri yok. Fotoğraf ve fiş zorunlu. Aynı mekanı çoğaltma. İşletme yanıtı sırayı değiştirmez. Reklam veya skor satışı yoktur; çıkar çatışması bu tahtayı satın alamaz.',
+    },
     create: {
       key: 'community_guidelines',
-      body: 'Hakaret yok. Kişisel veri yok. Fotoğraf ve fiş zorunlu. Aynı mekanı çoğaltma.',
+      body: 'Hakaret yok. Kişisel veri yok. Fotoğraf ve fiş zorunlu. Aynı mekanı çoğaltma. İşletme yanıtı sırayı değiştirmez. Reklam veya skor satışı yoktur; çıkar çatışması bu tahtayı satın alamaz.',
     },
   });
 

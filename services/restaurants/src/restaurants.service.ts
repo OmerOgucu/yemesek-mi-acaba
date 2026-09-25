@@ -32,6 +32,16 @@ export class RestaurantsService {
     private readonly settings: SettingsService,
   ) {}
 
+  private async allowedCityKeys(): Promise<string[] | null> {
+    const raw = await this.settings.get('allowedCities');
+    const parts = raw
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (!parts.length) return null;
+    return parts.map((part) => placeKey(part).key);
+  }
+
   private async visibleReports(): Promise<Prisma.ReportWhereInput> {
     const reviewedOnly = await this.settings.reportsNeedReview();
     return {
@@ -50,6 +60,7 @@ export class RestaurantsService {
     const reportWhere = await this.visibleReports();
     const cityKey = query.city ? placeKey(query.city).key : undefined;
     const districtKey = query.district ? placeKey(query.district).key : undefined;
+    const allowed = await this.allowedCityKeys();
     const restaurants = await this.prisma.restaurant.findMany({
       where: {
         hidden: false,
@@ -71,13 +82,15 @@ export class RestaurantsService {
         },
       },
     });
+    const visibleRows = allowed ? restaurants.filter((row) => allowed.includes(row.cityKey)) : restaurants;
     const locations = locationRows
+      .filter((city) => !allowed || allowed.includes(city.key))
       .filter((city) => city.districts.length > 0)
       .map((city) => ({ city: city.name, districts: city.districts.map((district) => district.name) }));
     const cities = locations.map((location) => location.city);
     const needle = query.q ? foldTr(query.q) : undefined;
 
-    const items = restaurants
+    const items = visibleRows
       .map((restaurant) => toSummary(restaurant))
       .filter((restaurant) => {
         if (!needle) return true;
@@ -143,6 +156,10 @@ export class RestaurantsService {
         existingId: exact.id,
         suggestions,
       });
+    }
+    const allowed = await this.allowedCityKeys();
+    if (allowed && !allowed.includes(location.cityKey)) {
+      throw new BadRequestException('Bu şehir henüz açık değil.');
     }
     const created = await this.prisma.restaurant.create({
       data: {

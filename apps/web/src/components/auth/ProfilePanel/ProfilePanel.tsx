@@ -46,6 +46,22 @@ export function ProfilePanel() {
       .finally(() => setReady(true));
   }, [router]);
 
+  async function downloadExport() {
+    setError('');
+    try {
+      const data = await getJson<unknown>('/auth/me/export', true);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'yemesek-verilerim.json';
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : 'Veri indirilemedi.');
+    }
+  }
+
   async function setMarketing(acceptMarketing: boolean) {
     setError('');
     try {
@@ -97,7 +113,9 @@ export function ProfilePanel() {
         <p className="mt-1 text-sm text-muted">
           {user.marketingAcceptedAt
             ? `Açık rıza ${formatDate(user.marketingAcceptedAt)} tarihinde verildi.`
-            : 'Pazarlama için açık rıza yok.'}
+            : user.marketingWithdrawnAt
+              ? `Rıza ${formatDate(user.marketingWithdrawnAt)} tarihinde geri alındı.`
+              : 'Pazarlama için açık rıza yok.'}
         </p>
         <button
           type="button"
@@ -107,10 +125,19 @@ export function ProfilePanel() {
           {user.marketingAcceptedAt ? 'Rızayı geri al' : 'Açık rıza ver'}
         </button>
       </section>
+      <section className="rounded-2xl border border-line bg-card p-4">
+        <h2 className="font-display text-2xl">Verilerim</h2>
+        <p className="mt-1 text-sm text-muted">Profil, rızalar, eklediğin mekanlar, şikayetlerin, oyların ve rozetlerin. Başkasının e-postası yok.</p>
+        <button type="button" className="btn btn-primary mt-3 text-sm" onClick={() => void downloadExport()}>
+          Verilerimi indir
+        </button>
+      </section>
       <section>
         <h2 className="font-display text-2xl">Şikayetlerim</h2>
         {reports.length === 0 ? (
-          <p className="mt-2 text-muted">Henüz şikayetin yok.</p>
+          <p className="mt-2 rounded-2xl border border-dashed border-line bg-card px-4 py-6 text-muted" role="status">
+            Henüz şikayetin yok. Fotoğraf ve fişle bir mekan altına yazabilirsin.
+          </p>
         ) : (
           <ul className="mt-3 space-y-2">
             {reports.map((report) => (

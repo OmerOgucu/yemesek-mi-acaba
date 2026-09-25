@@ -169,16 +169,32 @@ export class RenameLocationDto {
   name!: string;
 }
 
-export class MergeCityDto {
+export class DestructiveConfirmDto {
+  @IsString()
+  @MinLength(8)
+  @MaxLength(80)
+  password!: string;
+
+  @IsString()
+  @MinLength(4)
+  @MaxLength(40)
+  confirm!: string;
+}
+
+export class MergeCityDto extends DestructiveConfirmDto {
   @IsString()
   @MinLength(8)
   @MaxLength(40)
   intoCityId!: string;
 }
 
+export class ThreatReportDto {
+  @IsBoolean()
+  threat!: boolean;
+}
+
 export class UpdateSettingDto {
   @IsString()
-  @MinLength(1)
   @MaxLength(500)
   value!: string;
 }

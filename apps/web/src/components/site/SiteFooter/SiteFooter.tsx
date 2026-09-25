@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CookieSettingsButton } from '@/components/site/CookieNotice/CookieNotice';
 
 const LINKS = [
   { href: '/kvkk', label: 'KVKK aydınlatma' },
@@ -10,6 +11,8 @@ const LINKS = [
   { href: '/basin', label: 'Basın' },
   { href: '/destek', label: 'Destek' },
   { href: '/harita', label: 'Harita' },
+  { href: '/durum', label: 'Durum' },
+  { href: '/ihlal', label: 'İhlal adımları' },
 ];
 
 export function SiteFooter() {
@@ -32,6 +35,9 @@ export function SiteFooter() {
               </Link>
             </li>
           ))}
+          <li>
+            <CookieSettingsButton />
+          </li>
         </ul>
       </div>
     </footer>

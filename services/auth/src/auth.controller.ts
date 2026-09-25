@@ -56,6 +56,18 @@ export class AuthController {
     return this.auth.update(user.id, dto);
   }
 
+  @Get('me/export')
+  @UseGuards(JwtAuthGuard)
+  exportMine(@CurrentUser() user: AuthUser) {
+    return this.auth.exportMine(user.id);
+  }
+
+  @Post('me/marketing')
+  @UseGuards(JwtAuthGuard)
+  marketing(@CurrentUser() user: AuthUser, @Body() dto: UpdateProfileDto) {
+    return this.auth.update(user.id, { acceptMarketing: dto.acceptMarketing });
+  }
+
   @Post('me/delete')
   @UseGuards(JwtAuthGuard)
   remove(@CurrentUser() user: AuthUser, @Body() dto: DeleteAccountDto) {

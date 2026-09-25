@@ -2,6 +2,7 @@
   "expo": {
     "name": "Yemesek mi acaba?",
     "slug": "yemesek",
+    "version": "1.0.0",
     "scheme": "yemesek",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -27,10 +28,12 @@
     },
     "ios": {
       "bundleIdentifier": "com.yemesek.app",
+      "buildNumber": "1",
       "associatedDomains": ["applinks:yemesekmiacaba.com"]
     },
     "android": {
       "package": "com.yemesek.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/icon.png",
         "backgroundColor": "#8B1E1E"

@@ -63,10 +63,11 @@ export const DOCUMENTS: LegalDocument[] = [
         ],
       },
       {
-        heading: 'Aktarım',
+        heading: 'Aktarım ve işleyenler',
         paragraphs: [
-          'Bu MVP veriyi yurt dışındaki bir pazarlama veya reklam ağına aktarmaz. Barındırma kendi makinenizdeki SQLite dosyasıdır.',
-          'Yayın ortamına taşınırsa, barındırıcı ve e-posta hizmeti ayrıca ilan edilir. Şikayet metni siteyi açan herkese açıktır; bunu aktarım değil, sizin yayımladığınız içerik sayın.',
+          'Şikayet metni siteyi açan herkese açıktır. Bunu aktarım değil, sizin yayımladığınız içerik sayın.',
+          'Yer tutucu işleyenler, anahtarlar bağlanınca devreye girer: e-posta için Brevo, dosya deposu için S3 veya uyumlu kova, uygulamanın çalıştığı barındırıcı. İsimler ve ülkeler sözleşme imzalanınca bu metne yazılır.',
+          'İhlal adımlarının kısa hali sitede /ihlal sayfasındadır. İşletme kontrol listesi docs/breach-response.md dosyasındadır. Bu bir hukuk görüşü değildir.',
         ],
       },
       {
@@ -80,7 +81,7 @@ export const DOCUMENTS: LegalDocument[] = [
         heading: 'Haklarınız',
         paragraphs: [
           'KVKK madde 11: verinizin işlenip işlenmediğini öğrenme, düzeltilmesini isteme, silinmesini isteme, işlenen veriyi öğrenme.',
-          'Uygulama: profil ekranında görünen adı güncelleyebilir, pazarlama rızasını kapatabilir ve hesabınızı parolanızla silebilirsiniz. Diğer talepler için ' +
+          'Uygulama: profil ekranında görünen adı güncelleyebilir, pazarlama rızasını kapatabilir, “Verilerimi indir” ile kendi kaydınızı JSON alabilir ve hesabınızı parolanızla silebilirsiniz. Diğer talepler için ' +
             CONTACT +
             ' adresine e-posta yazın. Kimliğinizi doğrulamamız gerekebilir.',
           'Yanıt süresi Kanundaki otuz gündür. Başvurunuz reddedilirse veya süresinde cevap alamazsanız Kişisel Verileri Koruma Kuruluna şikayet hakkınız vardır.',
@@ -151,6 +152,13 @@ export const DOCUMENTS: LegalDocument[] = [
         ],
       },
       {
+        heading: 'İçerik lisansı',
+        paragraphs: [
+          'Şikayet, fotoğraf ve fiş üzerindeki hak sizde kalır. Yayımlayınca platforma, bu hizmette göstermek, sıralamak ve moderasyon için saklamak üzere dünya çapında, münhasır olmayan, bedelsiz bir lisans verirsiniz.',
+          'Lisans, içeriği geri çekmeniz veya hesabı silmenizle yeni gösterimler için sona erer. Daha önce indirilmiş kopyalar ve yasal saklama yükümlülüğü bu cümlenin dışındadır.',
+        ],
+      },
+      {
         heading: 'İçerik kuralları',
         paragraphs: [
           'Yaşadığınızı anlatın. Kişi adı, telefon, tam adres, kimlik numarası yazmayın. Hakaret, nefret söylemi ve tehdit yasaktır.',
@@ -194,7 +202,8 @@ export const DOCUMENTS: LegalDocument[] = [
           'yemesek.access: kısa ömürlü erişim jetonu.',
           'yemesek.refresh: yenileme jetonu. Çıkışta silinir.',
           'yemesek.user: e-posta ve görünen ad gibi sizin gördüğünüz profil özeti.',
-          'yemesek.notice: bu bildirimi kapattığınız.',
+          'yemesek.notice: eski bildirim anahtarı.',
+          'yemesek.cookies: zorunlu depolama her zaman açık kalır. Analiz ve pazarlama tercihleri bu anahtarda, yalnızca bu tarayıcıda durur. “Yalnızca gerekli” seçilince analiz ve pazarlama kapalı yazılır. Şu an analiz veya pazarlama betiği yüklenmez.',
         ],
       },
       {

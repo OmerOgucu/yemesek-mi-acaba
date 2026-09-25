@@ -1,4 +1,15 @@
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import { clearSession, readSession, writeSession, type Session, type SessionUser } from '../auth/session';
+
+function appHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    'x-app-version': Constants.expoConfig?.version ?? '1.0.0',
+  };
+  if (Platform.OS === 'ios') headers['x-ios-build'] = Constants.expoConfig?.ios?.buildNumber ?? '1';
+  if (Platform.OS === 'android') headers['x-android-build'] = String(Constants.expoConfig?.android?.versionCode ?? 1);
+  return headers;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -44,7 +55,7 @@ async function refreshSession(): Promise<boolean> {
 }
 
 async function send(path: string, method: string, body: unknown, auth: boolean): Promise<Response> {
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  const headers: Record<string, string> = { Accept: 'application/json', ...appHeaders() };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (auth) {
     const session = await readSession();
@@ -82,7 +93,7 @@ export function postJson<T>(path: string, body: unknown, auth = false): Promise<
 
 export async function postForm<T>(path: string, body: FormData, auth = false): Promise<T> {
   const send = async () => {
-    const headers: Record<string, string> = { Accept: 'application/json' };
+    const headers: Record<string, string> = { Accept: 'application/json', ...appHeaders() };
     if (auth) {
       const session = await readSession();
       if (!session) throw new ApiError('Giriş gerekli.', 401);

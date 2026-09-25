@@ -37,7 +37,7 @@ export default function ResetPage() {
   return (
     <div className="mx-auto max-w-md space-y-8">
       <form onSubmit={requestLink} className="space-y-3">
-        <p className="text-sm font-medium text-amber">Mekanları keşfet — kararını kolaylaştır</p>
+        <p className="text-sm font-medium text-amber-ink">Mekanları keşfet — kararını kolaylaştır</p>
         <h1 className="font-display text-4xl font-semibold">Parolayı sıfırla</h1>
         <input name="email" type="email" required className="field" placeholder="E-posta" />
         <button className="btn btn-primary" type="submit">

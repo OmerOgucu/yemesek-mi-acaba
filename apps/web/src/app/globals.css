@@ -8,6 +8,7 @@
   --color-chili: #8b1e1e;
   --color-chili-dark: #6e1616;
   --color-amber: #c9a962;
+  --color-amber-ink: #5c471c;
   --color-moss: #2f6b45;
   --color-card: #fffcf7;
   --color-line: #e7dcc8;
@@ -24,6 +25,11 @@ body {
     radial-gradient(ellipse at top, rgba(139, 30, 30, 0.07), transparent 46%),
     linear-gradient(180deg, rgba(28, 25, 21, 0.035), transparent 220px);
   color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-chili);
+  outline-offset: 2px;
 }
 
 ::selection {

@@ -43,6 +43,8 @@ export function LoginForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? 'login-error' : undefined}
         />
       </label>
       <label className="block text-sm font-medium" htmlFor="password">
@@ -59,7 +61,7 @@ export function LoginForm() {
         />
       </label>
       {error ? (
-        <p className="text-sm text-chili" role="alert">
+        <p id="login-error" className="text-sm text-chili" role="alert">
           {error}
         </p>
       ) : null}
