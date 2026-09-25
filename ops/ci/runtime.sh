@@ -13,16 +13,18 @@ load_env_file "$ENV_FILE"
 # that only has Docker, Compose, sh, and git. The scripts must not call host psql or aws.
 hide_host_tool() {
   tool="$1"
-  if ! command -v "$tool" >/dev/null 2>&1; then
+  hash -r 2>/dev/null || true
+  bin=$(command -v "$tool" 2>/dev/null || true)
+  if [ -z "$bin" ]; then
     return 0
   fi
-  bin=$(command -v "$tool")
   pkg=$(dpkg -S "$bin" 2>/dev/null | head -n 1 | cut -d: -f1 || true)
   if [ -n "$pkg" ]; then
     sudo apt-get remove -y "$pkg" || true
   fi
-  if command -v "$tool" >/dev/null 2>&1; then
-    sudo mv "$(command -v "$tool")" "/tmp/yemesek-disabled-${tool}"
+  hash -r 2>/dev/null || true
+  if [ -e "$bin" ]; then
+    sudo mv "$bin" "/tmp/yemesek-disabled-${tool}"
   fi
 }
 if [ -n "${GITHUB_ACTIONS:-}" ]; then
@@ -32,6 +34,7 @@ if [ -n "${GITHUB_ACTIONS:-}" ]; then
   fi
   hide_host_tool psql
   hide_host_tool aws
+  hash -r 2>/dev/null || true
 fi
 if command -v psql >/dev/null 2>&1; then
   echo "host psql present; clean-host proof expects it absent" >&2
