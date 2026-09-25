@@ -170,7 +170,7 @@ export const DOCUMENTS: LegalDocument[] = [
         heading: 'Sorumluluk',
         paragraphs: [
           'Hizmet olduğu gibi sunulur. Listenin eksiksiz, güncel veya bir işletme hakkında kesin doğru olduğu taahhüt edilmez.',
-          'Bu MVP koşulları Türkiye Cumhuriyeti hukukuna göre yorumlanır. Yerel deneme sürümünde yetkili merci placeholder olarak İstanbul mahkemeleridir; yayın öncesi güncellenmelidir.',
+          'Bu MVP koşulları Türkiye Cumhuriyeti hukukuna göre yorumlanır. Yetkili mahkeme yayın öncesi ayrıca yazılacaktır.',
         ],
       },
     ],

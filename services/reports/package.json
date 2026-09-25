@@ -12,6 +12,7 @@
     "@nestjs/platform-express": "^11.1.6",
     "@prisma/client": "^6.16.2",
     "@yemesek/auth": "workspace:*",
+    "@yemesek/badges": "workspace:*",
     "@yemesek/database": "workspace:*",
     "@yemesek/evidence": "workspace:*",
     "@yemesek/moderation": "workspace:*",

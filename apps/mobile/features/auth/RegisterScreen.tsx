@@ -29,8 +29,7 @@ export default function RegisterScreen() {
         acceptMarketing,
       });
       await signIn(session);
-      if (router.canGoBack()) router.back();
-      else router.replace('/');
+      router.replace('/dogrula');
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Kayıt tamamlanamadı.');
     }

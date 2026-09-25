@@ -8,17 +8,23 @@ datasource db {
 }
 
 model User {
-  id                  String         @id @default(cuid())
-  email               String         @unique
+  id                  String              @id @default(cuid())
+  email               String              @unique
   passwordHash        String
   displayName         String
+  role                UserRole            @default(USER)
+  emailVerifiedAt     DateTime?
+  disabledAt          DateTime?
   kvkkAcceptedAt      DateTime
   termsAcceptedAt     DateTime
   marketingAcceptedAt DateTime?
-  createdAt           DateTime       @default(now())
+  createdAt           DateTime            @default(now())
   reports             Report[]
   votes               Vote[]
+  restaurants         Restaurant[]
   refreshTokens       RefreshToken[]
+  emailVerifications  EmailVerification[]
+  badges              UserBadge[]
 }
 
 model RefreshToken {
@@ -37,13 +43,18 @@ model Restaurant {
   id          String   @id @default(cuid())
   name        String
   city        String
+  cityKey     String
   district    String?
   addressHint String?
   cuisine     String?
+  hidden      Boolean  @default(false)
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   reports     Report[]
 
-  @@index([city])
+  @@index([cityKey])
+  @@index([createdById])
 }
 
 model Report {
@@ -59,8 +70,11 @@ model Report {
   nickname           String         @default("anonim")
   photoUrls          Json
   receiptUrl         String
-  evidenceVerified   Boolean        @default(false)
-  createdAt          DateTime       @default(now())
+  evidenceVerified   Boolean            @default(false)
+  moderationStatus   ModerationStatus   @default(PENDING)
+  hidden             Boolean            @default(false)
+  moderationNote     String?
+  createdAt          DateTime           @default(now())
   votes        Vote[]
 
   @@index([restaurantId, createdAt])
@@ -77,6 +91,84 @@ model Vote {
 
   @@unique([reportId, userId])
   @@index([reportId])
+}
+
+model EmailVerification {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash   String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([codeHash])
+}
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model EmailTemplate {
+  key       String   @id
+  subject   String
+  htmlBody  String
+  textBody  String
+  updatedAt DateTime @updatedAt
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  description String
+  icon        String
+  metric      BadgeMetric
+  threshold   Int
+  sortOrder   Int         @default(0)
+  enabled     Boolean     @default(true)
+  awards      UserBadge[]
+}
+
+model UserBadge {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge            @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  source    BadgeAwardSource @default(AUTO)
+  awardedAt DateTime         @default(now())
+  revokedAt DateTime?
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BadgeMetric {
+  REPORTS_FILED
+  HELPFUL_VOTES_RECEIVED
+  VENUES_ADDED
+  HELPFUL_VOTES_GIVEN
+}
+
+enum BadgeAwardSource {
+  AUTO
+  MANUAL
 }
 
 enum ReportCategory {

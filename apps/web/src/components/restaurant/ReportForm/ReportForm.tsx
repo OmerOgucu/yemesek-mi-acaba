@@ -45,6 +45,7 @@ export function ReportForm({ restaurantId }: { restaurantId: string }) {
   const [details, setDetails] = useState<string[]>([]);
   const [done, setDone] = useState(false);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [verified, setVerified] = useState(false);
   const [photos, setPhotos] = useState<LocalImage[]>([]);
   const [receipt, setReceipt] = useState<LocalImage | null>(null);
 
@@ -63,7 +64,11 @@ export function ReportForm({ restaurantId }: { restaurantId: string }) {
   }
 
   useEffect(() => {
-    const sync = () => setSignedIn(Boolean(readSession()));
+    const sync = () => {
+      const user = readSession()?.user;
+      setSignedIn(Boolean(user));
+      setVerified(user?.emailVerified === true);
+    };
     sync();
     window.addEventListener('yemesek-auth', sync);
     return () => window.removeEventListener('yemesek-auth', sync);
@@ -122,6 +127,18 @@ export function ReportForm({ restaurantId }: { restaurantId: string }) {
             Kayıt
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  if (!verified) {
+    return (
+      <div className="rounded-2xl border border-ink bg-card p-5">
+        <h2 className="font-display text-3xl">E-posta doğrulaması gerekli</h2>
+        <p className="mt-2 text-sm text-muted">Şikayet ve oy, doğrulanmış hesaba açık.</p>
+        <Link href="/dogrula" className="btn btn-primary mt-4 text-sm">
+          Doğrula
+        </Link>
       </div>
     );
   }

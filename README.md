@@ -1,8 +1,8 @@
 # Yemesek mi acaba?
 
-Kötü restoran deneyimlerini toplayan kara liste. İstanbul ve KKTC örnekleriyle gelir. Övgü değil, şikayet sıralanır: yüksek **kötülük skoru** daha kötü demektir.
+Kötü restoran deneyimlerini toplayan kara liste. Örnek veri belirli bir şehre kilitli değildir; şehir, mekan eklerken yazılan addan çıkar. Övgü değil, şikayet sıralanır: yüksek **kötülük skoru** daha kötü demektir.
 
-Şikayetler kullanıcı metnidir. Resmi tespit, laboratuvar sonucu veya mahkeme kararı değildir. Telefon, tam adres ve kimlik yazılmaz. Liste herkese açıktır. Şikayet ve yararlı oy için hesap gerekir. Şikayet ancak en az bir fotoğraf ve fiş/fatura görseliyle açılır.
+Şikayetler kullanıcı metnidir. Resmi tespit, laboratuvar sonucu veya mahkeme kararı değildir. Telefon, tam adres ve kimlik yazılmaz. Liste herkese açıktır. Giriş yapılabilir; mekan eklemek, şikayet ve yararlı oy e-posta doğrulaması ister. Şikayet ancak en az bir fotoğraf ve fiş/fatura görseliyle açılır.
 
 ## Çalıştırma
 
@@ -46,16 +46,20 @@ Bir özellik arıyorsan önce bu tabloya bak. Ayrıntı: [docs/folder-guide.md](
 | İhtiyaç | Yer |
 | --- | --- |
 | HTTP kapısı | `apps/api` |
-| Hesap | `services/auth` |
-| Mekan | `services/restaurants` |
+| Hesap ve e-posta doğrulama | `services/auth` |
+| E-posta (Brevo veya yerel günlük) | `services/mail` |
+| Mekan ve şehir | `services/restaurants` |
 | Şikayet ve oy | `services/reports` |
 | Fotoğraf ve fiş | `services/evidence` |
 | Metin politikası | `services/moderation` |
+| Rozet | `services/badges` |
+| Site ayarı | `services/settings` |
+| Yönetim uçları | `services/admin` |
 | Veritabanı | `packages/database` |
 | Skor ve ortak sabit | `packages/shared` |
 | Ortam değişkeni | `packages/config` |
 | Yasal metin | `packages/legal` |
-| Site sayfası | `apps/web/src/app/(public)` veya `app/(auth)` |
+| Site sayfası | `apps/web/src/app/(public)`, `app/(auth)` veya `app/admin` |
 | Site parçası | `apps/web/src/components/<alan>` |
 | Mobil ekran | `apps/mobile/features/<alan>` |
 | Kanıt dosyası | `uploads/` |
@@ -67,7 +71,15 @@ Seed bir deneme kullanıcısı açar. Yalnızca yerel geliştirme içindir.
 - E-posta: `demo@yemesek.local`
 - Parola: `Demo1234!`
 
-Kayıtta KVKK aydınlatma metni ve kullanım koşulları zorunludur. Pazarlama kutusu isteğe bağlıdır ve kaydı engellemez.
+Yerel yönetici, yalnızca bu makine içindir. Parolayı yayına taşıma.
+
+- E-posta: `admin@yemesek.local`
+- Parola: `Admin1234!`
+- Panel: http://localhost:3000/admin
+
+Kayıtta KVKK aydınlatma metni ve kullanım koşulları zorunludur. Pazarlama kutusu isteğe bağlıdır ve kaydı engellemez. Kayıt doğrulama e-postası gönderir. `BREVO_API_KEY` yoksa kod ve bağlantı API günlüğüne yazılır; `GET /auth/dev/verification?email=` yalnızca geliştirmede cevap verir.
+
+Giriş, e-posta doğrulanmadan da olur. Mekan, şikayet ve oy doğrulama ister. Bu, doğrulanmamış hesapla listeyi okumaya izin verip yazmayı kapatan varsayılandır.
 
 ## Kontrol
 
@@ -92,9 +104,20 @@ pnpm build
 | POST | `/auth/me/delete` | Giriş, parola ile silme |
 | GET | `/restaurants?q=&city=` | Herkes, en kötü önce |
 | GET | `/restaurants/:id` | Herkes |
-| POST | `/restaurants` | Herkes |
-| POST | `/restaurants/:id/reports` | Giriş, multipart: en az 1 fotoğraf (`photos`) ve fiş (`receipt`) |
-| POST | `/reports/:id/votes` | Giriş, kendi şikayetine oy yok |
+| POST | `/restaurants` | Giriş ve doğrulanmış e-posta |
+| POST | `/restaurants/:id/reports` | Giriş ve doğrulanmış e-posta, multipart: en az 1 fotoğraf (`photos`) ve fiş (`receipt`) |
+| POST | `/reports/:id/votes` | Giriş ve doğrulanmış e-posta, kendi şikayetine oy yok |
+| POST | `/auth/verify` | Giriş, 6 haneli kod |
+| POST | `/auth/verify-link` | Sihirli bağlantı jetonu |
+| POST | `/auth/verify/resend` | Giriş, hız sınırlı |
+| GET | `/auth/dev/verification` | Yalnızca geliştirme, Brevo anahtarı yokken |
+| GET | `/admin/*` | Rol `ADMIN` |
+
+Şehir filtresi beyaz liste kullanmaz. Aynı şehir farklı yazılırsa (`Ankara` ve `ankara`) ilk kaydın yazımı listede kalır, gruplama kırpılmış ve küçük harfe indirgenmiş anahtarla yapılır.
+
+Katkı puanı: şikayet × 10, alınan yararlı oy × 3, eklenen mekan × 8, verilen yararlı oy × 1. Rozetler bu sayaçların eşiğine göre otomatik verilir. Elle verilen veya geri alınan rozet `MANUAL` kalır ve otomatik hesap onu bozmaz.
+
+Yayın notları: [docs/deploy.md](docs/deploy.md).
 
 Parola bcrypt ile özetlenir. Erişim jetonu 15 dakika, yenileme jetonu 30 gün; yenileme jetonunun yalnızca özeti saklanır. Giriş uçları 10 dakikada 8 deneme ile sınırlıdır. Diğer POST istekleri dakikada 20 ile sınırlıdır. Hata gövdesi `statusCode`, `message`, varsa `details` döner; yığın izi dönmez.
 

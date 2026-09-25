@@ -35,7 +35,7 @@ export async function createApp(): Promise<NestExpressApplication> {
   });
   app.enableCors({
     origin: LOCAL_ORIGINS,
-    methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
   });
   app.useGlobalPipes(createValidationPipe());

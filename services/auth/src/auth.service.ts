@@ -1,18 +1,26 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes, randomInt } from 'crypto';
 import { readConfig } from '@yemesek/config';
 import { PrismaService } from '@yemesek/database';
 import { EvidenceService } from '@yemesek/evidence';
+import { MailService } from '@yemesek/mail';
 import { ModerationService } from '@yemesek/moderation';
-import type { AuthSession, PublicUser } from './auth.types';
+import { SettingsService } from '@yemesek/settings';
+import { MemoryRateLimiter } from '@yemesek/shared';
+import type { AuthSession, PublicBadge, PublicUser } from './auth.types';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
@@ -31,18 +39,6 @@ function assertPassword(password: string): void {
   }
 }
 
-function toPublicUser(user: User): PublicUser {
-  return {
-    id: user.id,
-    email: user.email,
-    displayName: user.displayName,
-    kvkkAcceptedAt: user.kvkkAcceptedAt.toISOString(),
-    termsAcceptedAt: user.termsAcceptedAt.toISOString(),
-    marketingAcceptedAt: user.marketingAcceptedAt?.toISOString() ?? null,
-    createdAt: user.createdAt.toISOString(),
-  };
-}
-
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
@@ -50,23 +46,30 @@ function hashToken(token: string): string {
 @Injectable()
 export class AuthService {
   private readonly dummyHash = bcrypt.hashSync('not-a-real-user', 12);
+  private readonly resendLimiter = new MemoryRateLimiter(3, 10 * 60_000);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly moderation: ModerationService,
     private readonly evidence: EvidenceService,
+    private readonly mail: MailService,
+    private readonly settings: SettingsService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthSession> {
+    if (!(await this.settings.registrationOpen())) {
+      throw new ForbiddenException('Yeni kayıtlar kapalı.');
+    }
     assertPassword(dto.password);
     const issues = this.moderation.collect([{ value: dto.displayName }]);
     if (issues.length) throw new BadRequestException({ message: issues });
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const now = new Date();
+    let user: User;
     try {
-      const user = await this.prisma.user.create({
+      user = await this.prisma.user.create({
         data: {
           email: dto.email,
           passwordHash,
@@ -76,13 +79,21 @@ export class AuthService {
           marketingAcceptedAt: dto.acceptMarketing ? now : null,
         },
       });
-      return this.issue(user);
     } catch (error) {
       if (typeof error === 'object' && error && 'code' in error && error.code === 'P2002') {
         throw new ConflictException('Bu e-posta ile kayıt var.');
       }
       throw error;
     }
+
+    try {
+      await this.sendVerification(user);
+    } catch (error) {
+      await this.prisma.user.delete({ where: { id: user.id } }).catch(() => undefined);
+      if (error instanceof HttpException) throw error;
+      throw new ServiceUnavailableException('Doğrulama e-postası gönderilemedi. Biraz sonra tekrar dene.');
+    }
+    return this.issue(user);
   }
 
   async login(dto: LoginDto): Promise<AuthSession> {
@@ -127,7 +138,7 @@ export class AuthService {
   async me(userId: string): Promise<PublicUser> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException('Giriş gerekli.');
-    return toPublicUser(user);
+    return this.toPublicUser(user);
   }
 
   async update(userId: string, dto: UpdateProfileDto): Promise<PublicUser> {
@@ -149,7 +160,7 @@ export class AuthService {
         marketingAcceptedAt,
       },
     });
-    return toPublicUser(user);
+    return this.toPublicUser(user);
   }
 
   async remove(userId: string, dto: DeleteAccountDto): Promise<{ ok: true }> {
@@ -186,12 +197,104 @@ export class AuthService {
     }));
   }
 
+  async verifyCode(userId: string, code: string): Promise<PublicUser> {
+    const user = await this.consumeVerification({ userId, codeHash: hashToken(code) });
+    return this.toPublicUser(user);
+  }
+
+  async verifyLink(token: string): Promise<{ ok: true }> {
+    await this.consumeVerification({ tokenHash: hashToken(token) });
+    return { ok: true };
+  }
+
+  async resend(userId: string): Promise<{ ok: true }> {
+    if (process.env.NODE_ENV !== 'test' && !this.resendLimiter.allow(`resend:${userId}`)) {
+      throw new HttpException(
+        'Doğrulama e-postası çok sık istendi. Biraz sonra tekrar dene.',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('Giriş gerekli.');
+    if (user.emailVerifiedAt) throw new BadRequestException('E-posta zaten doğrulanmış.');
+    await this.sendVerification(user);
+    return { ok: true };
+  }
+
+  devHint(email: string) {
+    const config = readConfig();
+    if (config.isProduction || config.brevoApiKey) throw new NotFoundException();
+    const hint = this.mail.devHint(email);
+    if (!hint) throw new NotFoundException('Doğrulama kaydı yok.');
+    return hint;
+  }
+
+  passwordResetStub(): { ok: true; message: string } {
+    return {
+      ok: true,
+      message: 'Hesap varsa sıfırlama yönergesi daha sonra e-posta ile gelir. Bu sürümde gönderilmez.',
+    };
+  }
+
+  private async sendVerification(user: User): Promise<void> {
+    const config = readConfig();
+    const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+    const token = randomBytes(32).toString('base64url');
+    const expiresAt = new Date(Date.now() + config.emailVerificationTtlMinutes * 60_000);
+    await this.prisma.emailVerification.updateMany({
+      where: { userId: user.id, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+    await this.prisma.emailVerification.create({
+      data: {
+        userId: user.id,
+        codeHash: hashToken(code),
+        tokenHash: hashToken(token),
+        expiresAt,
+      },
+    });
+    const verifyUrl = `${config.appPublicUrl}/dogrula?token=${encodeURIComponent(token)}`;
+    await this.mail.send('email_verification', user.email, {
+      displayName: user.displayName,
+      code,
+      verifyUrl,
+    });
+  }
+
+  private async consumeVerification(where: { userId?: string; codeHash?: string; tokenHash?: string }): Promise<User> {
+    const row = await this.prisma.emailVerification.findFirst({
+      where: {
+        userId: where.userId,
+        codeHash: where.codeHash,
+        tokenHash: where.tokenHash,
+        consumedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { user: true },
+    });
+    if (!row) throw new BadRequestException('Kod hatalı veya süresi dolmuş.');
+    await this.prisma.emailVerification.update({ where: { id: row.id }, data: { consumedAt: new Date() } });
+    const user = row.user.emailVerifiedAt
+      ? row.user
+      : await this.prisma.user.update({
+          where: { id: row.userId },
+          data: { emailVerifiedAt: new Date() },
+        });
+    if (!row.user.emailVerifiedAt) {
+      try {
+        await this.mail.send('welcome', user.email, { displayName: user.displayName });
+      } catch {
+        console.error('[mail] welcome failed');
+      }
+    }
+    return user;
+  }
+
   private async issue(user: User): Promise<AuthSession> {
+    if (user.disabledAt) throw new ForbiddenException('Bu hesap askıya alındı.');
     const secret = readConfig().jwtAccessSecret;
-    const accessToken = await this.jwt.signAsync(
-      { sub: user.id },
-      { secret, expiresIn: ACCESS_TTL },
-    );
+    const accessToken = await this.jwt.signAsync({ sub: user.id }, { secret, expiresIn: ACCESS_TTL });
     const refreshToken = randomBytes(32).toString('base64url');
     await this.prisma.refreshToken.create({
       data: {
@@ -200,6 +303,31 @@ export class AuthService {
         expiresAt: new Date(Date.now() + REFRESH_TTL_MS),
       },
     });
-    return { accessToken, refreshToken, user: toPublicUser(user) };
+    return { accessToken, refreshToken, user: await this.toPublicUser(user) };
+  }
+
+  private async toPublicUser(user: User): Promise<PublicUser> {
+    const awards = await this.prisma.userBadge.findMany({
+      where: { userId: user.id, revokedAt: null },
+      include: { badge: true },
+      orderBy: { badge: { sortOrder: 'asc' } },
+    });
+    const badges: PublicBadge[] = awards.map((award) => ({
+      slug: award.badge.slug,
+      name: award.badge.name,
+      icon: award.badge.icon,
+    }));
+    return {
+      id: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      role: user.role,
+      emailVerified: Boolean(user.emailVerifiedAt),
+      badges,
+      kvkkAcceptedAt: user.kvkkAcceptedAt.toISOString(),
+      termsAcceptedAt: user.termsAcceptedAt.toISOString(),
+      marketingAcceptedAt: user.marketingAcceptedAt?.toISOString() ?? null,
+      createdAt: user.createdAt.toISOString(),
+    };
   }
 }

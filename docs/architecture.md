@@ -5,16 +5,20 @@ Yemesek tek bir Nest sürecidir. `services/` altındaki paketler ayrı sunucu de
 ```
 İstek
   → apps/api            CORS, gövde sınırı, hata filtresi, /uploads statik
-  → services/auth       hesap, JWT, yenileme jetonu
-  → services/restaurants  liste, detay, yeni mekan, kötülük skoru görünümü
+  → services/auth       hesap, JWT, e-posta doğrulama
+  → services/mail       Brevo veya yerel günlük
+  → services/restaurants  liste, detay, yeni mekan, şehir grubu
   → services/reports    şikayet ve yararlı oy
   → services/evidence   fotoğraf + fiş dosyası
   → services/moderation metin politikası, evidenceVerified damgası
+  → services/badges     katkı eşiği ve rozet
+  → services/settings   site ayarı
+  → services/admin      yönetim uçları
   → packages/database   Prisma
 ```
 
-Skor formülü, kategori ağırlıkları ve ortak hata cümleleri `packages/shared` içindedir. Ortam değişkenleri `packages/config` ile okunur. Site parçaları `apps/web/src/components` altındadır. Mobil ekranlar `apps/mobile/features` altındadır.
+Skor formülü, kategori ağırlıkları ve ortak hata cümleleri `packages/shared` içindedir. Ortam değişkenleri `packages/config` ile okunur. Site parçaları `apps/web/src/components` altındadır. Yönetim yalnızca webdedir: `apps/web/src/app/admin`. Mobil ekranlar `apps/mobile/features` altındadır.
 
-Herkese açık olanlar: sağlık, mekan listesi ve detay, yeni mekan, yasal sayfalar. Şikayet ve oy giriş ister. Kanıt dosyası olmadan şikayet yazılmaz. `evidenceVerified` varsayılanı kapalıdır; rozet dosyanın yüklendiğini söyler, incelemenin geçtiğini değil.
+Herkese açık olanlar: sağlık, mekan listesi ve detay, site ayarlarının görünen metni, yasal sayfalar. Giriş serbesttir; mekan eklemek, şikayet ve oy e-posta doğrulaması ister. Şehirler sabit liste değildir: ilk yazılan yazım gruplanır. Kanıt dosyası olmadan şikayet yazılmaz. `evidenceVerified` inceleme onayına kadar kapalıdır; herkese açık “Kanıtlı şikayet” rozeti dosyanın yüklendiğini söyler.
 
 Yerel dosyalar `uploads/` altındadır. Yayında bu klasörün yerini nesne deposu almalıdır.

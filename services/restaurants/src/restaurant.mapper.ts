@@ -1,6 +1,6 @@
 import { ReportCategory } from '@prisma/client';
 import { photoUrlList, publicUploadPath } from '@yemesek/evidence';
-import { CATEGORY_LABEL, computeEvilScore, scoreLabel, type ScoreInput } from '@yemesek/shared';
+import { CATEGORY_LABEL, computeEvilScore, foldTr, scoreLabel, type ScoreInput } from '@yemesek/shared';
 
 export type ScoredReport = {
   category: ReportCategory;
@@ -128,6 +128,4 @@ export function toReportView(report: ReportRow): ReportView {
   };
 }
 
-export function foldTr(value: string): string {
-  return value.toLocaleLowerCase('tr-TR');
-}
+export { foldTr };

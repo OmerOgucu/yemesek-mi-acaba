@@ -1,5 +1,5 @@
 import { Body, Controller, Param, Post, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
-import { AuthUser, CurrentUser, JwtAuthGuard } from '@yemesek/auth';
+import { AuthUser, CurrentUser, JwtAuthGuard, VerifiedEmailGuard } from '@yemesek/auth';
 import { reportFilesInterceptor, type IncomingImage } from '@yemesek/evidence';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ReportsService } from './reports.service';
@@ -9,7 +9,7 @@ export class ReportsController {
   constructor(private readonly reports: ReportsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, VerifiedEmailGuard)
   @UseInterceptors(reportFilesInterceptor)
   create(
     @Param('restaurantId') restaurantId: string,

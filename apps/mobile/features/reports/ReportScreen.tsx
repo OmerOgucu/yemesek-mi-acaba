@@ -73,6 +73,18 @@ export default function ReportScreen() {
     );
   }
 
+  if (user.emailVerified !== true) {
+    return (
+      <View style={styles.page}>
+        <Text style={styles.title}>E-posta doğrulaması gerekli</Text>
+        <Text style={styles.hint}>Şikayet için kodu gir.</Text>
+        <Pressable style={styles.primary} onPress={() => router.push('/dogrula')}>
+          <Text style={styles.primaryText}>Doğrula</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   if (!restaurantId) {
     return <Text style={styles.hint}>Önce listeden bir mekan seç.</Text>;
   }

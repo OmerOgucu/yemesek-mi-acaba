@@ -34,7 +34,8 @@ export function RegisterForm() {
         acceptMarketing,
       });
       writeSession(session);
-      router.push(safeNext(params.get('donus')));
+      const next = params.get('donus');
+      router.push(next ? `/dogrula?donus=${encodeURIComponent(safeNext(next))}` : '/dogrula');
       router.refresh();
     } catch (caught) {
       if (caught instanceof ApiError) {

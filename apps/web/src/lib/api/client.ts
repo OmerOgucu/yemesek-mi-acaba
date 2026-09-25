@@ -133,6 +133,18 @@ export async function getJson<T>(path: string, auth = false): Promise<T> {
   return (await response.json()) as T;
 }
 
+export async function putJson<T>(path: string, body: unknown, auth = false): Promise<T> {
+  const response = await withAuth(path, 'PUT', body, auth);
+  if (!response.ok) throw await readError(response);
+  return (await response.json()) as T;
+}
+
+export async function deleteJson<T>(path: string, auth = false): Promise<T> {
+  const response = await withAuth(path, 'DELETE', undefined, auth);
+  if (!response.ok) throw await readError(response);
+  return (await response.json()) as T;
+}
+
 export async function patchJson<T>(path: string, body: unknown, auth = false): Promise<T> {
   const response = await withAuth(path, 'PATCH', body, auth);
   if (!response.ok) throw await readError(response);

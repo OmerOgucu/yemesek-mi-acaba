@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthRateLimitGuard } from './auth-rate-limit.guard';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './current-user.decorator';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { LoginDto } from './dto/login.dto';
+import { PasswordResetDto, VerifyCodeDto, VerifyLinkDto } from './dto/verify-email.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -59,5 +60,35 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   remove(@CurrentUser() user: AuthUser, @Body() dto: DeleteAccountDto) {
     return this.auth.remove(user.id, dto);
+  }
+
+  @Post('verify')
+  @UseGuards(JwtAuthGuard, AuthRateLimitGuard)
+  verify(@CurrentUser() user: AuthUser, @Body() dto: VerifyCodeDto) {
+    return this.auth.verifyCode(user.id, dto.code);
+  }
+
+  @Post('verify-link')
+  @UseGuards(AuthRateLimitGuard)
+  verifyLink(@Body() dto: VerifyLinkDto) {
+    return this.auth.verifyLink(dto.token);
+  }
+
+  @Post('verify/resend')
+  @UseGuards(JwtAuthGuard, AuthRateLimitGuard)
+  resend(@CurrentUser() user: AuthUser) {
+    return this.auth.resend(user.id);
+  }
+
+  @Get('dev/verification')
+  devHint(@Query('email') email = '') {
+    return this.auth.devHint(email);
+  }
+
+  @Post('password-reset')
+  @UseGuards(AuthRateLimitGuard)
+  passwordReset(@Body() dto: PasswordResetDto) {
+    void dto.email;
+    return this.auth.passwordResetStub();
   }
 }

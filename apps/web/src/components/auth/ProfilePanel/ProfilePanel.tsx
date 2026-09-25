@@ -77,6 +77,17 @@ export function ProfilePanel() {
       <div>
         <h1 className="font-display text-4xl font-semibold">{user.displayName}</h1>
         <p className="mt-1 text-muted">{user.email}</p>
+        <p className="mt-1 text-sm text-muted">
+          {user.emailVerified ? 'E-posta doğrulandı.' : 'E-posta henüz doğrulanmadı.'}{' '}
+          {user.emailVerified ? null : (
+            <Link href="/dogrula" className="underline">
+              Doğrula
+            </Link>
+          )}
+        </p>
+        {user.badges?.length ? (
+          <p className="mt-2 text-sm">{user.badges.map((badge) => `${badge.icon} ${badge.name}`).join(' · ')}</p>
+        ) : null}
         <p className="mt-3 text-sm text-muted">
           Aydınlatma: {formatDate(user.kvkkAcceptedAt)} · Koşullar: {formatDate(user.termsAcceptedAt)}
         </p>

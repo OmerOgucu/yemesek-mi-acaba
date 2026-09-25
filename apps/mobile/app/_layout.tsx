@@ -19,6 +19,8 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="giris" options={{ title: 'Giriş' }} />
           <Stack.Screen name="kayit" options={{ title: 'Kayıt' }} />
+          <Stack.Screen name="dogrula" options={{ title: 'E-posta doğrulama' }} />
+          <Stack.Screen name="mekan-ekle" options={{ title: 'Mekan ekle' }} />
           <Stack.Screen name="yasal/[slug]" options={{ title: 'Yasal metin' }} />
         </Stack>
       </SelectionProvider>

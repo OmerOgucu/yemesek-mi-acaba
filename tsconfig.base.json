@@ -22,6 +22,10 @@
       "@yemesek/reports": ["services/reports/src/index.ts"],
       "@yemesek/evidence": ["services/evidence/src/index.ts"],
       "@yemesek/moderation": ["services/moderation/src/index.ts"],
+      "@yemesek/mail": ["services/mail/src/index.ts"],
+      "@yemesek/badges": ["services/badges/src/index.ts"],
+      "@yemesek/settings": ["services/settings/src/index.ts"],
+      "@yemesek/admin": ["services/admin/src/index.ts"],
       "@yemesek/database": ["packages/database/src/index.ts"],
       "@yemesek/shared": ["packages/shared/src/index.ts"],
       "@yemesek/config": ["packages/config/src/index.ts"]

@@ -34,6 +34,11 @@ export function AuthMenu() {
       </Link>
       {user ? (
         <>
+          {user.role === 'ADMIN' ? (
+            <Link href="/admin" className="btn btn-ghost text-sm">
+              Yönetim
+            </Link>
+          ) : null}
           <Link href="/profil" className="btn btn-ghost text-sm">
             {user.displayName}
           </Link>

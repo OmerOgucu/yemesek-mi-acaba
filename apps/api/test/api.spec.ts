@@ -20,10 +20,15 @@ describe('Yemesek API', () => {
   beforeEach(async () => {
     const prisma = app.get(PrismaService);
     await prisma.vote.deleteMany();
+    await prisma.userBadge.deleteMany();
+    await prisma.emailVerification.deleteMany();
     await prisma.report.deleteMany();
     await prisma.refreshToken.deleteMany();
-    await prisma.user.deleteMany();
     await prisma.restaurant.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.badge.deleteMany();
+    await prisma.emailTemplate.deleteMany();
+    await prisma.siteSetting.deleteMany();
   });
 
   async function register(email = 'yazar@example.com', displayName = 'Yazar') {
@@ -38,9 +43,19 @@ describe('Yemesek API', () => {
       })
       .expect(201);
     expect(response.body.passwordHash).toBeUndefined();
+    expect(response.body.user.emailVerified).toBe(false);
     expect(response.body.user.kvkkAcceptedAt).toEqual(expect.any(String));
     expect(response.body.user.termsAcceptedAt).toEqual(expect.any(String));
     expect(response.body.user.marketingAcceptedAt).toBeNull();
+    const hint = await request(app.getHttpServer())
+      .get('/auth/dev/verification')
+      .query({ email })
+      .expect(200);
+    await request(app.getHttpServer())
+      .post('/auth/verify')
+      .set('Authorization', `Bearer ${response.body.accessToken}`)
+      .send({ code: hint.body.code })
+      .expect(201);
     return response.body as {
       accessToken: string;
       refreshToken: string;
@@ -56,10 +71,14 @@ describe('Yemesek API', () => {
       .attach('receipt', RECEIPT_PNG, { filename: 'fis.png', contentType: 'image/png' });
   }
 
-  async function createRestaurant(name = 'Test Lokantası', city = 'İstanbul') {
+  let venueSeq = 0;
+
+  async function createRestaurant(name = 'Test Lokantası', city = 'Ankara', token?: string) {
+    const accessToken = token ?? (await register(`mekan-${venueSeq += 1}@example.com`, 'Mekan')).accessToken;
     const response = await request(app.getHttpServer())
       .post('/restaurants')
-      .send({ name, city, district: 'Kadıköy', cuisine: 'Ev yemeği', addressHint: 'Moda sahil' })
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ name, city, district: 'Merkez', cuisine: 'Ev yemeği', addressHint: 'çarşı içi' })
       .expect(201);
     return response.body as { id: string; evilScore: number };
   }
@@ -105,8 +124,8 @@ describe('Yemesek API', () => {
       .send({ email: 'yazar@example.com', password: 'yanlis999' })
       .expect(401);
     const reader = await register('okur@example.com', 'Okur');
-    const mild = await createRestaurant('Sakin Kahve', 'Girne');
-    const harsh = await createRestaurant('Şüpheli Balık', 'İstanbul');
+    const mild = await createRestaurant('Sakin Kahve', 'Ankara', author.accessToken);
+    const harsh = await createRestaurant('Şüpheli Balık', 'İzmir', author.accessToken);
 
     await request(app.getHttpServer())
       .post(`/restaurants/${mild.id}/reports`)
@@ -179,7 +198,7 @@ describe('Yemesek API', () => {
     expect(list.body.total).toBe(2);
     expect(list.body.items[0].id).toBe(harsh.id);
     expect(list.body.items[0].evilScore).toBeGreaterThan(list.body.items[1].evilScore);
-    expect(list.body.cities).toEqual(['Girne', 'İstanbul']);
+    expect(list.body.cities).toEqual(['Ankara', 'İzmir']);
 
     const detail = await request(app.getHttpServer()).get(`/restaurants/${harsh.id}`).expect(200);
     expect(detail.body.reports).toHaveLength(1);
@@ -190,7 +209,7 @@ describe('Yemesek API', () => {
 
     const filtered = await request(app.getHttpServer())
       .get('/restaurants')
-      .query({ city: 'girne', q: 'sakin' })
+      .query({ city: 'ankara', q: 'sakin' })
       .expect(200);
     expect(filtered.body.items.map((item: { id: string }) => item.id)).toEqual([mild.id]);
   });
@@ -245,13 +264,15 @@ describe('Yemesek API', () => {
 
     const extra = await request(app.getHttpServer())
       .post('/restaurants')
-      .send({ name: 'Yeni Yer', city: 'Lefkoşa', ownerPhone: 'gizli' })
+      .set('Authorization', `Bearer ${author.accessToken}`)
+      .send({ name: 'Yeni Yer', city: 'Ankara', ownerPhone: 'gizli' })
       .expect(400);
     expect(extra.body.details.some((line: string) => line.includes('ownerPhone'))).toBe(true);
 
     await request(app.getHttpServer())
       .post('/restaurants')
-      .send({ name: 'Adres Kaçağı', city: 'İstanbul', addressHint: 'Moda Cad. No: 12' })
+      .set('Authorization', `Bearer ${author.accessToken}`)
+      .send({ name: 'Adres Kaçağı', city: 'Ankara', addressHint: 'Moda Cad. No: 12' })
       .expect(400);
 
     await request(app.getHttpServer()).get('/restaurants/no-such-id').expect(404);

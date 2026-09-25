@@ -1,8 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { ApiError, postJson } from '@/lib/api/client';
+import { readSession } from '@/components/auth/session/session';
 
 const EMPTY = {
   name: '',
@@ -18,6 +20,14 @@ export function RestaurantForm() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [details, setDetails] = useState<string[]>([]);
+  const [gate, setGate] = useState<'loading' | 'anon' | 'unverified' | 'ok'>('loading');
+
+  useEffect(() => {
+    const user = readSession()?.user;
+    if (!user) setGate('anon');
+    else if (user.emailVerified !== true) setGate('unverified');
+    else setGate('ok');
+  }, []);
 
   function update(key: keyof typeof EMPTY, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -35,7 +45,7 @@ export function RestaurantForm() {
         district: form.district || undefined,
         addressHint: form.addressHint || undefined,
         cuisine: form.cuisine || undefined,
-      });
+      }, true);
       router.push(`/restoran/${created.id}`);
       router.refresh();
     } catch (caught) {
@@ -47,6 +57,35 @@ export function RestaurantForm() {
       }
       setPending(false);
     }
+  }
+
+  if (gate === 'loading') return null;
+  if (gate === 'anon') {
+    return (
+      <div className="rounded-2xl border border-ink bg-card p-5">
+        <h2 className="font-display text-3xl">Mekan eklemek için giriş</h2>
+        <p className="mt-2 text-sm text-muted">Liste herkese açık. Yeni mekan için hesabın olmalı.</p>
+        <div className="mt-4 flex gap-2">
+          <Link href="/giris?donus=/restoran/yeni" className="btn btn-primary text-sm">
+            Giriş
+          </Link>
+          <Link href="/kayit?donus=/restoran/yeni" className="btn btn-ghost text-sm">
+            Kayıt
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  if (gate === 'unverified') {
+    return (
+      <div className="rounded-2xl border border-ink bg-card p-5">
+        <h2 className="font-display text-3xl">Önce e-postanı doğrula</h2>
+        <p className="mt-2 text-sm text-muted">Mekan eklemek doğrulanmış hesaba açık.</p>
+        <Link href="/dogrula?donus=/restoran/yeni" className="btn btn-primary mt-4 text-sm">
+          Doğrula
+        </Link>
+      </div>
+    );
   }
 
   return (
@@ -71,7 +110,7 @@ export function RestaurantForm() {
             className="field mt-1"
             value={form.city}
             onChange={(event) => update('city', event.target.value)}
-            placeholder="İstanbul, Girne, Lefkoşa…"
+            placeholder="Şehir adı"
             minLength={2}
             maxLength={60}
             required

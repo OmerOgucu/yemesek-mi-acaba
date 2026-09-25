@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadgesService } from '@yemesek/badges';
 import { PrismaService } from '@yemesek/database';
 import { EvidenceService, type IncomingImage } from '@yemesek/evidence';
 import { ModerationService } from '@yemesek/moderation';
@@ -12,6 +13,7 @@ export class ReportsService {
     private readonly restaurants: RestaurantsService,
     private readonly moderation: ModerationService,
     private readonly evidence: EvidenceService,
+    private readonly badges: BadgesService,
   ) {}
 
   async create(
@@ -32,8 +34,9 @@ export class ReportsService {
 
     const evidence = this.evidence.assert(files.photos, files.receipt);
     const review = this.moderation.stampEvidence();
+    let created;
     try {
-      const created = await this.prisma.report.create({
+      created = await this.prisma.report.create({
         data: {
           restaurantId,
           authorId: author.id,
@@ -48,17 +51,20 @@ export class ReportsService {
         },
         include: { _count: { select: { votes: true } } },
       });
-      return toReportView(created);
     } catch (error) {
       for (const url of [...evidence.photoUrls, evidence.receiptUrl]) this.evidence.remove(url);
       throw error;
     }
+    await this.badges.sync(author.id);
+    return toReportView(created);
   }
 
   async findOrThrow(id: string) {
     if (!id || id.length > 40) throw new NotFoundException('Şikayet bulunamadı.');
     const report = await this.prisma.report.findUnique({ where: { id } });
-    if (!report) throw new NotFoundException('Şikayet bulunamadı.');
+    if (!report || report.hidden || report.moderationStatus === 'REJECTED') {
+      throw new NotFoundException('Şikayet bulunamadı.');
+    }
     return report;
   }
 }

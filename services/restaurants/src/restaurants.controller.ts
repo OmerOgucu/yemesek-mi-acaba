@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { AuthUser, CurrentUser, JwtAuthGuard, VerifiedEmailGuard } from '@yemesek/auth';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { ListRestaurantsQuery } from './dto/list-restaurants.query';
 import { RestaurantsService } from './restaurants.service';
@@ -18,7 +19,8 @@ export class RestaurantsController {
   }
 
   @Post()
-  create(@Body() dto: CreateRestaurantDto) {
-    return this.restaurants.create(dto);
+  @UseGuards(JwtAuthGuard, VerifiedEmailGuard)
+  create(@Body() dto: CreateRestaurantDto, @CurrentUser() user: AuthUser) {
+    return this.restaurants.create(dto, user.id);
   }
 }

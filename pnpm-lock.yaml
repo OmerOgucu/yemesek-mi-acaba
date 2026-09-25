@@ -30,9 +30,15 @@ importers:
       '@prisma/client':
         specifier: ^6.16.2
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@yemesek/admin':
+        specifier: workspace:*
+        version: link:../../services/admin
       '@yemesek/auth':
         specifier: workspace:*
         version: link:../../services/auth
+      '@yemesek/badges':
+        specifier: workspace:*
+        version: link:../../services/badges
       '@yemesek/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -42,6 +48,9 @@ importers:
       '@yemesek/evidence':
         specifier: workspace:*
         version: link:../../services/evidence
+      '@yemesek/mail':
+        specifier: workspace:*
+        version: link:../../services/mail
       '@yemesek/moderation':
         specifier: workspace:*
         version: link:../../services/moderation
@@ -51,6 +60,9 @@ importers:
       '@yemesek/restaurants':
         specifier: workspace:*
         version: link:../../services/restaurants
+      '@yemesek/settings':
+        specifier: workspace:*
+        version: link:../../services/settings
       '@yemesek/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -279,11 +291,60 @@ importers:
         specifier: ^5.9.2
         version: 5.9.3
 
+  services/admin:
+    dependencies:
+      '@nestjs/common':
+        specifier: ^11.1.6
+        version: 11.2.6(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@prisma/client':
+        specifier: ^6.16.2
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@yemesek/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@yemesek/badges':
+        specifier: workspace:*
+        version: link:../badges
+      '@yemesek/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@yemesek/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@yemesek/evidence':
+        specifier: workspace:*
+        version: link:../evidence
+      '@yemesek/mail':
+        specifier: workspace:*
+        version: link:../mail
+      '@yemesek/moderation':
+        specifier: workspace:*
+        version: link:../moderation
+      '@yemesek/settings':
+        specifier: workspace:*
+        version: link:../settings
+      '@yemesek/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      class-transformer:
+        specifier: ^0.5.1
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.14.2
+        version: 0.14.4
+    devDependencies:
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+
   services/auth:
     dependencies:
       '@nestjs/common':
         specifier: ^11.1.6
         version: 11.2.6(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core':
+        specifier: ^11.1.6
+        version: 11.2.6(@nestjs/common@11.2.6(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.2.6)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/jwt':
         specifier: ^11.0.0
         version: 11.0.2(@nestjs/common@11.2.6(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))
@@ -299,9 +360,15 @@ importers:
       '@yemesek/evidence':
         specifier: workspace:*
         version: link:../evidence
+      '@yemesek/mail':
+        specifier: workspace:*
+        version: link:../mail
       '@yemesek/moderation':
         specifier: workspace:*
         version: link:../moderation
+      '@yemesek/settings':
+        specifier: workspace:*
+        version: link:../settings
       '@yemesek/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -328,6 +395,22 @@ importers:
         specifier: ^5.9.2
         version: 5.9.3
 
+  services/badges:
+    dependencies:
+      '@nestjs/common':
+        specifier: ^11.1.6
+        version: 11.2.6(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@prisma/client':
+        specifier: ^6.16.2
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@yemesek/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+    devDependencies:
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+
   services/evidence:
     dependencies:
       '@nestjs/common':
@@ -339,6 +422,28 @@ importers:
       '@yemesek/config':
         specifier: workspace:*
         version: link:../../packages/config
+    devDependencies:
+      '@types/node':
+        specifier: ^22.18.6
+        version: 22.20.4
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+
+  services/mail:
+    dependencies:
+      '@nestjs/common':
+        specifier: ^11.1.6
+        version: 11.2.6(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@prisma/client':
+        specifier: ^6.16.2
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@yemesek/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@yemesek/database':
+        specifier: workspace:*
+        version: link:../../packages/database
     devDependencies:
       '@types/node':
         specifier: ^22.18.6
@@ -371,6 +476,9 @@ importers:
       '@yemesek/auth':
         specifier: workspace:*
         version: link:../auth
+      '@yemesek/badges':
+        specifier: workspace:*
+        version: link:../badges
       '@yemesek/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -402,6 +510,12 @@ importers:
       '@prisma/client':
         specifier: ^6.16.2
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@yemesek/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@yemesek/badges':
+        specifier: workspace:*
+        version: link:../badges
       '@yemesek/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -411,12 +525,34 @@ importers:
       '@yemesek/moderation':
         specifier: workspace:*
         version: link:../moderation
+      '@yemesek/settings':
+        specifier: workspace:*
+        version: link:../settings
       '@yemesek/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
+      class-validator:
+        specifier: ^0.14.2
+        version: 0.14.4
+    devDependencies:
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+
+  services/settings:
+    dependencies:
+      '@nestjs/common':
+        specifier: ^11.1.6
+        version: 11.2.6(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@prisma/client':
+        specifier: ^6.16.2
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@yemesek/database':
+        specifier: workspace:*
+        version: link:../../packages/database
       class-validator:
         specifier: ^0.14.2
         version: 0.14.4

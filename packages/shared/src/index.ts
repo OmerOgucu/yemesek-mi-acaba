@@ -1,3 +1,5 @@
+export { normalizeCity, foldTr } from './city';
+export { contributionScore, type ContributionCounts } from './contribution';
 export { ApiErrorMessage } from './errors';
 export { MemoryRateLimiter } from './memory-rate-limiter';
 export { CATEGORY_LABEL, CATEGORY_ORDER, CATEGORY_WEIGHT } from './scoring/categories';

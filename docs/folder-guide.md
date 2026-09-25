@@ -3,16 +3,20 @@
 | İhtiyaç | Yer |
 | --- | --- |
 | HTTP kapısı, CORS, statik `/uploads`, hız sınırı, hata zarfı | `apps/api/src` |
-| Hesap, giriş, JWT | `services/auth` |
-| Mekan listesi, detay, yeni mekan | `services/restaurants` |
+| Hesap, giriş, JWT, e-posta doğrulama | `services/auth` |
+| Brevo ve yerel e-posta | `services/mail` |
+| Mekan listesi, detay, yeni mekan, şehir | `services/restaurants` |
 | Şikayet ve yararlı oy | `services/reports` |
 | Fotoğraf ve fiş | `services/evidence` |
 | Metin politikası, kanıt damgası | `services/moderation` |
+| Rozet eşiği | `services/badges` |
+| Site ayarı | `services/settings` |
+| Yönetim uçları | `services/admin` |
 | Prisma şema, migration, seed | `packages/database` |
 | Kategori, skor, hız sayacı, ortak hata metni | `packages/shared` |
 | `DATABASE_URL`, JWT, port, uploads yolu | `packages/config` |
 | KVKK ve diğer yasal metin | `packages/legal` |
-| Site sayfaları | `apps/web/src/app/(public)` ve `app/(auth)` |
+| Site sayfaları | `apps/web/src/app/(public)`, `app/(auth)`, `app/admin` |
 | Site arayüzü | `apps/web/src/components/<alan>` |
 | Site API istemcisi | `apps/web/src/lib/api` |
 | Mobil rota | `apps/mobile/app` |
