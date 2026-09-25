@@ -1,5 +1,15 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/**/*"],
+  "compilerOptions": {
+    "rootDir": "../..",
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/**/*",
+    "../../services/*/src/**/*",
+    "../../packages/database/src/**/*",
+    "../../packages/shared/src/**/*",
+    "../../packages/config/src/**/*"
+  ],
   "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]
 }

@@ -28,7 +28,7 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r --if-present lint",
     "test": "pnpm -r --if-present test",
-    "db:migrate": "pnpm --filter @yemesek/api db:migrate",
-    "db:seed": "pnpm --filter @yemesek/api db:seed"
+    "db:migrate": "pnpm --filter @yemesek/database db:migrate",
+    "db:seed": "pnpm --filter @yemesek/database db:seed"
   }
 }

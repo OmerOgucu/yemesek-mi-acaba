@@ -37,7 +37,9 @@ pnpm dev:mobile
 ```
 
 İsteğe bağlı ortam değişkenleri: `apps/api/.env.example`, `apps/web/.env.example`, `apps/mobile/.env.example`.
-Varsayılan veritabanı `apps/api/prisma/dev.db`. Yerel JWT sırrı yalnızca geliştirme içindir; yayında değiştirin.
+Varsayılan veritabanı `packages/database/prisma/dev.db`. Yerel JWT sırrı yalnızca geliştirme içindir; yayında değiştirin.
+
+Klasör haritası: [docs/folder-guide.md](docs/folder-guide.md). Kim neyi sahiplenir: [docs/architecture.md](docs/architecture.md).
 
 ## Demo hesap
 
@@ -81,4 +83,4 @@ Kötülük skoru: şiddet × kategori ağırlığı toplanır, × 8; şikayet sa
 
 Yasal sayfalar: `/kvkk`, `/gizlilik`, `/kullanim-kosullari`, `/cerez-politikasi`. Aynı metinler mobil uygulamada Profil sekmesinden açılır.
 
-Kanıt dosyaları bu MVP'de API'nin yerel `uploads/` klasöründe durur ve `/uploads/...` adresinden sunulur. JPEG, PNG ve WebP kabul edilir; dosya başı sınır 5 MB'dir. Dosya adı istemciden alınmaz. `evidenceVerified` varsayılanı kapalıdır: yükleme, bir incelemenin geçtiği anlamına gelmez. Yayında bu klasörün yerine sahiplik kontrolü olan bir nesne deposu kullanılmalıdır. Seed, örnek şikayetlere yer tutucu görseller yazar.
+Kanıt dosyaları bu MVP'de depo kökündeki `uploads/` klasöründe durur ve API üzerinden `/uploads/...` adresinden sunulur. JPEG, PNG ve WebP kabul edilir; dosya başı sınır 5 MB'dir. Dosya adı istemciden alınmaz. `evidenceVerified` varsayılanı kapalıdır: yükleme, bir incelemenin geçtiği anlamına gelmez. Yayında bu klasörün yerine sahiplik kontrolü olan bir nesne deposu kullanılmalıdır. Seed, örnek şikayetlere yer tutucu görseller yazar.

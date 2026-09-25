@@ -6,7 +6,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { MemoryRateLimiter } from './memory-rate-limiter';
+import { MemoryRateLimiter } from '@yemesek/shared';
 
 @Injectable()
 export class PostRateLimitGuard implements CanActivate {

@@ -1,4 +1,4 @@
-import { SEED_RESTAURANTS } from '../prisma/seed-data';
+import { SEED_RESTAURANTS } from '../../../packages/database/prisma/seed-data';
 
 describe('seed data', () => {
   it('covers İstanbul and KKTC with 8 to 12 restaurants', () => {

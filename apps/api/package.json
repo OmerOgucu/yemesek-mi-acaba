@@ -3,22 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "postinstall": "DATABASE_URL=file:./dev.db prisma generate",
-    "dev": "DATABASE_URL=file:./dev.db prisma generate && sh scripts/with-db.sh tsc-watch -p tsconfig.build.json --onSuccess \"node dist/main.js\"",
-    "build": "DATABASE_URL=file:./dev.db prisma generate && tsc -p tsconfig.build.json",
-    "start": "sh scripts/with-db.sh node dist/main.js",
-    "typecheck": "DATABASE_URL=file:./dev.db prisma generate && tsc -p tsconfig.json --noEmit",
-    "lint": "eslint .",
-    "test": "DATABASE_URL=file:./dev.db prisma generate && jest --runInBand",
-    "db:migrate": "sh scripts/with-db.sh prisma migrate deploy",
-    "db:seed": "sh scripts/with-db.sh prisma db seed",
-    "db:dev-migrate": "sh scripts/with-db.sh prisma migrate dev"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "dev": "pnpm --filter @yemesek/database exec prisma generate && sh scripts/with-db.sh tsc-watch -p tsconfig.build.json --onSuccess \"sh scripts/start-compiled.sh\"",
+    "build": "pnpm --filter @yemesek/database exec prisma generate && tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "start": "sh scripts/with-db.sh node dist/apps/api/src/main.js",
+    "typecheck": "pnpm --filter @yemesek/database exec prisma generate && tsc -p tsconfig.json --noEmit",
+    "lint": "cd ../.. && eslint -c eslint.config.mjs apps/api/src apps/api/test services packages/database/src packages/database/prisma/seed.ts packages/database/prisma/seed-data.ts packages/shared/src packages/config/src",
+    "test": "pnpm --filter @yemesek/database exec prisma generate && sh scripts/with-db.sh jest --runInBand"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",
+    "@yemesek/auth": "workspace:*",
+    "@yemesek/config": "workspace:*",
+    "@yemesek/database": "workspace:*",
+    "@yemesek/evidence": "workspace:*",
+    "@yemesek/moderation": "workspace:*",
+    "@yemesek/reports": "workspace:*",
+    "@yemesek/restaurants": "workspace:*",
+    "@yemesek/shared": "workspace:*",
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
     "@nestjs/jwt": "^11.0.0",
@@ -39,11 +40,10 @@
     "@types/supertest": "^6.0.3",
     "eslint": "^9.36.0",
     "jest": "^29.7.0",
-    "prisma": "^6.16.2",
     "supertest": "^7.1.4",
+    "tsc-alias": "^1.8.16",
     "ts-jest": "^29.4.4",
     "tsc-watch": "^7.2.1",
-    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.44.1"
   }

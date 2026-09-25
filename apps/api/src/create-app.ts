@@ -4,7 +4,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { createValidationPipe } from './common/validation';
-import { uploadsRoot } from './uploads/evidence-files';
+import { uploadsRoot } from '@yemesek/evidence';
 
 const LOCAL_ORIGINS = [
   'http://localhost:3000',

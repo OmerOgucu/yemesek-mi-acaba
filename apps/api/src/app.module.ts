@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from '@yemesek/auth';
+import { PrismaModule } from '@yemesek/database';
+import { ReportsModule, VotesModule } from '@yemesek/reports';
+import { RestaurantsModule } from '@yemesek/restaurants';
 import { PostRateLimitGuard } from './common/post-rate-limit.guard';
 import { HealthModule } from './health/health.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { ReportsModule } from './reports/reports.module';
-import { RestaurantsModule } from './restaurants/restaurants.module';
-import { VotesModule } from './votes/votes.module';
 
 @Module({
   imports: [PrismaModule, HealthModule, AuthModule, RestaurantsModule, ReportsModule, VotesModule],

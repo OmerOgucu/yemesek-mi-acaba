@@ -2,8 +2,8 @@ import type { INestApplication } from '@nestjs/common';
 import { ReportCategory } from '@prisma/client';
 import request from 'supertest';
 import { createApp } from '../src/create-app';
-import { PrismaService } from '../src/prisma/prisma.service';
-import { VENUE_PNG, RECEIPT_PNG } from '../src/uploads/evidence-files';
+import { PrismaService } from '@yemesek/database';
+import { RECEIPT_PNG, VENUE_PNG } from '@yemesek/evidence';
 
 describe('Yemesek API', () => {
   let app: INestApplication;
