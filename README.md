@@ -39,7 +39,26 @@ pnpm dev:mobile
 İsteğe bağlı ortam değişkenleri: `apps/api/.env.example`, `apps/web/.env.example`, `apps/mobile/.env.example`.
 Varsayılan veritabanı `packages/database/prisma/dev.db`. Yerel JWT sırrı yalnızca geliştirme içindir; yayında değiştirin.
 
-Klasör haritası: [docs/folder-guide.md](docs/folder-guide.md). Kim neyi sahiplenir: [docs/architecture.md](docs/architecture.md).
+## Klasörler
+
+Bir özellik arıyorsan önce bu tabloya bak. Ayrıntı: [docs/folder-guide.md](docs/folder-guide.md). Sahiplik: [docs/architecture.md](docs/architecture.md).
+
+| İhtiyaç | Yer |
+| --- | --- |
+| HTTP kapısı | `apps/api` |
+| Hesap | `services/auth` |
+| Mekan | `services/restaurants` |
+| Şikayet ve oy | `services/reports` |
+| Fotoğraf ve fiş | `services/evidence` |
+| Metin politikası | `services/moderation` |
+| Veritabanı | `packages/database` |
+| Skor ve ortak sabit | `packages/shared` |
+| Ortam değişkeni | `packages/config` |
+| Yasal metin | `packages/legal` |
+| Site sayfası | `apps/web/src/app/(public)` veya `app/(auth)` |
+| Site parçası | `apps/web/src/components/<alan>` |
+| Mobil ekran | `apps/mobile/features/<alan>` |
+| Kanıt dosyası | `uploads/` |
 
 ## Demo hesap
 

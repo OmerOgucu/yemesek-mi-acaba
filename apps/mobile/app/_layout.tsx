@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SessionProvider } from '../features/auth/SessionProvider';
 import { SelectionProvider } from '../features/restaurants/SelectionProvider';
-import { colors } from '../src/theme/theme';
+import { colors } from '../features/theme/theme';
 
 export default function RootLayout() {
   return (

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { RegisterForm } from '@/features/auth/RegisterForm/RegisterForm';
+import { RegisterForm } from '@/components/auth/RegisterForm/RegisterForm';
 
 export const metadata: Metadata = { title: 'Kayıt' };
 

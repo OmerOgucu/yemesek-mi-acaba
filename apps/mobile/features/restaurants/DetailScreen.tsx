@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { ApiError, getJson, mediaUrl } from '../api/client';
-import { colors } from '../../src/theme/theme';
+import { colors } from '../theme/theme';
 import { useSelection } from './SelectionProvider';
 
 type Report = {

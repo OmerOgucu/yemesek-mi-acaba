@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
-import { RestaurantDetail } from '@/features/restaurant/RestaurantDetail/RestaurantDetail';
-import { ApiUnavailable } from '@/features/site/ApiUnavailable/ApiUnavailable';
+import { RestaurantDetail } from '@/components/restaurant/RestaurantDetail/RestaurantDetail';
+import { ApiUnavailable } from '@/components/site/ApiUnavailable/ApiUnavailable';
 import { ApiError, getRestaurant } from '@/lib/api/client';
 
 const loadRestaurant = cache(async (id: string) => getRestaurant(id));

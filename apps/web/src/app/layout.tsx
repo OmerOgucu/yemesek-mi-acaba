@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Fraunces, Outfit } from 'next/font/google';
-import { CookieNotice } from '@/features/site/CookieNotice/CookieNotice';
-import { SiteFooter } from '@/features/site/SiteFooter/SiteFooter';
-import { SiteHeader } from '@/features/site/SiteHeader/SiteHeader';
+import { CookieNotice } from '@/components/site/CookieNotice/CookieNotice';
+import { SiteFooter } from '@/components/site/SiteFooter/SiteFooter';
+import { SiteHeader } from '@/components/site/SiteHeader/SiteHeader';
 import './globals.css';
 
 const fraunces = Fraunces({

@@ -5,7 +5,7 @@ import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, Vi
 import { useSession } from '../auth/SessionProvider';
 import { ApiError, postForm } from '../api/client';
 import { useSelection } from '../restaurants/SelectionProvider';
-import { colors } from '../../src/theme/theme';
+import { colors } from '../theme/theme';
 
 const CATEGORIES = [
   { id: 'FOOD_POISONING', label: 'Gıda zehirlenmesi şüphesi' },

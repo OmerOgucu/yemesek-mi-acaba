@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { CATEGORIES, SEVERITY_OPTIONS } from '@/lib/categories/categories';
 import { ApiError, postForm } from '@/lib/api/client';
-import { readSession } from '@/features/auth/session/session';
+import { readSession } from '@/components/auth/session/session';
 
 const EMPTY = {
   category: 'HYGIENE',

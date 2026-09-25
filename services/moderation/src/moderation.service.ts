@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import type { PolicyField } from './dto/policy-field';
 import { collectPolicyIssues } from './content-policy';
 
 @Injectable()
 export class ModerationService {
-  collect(fields: { value: string | null | undefined; addressHint?: boolean }[]): string[] {
+  collect(fields: PolicyField[]): string[] {
     return collectPolicyIssues(fields);
   }
 

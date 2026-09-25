@@ -1,4 +1,4 @@
-import { clearSession, readSession, writeSession, type SessionUser } from '@/features/auth/session/session';
+import { clearSession, readSession, writeSession, type SessionUser } from '@/components/auth/session/session';
 import type { ApiErrorBody, RestaurantDetail, RestaurantListResponse } from '../types/restaurant';
 
 export class ApiError extends Error {

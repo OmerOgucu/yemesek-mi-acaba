@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ProfilePanel } from '@/features/auth/ProfilePanel/ProfilePanel';
+import { ProfilePanel } from '@/components/auth/ProfilePanel/ProfilePanel';
 
 export const metadata: Metadata = { title: 'Profil' };
 

@@ -4,7 +4,7 @@ import { LEGAL_SLUGS, getDocument } from '@yemesek/legal';
 import { readSession } from '../auth/session';
 import { useSession } from '../auth/SessionProvider';
 import { postJson } from '../api/client';
-import { colors } from '../../src/theme/theme';
+import { colors } from '../theme/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();

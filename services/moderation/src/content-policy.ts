@@ -1,3 +1,5 @@
+import type { PolicyField } from './dto/policy-field';
+
 const SLURS = [
   'pezevenk',
   'orospu',
@@ -85,9 +87,7 @@ export function inspectText(
   return { ok: true };
 }
 
-export function collectPolicyIssues(
-  fields: { value: string | null | undefined; addressHint?: boolean }[],
-): string[] {
+export function collectPolicyIssues(fields: PolicyField[]): string[] {
   const issues: string[] = [];
   for (const field of fields) {
     if (!field.value) continue;

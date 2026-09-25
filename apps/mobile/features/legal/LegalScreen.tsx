@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import { getDocument } from '@yemesek/legal';
-import { colors } from '../../src/theme/theme';
+import { colors } from '../theme/theme';
 
 export default function LegalScreen() {
   const params = useLocalSearchParams<{ slug: string }>();

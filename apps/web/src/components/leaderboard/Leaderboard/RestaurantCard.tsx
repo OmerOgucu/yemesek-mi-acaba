@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { RestaurantSummary } from '@/lib/types/restaurant';
-import { ScoreSeal } from '@/features/score/ScoreSeal/ScoreSeal';
+import { ScoreSeal } from '@/components/score/ScoreSeal/ScoreSeal';
 
 function placeLine(restaurant: RestaurantSummary): string {
   return [restaurant.district, restaurant.city, restaurant.cuisine].filter(Boolean).join(' · ');

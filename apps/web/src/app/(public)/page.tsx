@@ -1,6 +1,6 @@
 import { ApiError, getRestaurants } from '@/lib/api/client';
-import { ApiUnavailable } from '@/features/site/ApiUnavailable/ApiUnavailable';
-import { Leaderboard } from '@/features/leaderboard/Leaderboard/Leaderboard';
+import { ApiUnavailable } from '@/components/site/ApiUnavailable/ApiUnavailable';
+import { Leaderboard } from '@/components/leaderboard/Leaderboard/Leaderboard';
 
 export default async function HomePage({
   searchParams,

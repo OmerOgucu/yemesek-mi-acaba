@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { ApiErrorMessage } from '@yemesek/shared';
 import type { Response } from 'express';
 
 type ErrorBody = {
@@ -40,7 +41,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         if (Array.isArray(record.message)) {
           return {
             statusCode,
-            message: 'Gönderilen bilgiler geçersiz.',
+            message: ApiErrorMessage.invalidBody,
             details: record.message.map(String),
           };
         }
@@ -48,39 +49,39 @@ export class AllExceptionsFilter implements ExceptionFilter {
           return { statusCode, message: record.message };
         }
       }
-      return { statusCode, message: 'İstek tamamlanamadı.' };
+      return { statusCode, message: ApiErrorMessage.requestFailed };
     }
 
     if (exception instanceof Error && exception.name === 'NotFoundError') {
-      return { statusCode: HttpStatus.NOT_FOUND, message: 'Dosya bulunamadı.' };
+      return { statusCode: HttpStatus.NOT_FOUND, message: ApiErrorMessage.fileMissing };
     }
 
     if (isMulterError(exception)) {
       if (exception.code === 'LIMIT_FILE_SIZE') {
-        return { statusCode: HttpStatus.BAD_REQUEST, message: 'Her dosya en fazla 5 MB olabilir.' };
+        return { statusCode: HttpStatus.BAD_REQUEST, message: ApiErrorMessage.fileTooLarge };
       }
       if (exception.code === 'LIMIT_FILE_COUNT' || exception.code === 'LIMIT_UNEXPECTED_FILE') {
-        return { statusCode: HttpStatus.BAD_REQUEST, message: 'En fazla 3 fotoğraf ve 1 fiş yükleyebilirsin.' };
+        return { statusCode: HttpStatus.BAD_REQUEST, message: ApiErrorMessage.tooManyFiles };
       }
-      return { statusCode: HttpStatus.BAD_REQUEST, message: 'Dosya yüklenemedi.' };
+      return { statusCode: HttpStatus.BAD_REQUEST, message: ApiErrorMessage.uploadFailed };
     }
 
     if (exception instanceof Prisma.PrismaClientInitializationError) {
-      return { statusCode: HttpStatus.SERVICE_UNAVAILABLE, message: 'Veritabanına bağlanılamadı.' };
+      return { statusCode: HttpStatus.SERVICE_UNAVAILABLE, message: ApiErrorMessage.databaseDown };
     }
 
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       if (exception.code === 'P2021' || exception.code === 'P2022') {
         return {
           statusCode: HttpStatus.SERVICE_UNAVAILABLE,
-          message: 'Veritabanı şeması güncel değil.',
+          message: ApiErrorMessage.schemaOutOfDate,
         };
       }
     }
 
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: 'Bir şeyler karıştı. Biraz sonra tekrar dene.',
+      message: ApiErrorMessage.unexpected,
     };
   }
 }

@@ -1,7 +1,7 @@
-import { HelpfulVote } from '@/features/restaurant/HelpfulVote/HelpfulVote';
-import { ReportEvidence } from '@/features/restaurant/ReportEvidence/ReportEvidence';
-import { ReportForm } from '@/features/restaurant/ReportForm/ReportForm';
-import { ScoreSeal } from '@/features/score/ScoreSeal/ScoreSeal';
+import { HelpfulVote } from '@/components/restaurant/HelpfulVote/HelpfulVote';
+import { ReportEvidence } from '@/components/restaurant/ReportEvidence/ReportEvidence';
+import { ReportForm } from '@/components/restaurant/ReportForm/ReportForm';
+import { ScoreSeal } from '@/components/score/ScoreSeal/ScoreSeal';
 import { severityLabel } from '@/lib/categories/categories';
 import type { RestaurantDetail as RestaurantDetailData } from '@/lib/types/restaurant';
 

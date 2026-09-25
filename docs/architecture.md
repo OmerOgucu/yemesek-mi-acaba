@@ -13,7 +13,7 @@ Yemesek tek bir Nest sürecidir. `services/` altındaki paketler ayrı sunucu de
   → packages/database   Prisma
 ```
 
-Skor formülü ve kategori ağırlıkları `packages/shared` içindedir. Ortam değişkenleri `packages/config` ile okunur.
+Skor formülü, kategori ağırlıkları ve ortak hata cümleleri `packages/shared` içindedir. Ortam değişkenleri `packages/config` ile okunur. Site parçaları `apps/web/src/components` altındadır. Mobil ekranlar `apps/mobile/features` altındadır.
 
 Herkese açık olanlar: sağlık, mekan listesi ve detay, yeni mekan, yasal sayfalar. Şikayet ve oy giriş ister. Kanıt dosyası olmadan şikayet yazılmaz. `evidenceVerified` varsayılanı kapalıdır; rozet dosyanın yüklendiğini söyler, incelemenin geçtiğini değil.
 

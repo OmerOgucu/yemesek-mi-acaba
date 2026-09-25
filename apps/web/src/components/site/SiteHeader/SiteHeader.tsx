@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AuthMenu } from '@/features/auth/AuthMenu/AuthMenu';
+import { AuthMenu } from '@/components/auth/AuthMenu/AuthMenu';
 
 export function SiteHeader() {
   return (

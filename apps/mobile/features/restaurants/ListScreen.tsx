@@ -2,7 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { ApiError, getJson } from '../api/client';
-import { colors } from '../../src/theme/theme';
+import { colors } from '../theme/theme';
 import { useSelection } from './SelectionProvider';
 
 type Item = {

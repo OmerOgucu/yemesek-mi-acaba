@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors } from '../../src/theme/theme';
+import { colors } from '../theme/theme';
 import { ApiError, postJson } from '../api/client';
 import type { Session } from './session';
 import { useSession } from './SessionProvider';

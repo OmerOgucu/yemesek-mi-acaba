@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { LoginForm } from '@/features/auth/LoginForm/LoginForm';
+import { LoginForm } from '@/components/auth/LoginForm/LoginForm';
 
 export const metadata: Metadata = { title: 'Giriş' };
 

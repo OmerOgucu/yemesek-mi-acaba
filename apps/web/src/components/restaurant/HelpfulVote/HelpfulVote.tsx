@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { readSession } from '@/features/auth/session/session';
+import { readSession } from '@/components/auth/session/session';
 import { ApiError, postJson } from '@/lib/api/client';
 
 export function HelpfulVote({ reportId, initialCount }: { reportId: string; initialCount: number }) {

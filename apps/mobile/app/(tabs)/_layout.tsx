@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { colors } from '../../src/theme/theme';
+import { colors } from '../../features/theme/theme';
 
 export default function TabsLayout() {
   return (

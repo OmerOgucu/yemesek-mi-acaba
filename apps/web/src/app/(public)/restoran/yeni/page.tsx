@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { RestaurantForm } from '@/features/restaurant/RestaurantForm/RestaurantForm';
+import { RestaurantForm } from '@/components/restaurant/RestaurantForm/RestaurantForm';
 
 export const metadata: Metadata = {
   title: 'Mekan ekle',
