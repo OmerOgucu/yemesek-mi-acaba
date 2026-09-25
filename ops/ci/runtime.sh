@@ -9,6 +9,30 @@ export SMOKE_INSECURE=1
 export ENV_FILE=ops/ci/stack.env
 load_env_file "$ENV_FILE"
 
+# GitHub-hosted runners ship a PostgreSQL client. Remove it so this job matches a VPS
+# that only has Docker, Compose, sh, and git. The scripts must not call host psql or aws.
+hide_host_tool() {
+  tool="$1"
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    return 0
+  fi
+  bin=$(command -v "$tool")
+  pkg=$(dpkg -S "$bin" 2>/dev/null | head -n 1 | cut -d: -f1 || true)
+  if [ -n "$pkg" ]; then
+    sudo apt-get remove -y "$pkg" || true
+  fi
+  if command -v "$tool" >/dev/null 2>&1; then
+    sudo mv "$(command -v "$tool")" "/tmp/yemesek-disabled-${tool}"
+  fi
+}
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+  export DEBIAN_FRONTEND=noninteractive
+  if command -v psql >/dev/null 2>&1 || command -v aws >/dev/null 2>&1; then
+    sudo apt-get update -y
+  fi
+  hide_host_tool psql
+  hide_host_tool aws
+fi
 if command -v psql >/dev/null 2>&1; then
   echo "host psql present; clean-host proof expects it absent" >&2
   exit 1
