@@ -39,4 +39,29 @@ describe('assertLaunchConfig', () => {
   it('does not block local development', () => {
     expect(() => assertLaunchConfig({ NODE_ENV: 'development', JWT_ACCESS_SECRET: 'change-me' })).not.toThrow();
   });
+
+  it('lets api and worker boot without bootstrap secrets', () => {
+    const runtime: Record<string, string | undefined> = { ...ready };
+    delete runtime.INITIAL_ADMIN_EMAIL;
+    delete runtime.INITIAL_ADMIN_SETUP_SECRET;
+    delete runtime.INITIAL_ALLOWED_CITIES;
+    expect(() => assertLaunchConfig(runtime, 'api')).not.toThrow();
+    expect(() => assertLaunchConfig(runtime, 'worker')).not.toThrow();
+    expect(() => assertLaunchConfig(runtime, 'bootstrap')).toThrow(/INITIAL_ADMIN_EMAIL/);
+  });
+
+  it('limits bootstrap to the one-time admin inputs', () => {
+    expect(() =>
+      assertLaunchConfig(
+        {
+          NODE_ENV: 'production',
+          DATABASE_URL: ready.DATABASE_URL,
+          INITIAL_ADMIN_EMAIL: ready.INITIAL_ADMIN_EMAIL,
+          INITIAL_ADMIN_SETUP_SECRET: ready.INITIAL_ADMIN_SETUP_SECRET,
+          INITIAL_ALLOWED_CITIES: ready.INITIAL_ALLOWED_CITIES,
+        },
+        'bootstrap',
+      ),
+    ).not.toThrow();
+  });
 });

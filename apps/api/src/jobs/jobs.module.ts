@@ -6,6 +6,6 @@ import { JobsService } from './jobs.service';
 @Module({
   imports: [MailModule, EvidenceModule],
   providers: [JobsService],
-  exports: [MailModule],
+  exports: [MailModule, JobsService],
 })
 export class JobsModule {}

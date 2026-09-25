@@ -1,7 +1,7 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { assertHuman } from '@yemesek/auth';
 import { BadgesService } from '@yemesek/badges';
-import { consumeBucket, PrismaService } from '@yemesek/database';
+import { consumeBucket, enqueueCleanup, PrismaService } from '@yemesek/database';
 import { EvidenceService, type IncomingImage } from '@yemesek/evidence';
 import { ModerationService } from '@yemesek/moderation';
 import { RestaurantsService, toReportView, type ReportView } from '@yemesek/restaurants';
@@ -75,7 +75,7 @@ export class ReportsService {
       for (const item of evidence.objects) {
         const removed = await this.evidence.remove(item.key);
         if (!removed) {
-          await this.prisma.cleanupJob.create({ data: { objectKey: item.key } });
+          await enqueueCleanup(this.prisma, item.key);
         } else {
           await this.prisma.evidenceObject.updateMany({
             where: { objectKey: item.key },

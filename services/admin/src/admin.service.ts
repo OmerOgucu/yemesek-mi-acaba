@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { ModerationStatus, Prisma, UserRole } from '@prisma/client';
 import { BadgesService } from '@yemesek/badges';
 import { readConfig } from '@yemesek/config';
-import { PrismaService } from '@yemesek/database';
+import { enqueueCleanup, PrismaService } from '@yemesek/database';
 import { EvidenceService } from '@yemesek/evidence';
 import { TEMPLATE_DEFAULTS, TEMPLATE_KEYS, isTemplateKey, MailService } from '@yemesek/mail';
 import { ModerationService } from '@yemesek/moderation';
@@ -733,7 +733,7 @@ export class AdminService {
       const removed = await this.evidence.remove(key);
       if (!removed) {
         ok = false;
-        await this.prisma.cleanupJob.create({ data: { objectKey: key } });
+        await enqueueCleanup(this.prisma, key);
       }
     }
     return ok;

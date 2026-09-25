@@ -78,7 +78,17 @@ describe('Yemesek API', () => {
   it('GET /health', async () => {
     const response = await request(app.getHttpServer()).get('/health').expect(200);
     expect(response.body.status).toBe('ok');
+    expect(response.headers['x-yemesek-project']).toBe('yemesek');
     expect(response.body.uptime).toEqual(expect.any(Number));
+    process.env.RUN_WORKER = 'true';
+    try {
+      const workerReady = await request(app.getHttpServer()).get('/ready').expect(200);
+      expect(workerReady.body).toEqual({ status: 'ok', role: 'worker' });
+    } finally {
+      delete process.env.RUN_WORKER;
+    }
+    const apiReady = await request(app.getHttpServer()).get('/ready').expect(200);
+    expect(apiReady.body).toEqual({ status: 'ok', role: 'api' });
     expect(response.body.maintenance).toBeUndefined();
     expect(response.body.mailConfigured).toBeUndefined();
     expect(response.body.minMobileVersion).toBeUndefined();

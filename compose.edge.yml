@@ -6,5 +6,21 @@ networks:
 services:
   api:
     networks: [internal, edge]
+    labels:
+      traefik.enable: ${TRAEFIK_ENABLE:-false}
+      traefik.docker.network: ${EDGE_NETWORK}
+      traefik.http.routers.yemesek-api.rule: Host(`${API_HOST}`)
+      traefik.http.routers.yemesek-api.entrypoints: ${TRAEFIK_ENTRYPOINTS:-websecure}
+      traefik.http.routers.yemesek-api.tls: "true"
+      traefik.http.routers.yemesek-api.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      traefik.http.services.yemesek-api.loadbalancer.server.port: "3001"
   web:
     networks: [internal, edge]
+    labels:
+      traefik.enable: ${TRAEFIK_ENABLE:-false}
+      traefik.docker.network: ${EDGE_NETWORK}
+      traefik.http.routers.yemesek-web.rule: Host(`${WEB_HOST}`)
+      traefik.http.routers.yemesek-web.entrypoints: ${TRAEFIK_ENTRYPOINTS:-websecure}
+      traefik.http.routers.yemesek-web.tls: "true"
+      traefik.http.routers.yemesek-web.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      traefik.http.services.yemesek-web.loadbalancer.server.port: "3000"

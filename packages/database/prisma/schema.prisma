@@ -412,6 +412,7 @@ model MailJob {
   attempts      Int       @default(0)
   nextAttemptAt DateTime  @default(now())
   leaseUntil    DateTime?
+  leaseOwner    String?
   lastError     String?
   expiresAt     DateTime
   createdAt     DateTime  @default(now())
@@ -456,6 +457,8 @@ model CleanupJob {
   status        String    @default("PENDING")
   attempts      Int       @default(0)
   nextAttemptAt DateTime  @default(now())
+  leaseUntil    DateTime?
+  leaseOwner    String?
   lastError     String?
   createdAt     DateTime  @default(now())
 

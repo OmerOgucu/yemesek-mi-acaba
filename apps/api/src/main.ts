@@ -6,7 +6,7 @@ import { initObservability } from './observability';
 async function bootstrap(): Promise<void> {
   await initObservability();
   const config = readConfig();
-  assertLaunchConfig();
+  assertLaunchConfig(process.env, process.env.RUN_WORKER === 'true' ? 'worker' : 'api');
   const app = await createApp();
   await app.listen(config.port);
 }

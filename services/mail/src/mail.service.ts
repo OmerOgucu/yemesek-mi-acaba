@@ -83,15 +83,29 @@ export class MailService {
     if (!config.isProduction) await this.processDue(5);
   }
 
+  /**
+   * Delivery is at-least-once. If the provider accepts the message and the process dies
+   * before the row is marked SENT, a later worker can send it again. There is no
+   * exactly-once proof after the external call.
+   */
   async processDue(limit = 10): Promise<number> {
     const now = new Date();
+    const owner = process.env.WORKER_ID?.trim() || `mail-${process.pid}`;
     await this.prisma.mailJob.updateMany({
       where: { status: 'PENDING', expiresAt: { lte: now } },
       data: { status: 'EXPIRED', lastError: 'expired' },
     });
     await this.prisma.mailJob.updateMany({
-      where: { status: 'SENDING', leaseUntil: { lt: now }, attempts: { lt: 5 } },
-      data: { status: 'PENDING', leaseUntil: null },
+      where: { status: 'SENDING', leaseUntil: { lt: now }, expiresAt: { lte: now } },
+      data: { status: 'EXPIRED', lastError: 'expired', leaseOwner: null, leaseUntil: null },
+    });
+    await this.prisma.mailJob.updateMany({
+      where: { status: 'SENDING', leaseUntil: { lt: now }, attempts: { gte: 5 }, expiresAt: { gt: now } },
+      data: { status: 'FAILED', lastError: 'lease expired', leaseOwner: null, leaseUntil: null },
+    });
+    await this.prisma.mailJob.updateMany({
+      where: { status: 'SENDING', leaseUntil: { lt: now }, attempts: { lt: 5 }, expiresAt: { gt: now } },
+      data: { status: 'PENDING', leaseOwner: null, leaseUntil: null },
     });
     const sentToday = await this.prisma.mailJob.count({
       where: { status: 'SENT', sentAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) } },
@@ -104,35 +118,58 @@ export class MailService {
     });
     let sent = 0;
     for (const job of jobs) {
+      const leaseUntil = new Date(Date.now() + this.leaseMs());
       const lease = await this.prisma.mailJob.updateMany({
         where: { id: job.id, status: 'PENDING' },
-        data: { status: 'SENDING', leaseUntil: new Date(Date.now() + 60_000), attempts: { increment: 1 } },
+        data: { status: 'SENDING', leaseUntil, leaseOwner: owner, attempts: { increment: 1 } },
       });
       if (lease.count !== 1) continue;
       try {
+        const current = await this.prisma.mailJob.findFirst({
+          where: { id: job.id, status: 'SENDING', leaseOwner: owner },
+        });
+        if (!current) continue;
+        if (current.expiresAt.getTime() <= Date.now()) {
+          await this.prisma.mailJob.updateMany({
+            where: { id: job.id, leaseOwner: owner, status: 'SENDING' },
+            data: { status: 'EXPIRED', lastError: 'expired', leaseOwner: null, leaseUntil: null },
+          });
+          continue;
+        }
         const config = readConfig();
         if (config.isProduction && !config.brevoApiKey) throw new Error('brevo missing');
         const provider: MailProvider = config.brevoApiKey ? new BrevoMailProvider(config) : new ConsoleMailProvider();
-        await provider.send({ to: job.toEmail, subject: job.subject, html: job.htmlBody, text: job.textBody });
-        await this.prisma.mailJob.update({
-          where: { id: job.id },
-          data: { status: 'SENT', sentAt: new Date(), leaseUntil: null, lastError: null },
+        await provider.send({ to: current.toEmail, subject: current.subject, html: current.htmlBody, text: current.textBody });
+        const wrote = await this.prisma.mailJob.updateMany({
+          where: { id: job.id, status: 'SENDING', leaseOwner: owner },
+          data: { status: 'SENT', sentAt: new Date(), leaseUntil: null, leaseOwner: null, lastError: null },
         });
-        sent += 1;
+        if (wrote.count === 1) sent += 1;
       } catch {
-        const attempts = job.attempts + 1;
-        await this.prisma.mailJob.update({
-          where: { id: job.id },
+        const fresh = await this.prisma.mailJob.findFirst({
+          where: { id: job.id, leaseOwner: owner, status: 'SENDING' },
+          select: { attempts: true },
+        });
+        if (!fresh) continue;
+        await this.prisma.mailJob.updateMany({
+          where: { id: job.id, leaseOwner: owner, status: 'SENDING' },
           data: {
-            status: attempts >= 5 ? 'FAILED' : 'PENDING',
-            nextAttemptAt: new Date(Date.now() + Math.min(60_000 * 2 ** attempts, 15 * 60_000)),
+            status: fresh.attempts >= 5 ? 'FAILED' : 'PENDING',
+            nextAttemptAt: new Date(Date.now() + Math.min(60_000 * 2 ** fresh.attempts, 15 * 60_000)),
             leaseUntil: null,
+            leaseOwner: null,
             lastError: 'provider error',
           },
         });
       }
     }
     return sent;
+  }
+
+  private leaseMs(): number {
+    const raw = Number(process.env.JOB_LEASE_MS ?? 60_000);
+    if (!Number.isInteger(raw) || raw < 1_000 || raw > 300_000) return 60_000;
+    return raw;
   }
 
   preview(key: string, vars: MailVars): Promise<{ subject: string; html: string; text: string }> {

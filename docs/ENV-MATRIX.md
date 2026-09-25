@@ -4,6 +4,8 @@ Tek dosya: `.env.production.example`. Operatör bunu `.env.production` diye kopy
 
 `NEXT_PUBLIC_*` web derlemesine, `EXPO_PUBLIC_*` EAS derlemesine girer. Bunlara sır yazılmaz. `API_INTERNAL_URL` ve `DATABASE_URL` istemciye kopyalanmaz.
 
+`ops/render-env.mjs` tek dosyayı servis allowlist’ine böler: `ops/state/env/web.env`, `api.env`, `worker.env`, `bootstrap.env`, `migrate.env`, `backup.env`. Web allowlist’inde JWT, Brevo, R2, veritabanı, yedek ve kurulum sırrı yoktur. Bootstrap yalnız `INITIAL_*` ve `DATABASE_URL` alır. Yedek anahtarları yalnız yedek işindedir. Compose’un secret dosyası host ele geçirilince süreç ortamından okunabilir; bu sınır belgelenir, host izolasyonu iddia edilmez. Log, `docker inspect` değeri ve CI artifaktı sır basmaz; smoke yalnız anahtar adlarına bakar.
+
 | Değişken | Kim doldurur | Sır | İstemci | Zorunlu |
 | --- | --- | --- | --- | --- |
 | NODE_ENV | hazır `production` | hayır | hayır | evet |
@@ -36,7 +38,11 @@ Tek dosya: `.env.production.example`. Operatör bunu `.env.production` diye kopy
 | API_BIND_PORT, WEB_BIND_PORT | localhost profili, 127.0.0.1 | hayır | hayır | hayır |
 | BACKUP_PASSPHRASE | operatör, yedekten ayrı sakla | evet | hayır | yedek için |
 | BACKUP_S3_* | operatör, kanıt kovası değil | evet | hayır | yedek için |
-| RESTORE_DATABASE_URL | prova, adında `restore` | evet | hayır | prova |
+| RESTORE_DATABASE_URL | prova; ad alanında `restore` veya `disposable`, ayrı kullanıcı | evet | hayır | prova |
+| BREVO_API_URL | boşsa Brevo; CI posta yakalayıcı | hayır | hayır | hayır |
+| JOB_TICK_MS, JOB_LEASE_MS, DELETE_TIMEOUT_MS | worker zaman aşımı | hayır | hayır | hayır |
+| BACKUP_MAX_AGE_HOURS | yaş kontrolü, varsayılan 26 | hayır | hayır | hayır |
+| ALERT_WEBHOOK_URL | yedek hata bildirimi, gövde sabittir | evet | hayır | hayır |
 | BACKUP_FILE | prova dosyası | hayır | hayır | prova |
 | ANDROID_PACKAGE, ANDROID_SHA256_CERT_FINGERPRINTS | Play imza sertifikası | hayır | kamu dosyası | uygulama linki |
 | APPLE_TEAM_ID, IOS_BUNDLE_ID | Apple hesabı | hayır | kamu dosyası | uygulama linki |

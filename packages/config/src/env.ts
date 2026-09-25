@@ -113,16 +113,29 @@ function httpsOrigin(value: string | undefined, label: string): string {
   return url.origin;
 }
 
+export type LaunchRole = 'api' | 'worker' | 'bootstrap';
+
 /** Production refuses to boot until the operator fills real env values. Dev and test are unchanged. */
-export function assertLaunchConfig(env: LaunchEnv = process.env): void {
+export function assertLaunchConfig(env: LaunchEnv = process.env, role: LaunchRole = 'api'): void {
   if (env.NODE_ENV !== 'production') return;
-  const secret = env.JWT_ACCESS_SECRET?.trim() ?? '';
-  if (secret.length < 32 || PLACEHOLDER_SECRETS.has(secret) || /change-me|fill_me/i.test(secret)) {
-    throw new Error('JWT_ACCESS_SECRET production için en az 32 karakterlik rastgele bir değer olmalı.');
-  }
   const databaseUrl = env.DATABASE_URL?.trim() ?? '';
   if (!databaseUrl.startsWith('postgresql://') && !databaseUrl.startsWith('postgres://')) {
     throw new Error('Production DATABASE_URL SQLite olamaz. Postgres bağlantısı yaz.');
+  }
+  if (role === 'bootstrap') {
+    rejectPlaceholder(env.INITIAL_ADMIN_EMAIL, 'INITIAL_ADMIN_EMAIL');
+    const setup = env.INITIAL_ADMIN_SETUP_SECRET?.trim() ?? '';
+    if (setup.length < 16 || /fill_me|change-me/i.test(setup)) {
+      throw new Error('INITIAL_ADMIN_SETUP_SECRET en az 16 karakter olmalı.');
+    }
+    if (!env.INITIAL_ALLOWED_CITIES?.trim()) {
+      throw new Error('INITIAL_ALLOWED_CITIES boş olamaz. Production bütün şehirleri açmaz.');
+    }
+    return;
+  }
+  const secret = env.JWT_ACCESS_SECRET?.trim() ?? '';
+  if (secret.length < 32 || PLACEHOLDER_SECRETS.has(secret) || /change-me|fill_me/i.test(secret)) {
+    throw new Error('JWT_ACCESS_SECRET production için en az 32 karakterlik rastgele bir değer olmalı.');
   }
   const origins = (env.CORS_ORIGINS ?? '')
     .split(',')
@@ -150,13 +163,5 @@ export function assertLaunchConfig(env: LaunchEnv = process.env): void {
   const hops = Number(env.TRUST_PROXY_HOPS);
   if (!Number.isInteger(hops) || hops < 0 || hops > 5 || env.TRUST_PROXY_HOPS?.trim() === '') {
     throw new Error('TRUST_PROXY_HOPS production için 0 ile 5 arasında yazılmalı.');
-  }
-  rejectPlaceholder(env.INITIAL_ADMIN_EMAIL, 'INITIAL_ADMIN_EMAIL');
-  const setup = env.INITIAL_ADMIN_SETUP_SECRET?.trim() ?? '';
-  if (setup.length < 16 || /fill_me|change-me/i.test(setup)) {
-    throw new Error('INITIAL_ADMIN_SETUP_SECRET en az 16 karakter olmalı.');
-  }
-  if (!env.INITIAL_ALLOWED_CITIES?.trim()) {
-    throw new Error('INITIAL_ALLOWED_CITIES boş olamaz. Production bütün şehirleri açmaz.');
   }
 }

@@ -24,6 +24,10 @@ export async function createApp(): Promise<NestExpressApplication> {
     throw new Error('TRUST_PROXY_HOPS 0 ile 5 arasında bir tam sayı olmalı.');
   }
   app.set('trust proxy', hops);
+  app.use((_req: Request, res: Response, next: () => void) => {
+    res.setHeader('X-Yemesek-Project', 'yemesek');
+    next();
+  });
   app.use('/uploads', (_req: Request, res: Response) => {
     res.sendStatus(404);
   });

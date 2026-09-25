@@ -1,0 +1,8 @@
+[Unit]
+Description=Yemesek encrypted database backup
+
+[Service]
+Type=oneshot
+WorkingDirectory=@ROOT@
+ExecStart=@ROOT@/ops/backup.sh --env-file @ENV@
+Nice=10

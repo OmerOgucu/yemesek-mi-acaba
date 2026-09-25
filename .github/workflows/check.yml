@@ -13,7 +13,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:16
@@ -48,7 +48,24 @@ jobs:
         run: |
           node -e "process.env.APP_ENV='production'; process.env.EXPO_PUBLIC_API_URL='http://localhost:3001'; try { require('./apps/mobile/app.config.js')(); process.exit(1);} catch (e) { if (!String(e.message).includes('https')) process.exit(1); }"
           node -e "process.env.APP_ENV='production'; process.env.EXPO_PUBLIC_API_URL='https://api.yemesekmiacaba.com'; const cfg=require('./apps/mobile/app.config.js')(); if (cfg.expo.android.usesCleartextTraffic) process.exit(1);"
+      - name: Android emulator availability
+        run: sh ops/android-emulator.sh || test $? -eq 2
+      - name: Android JS bundle
+        env:
+          CI: "1"
+          EXPO_NO_TELEMETRY: "1"
+        run: pnpm --filter @yemesek/mobile exec expo export --platform android --output-dir /tmp/yemesek-android
       - name: API image
         run: docker build -f Dockerfile.api -t yemesek-api:ci .
       - name: web image
         run: docker build -f Dockerfile.web --build-arg NEXT_PUBLIC_API_URL=https://api.yemesekmiacaba.com -t yemesek-web:ci .
+
+  runtime:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compose runtime, restart, Playwright, backup
+        run: sh ops/ci/runtime.sh
+

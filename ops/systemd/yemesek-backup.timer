@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Yemesek backup
+
+[Timer]
+OnCalendar=*-*-* 02:30:00 UTC
+Persistent=true
+Unit=yemesek-backup.service
+
+[Install]
+WantedBy=timers.target

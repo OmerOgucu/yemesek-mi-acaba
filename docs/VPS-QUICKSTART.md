@@ -4,11 +4,11 @@ Bu paket mevcut 80/443 sahibine dokunmaz. İkinci reverse proxy veya sertifika y
 
 ## Edge (mevcut Dokploy/Traefik ağı)
 
-`DEPLOY_PROFILE=edge`. `EDGE_NETWORK` var olan ağın adıdır. `API_HOST` ve `WEB_HOST` o ağdaki yönlendiricinin kullanacağı hostlardır. `TRAEFIK_ENABLE=true` yalnız etiket basar; Traefik’i bu compose başlatmaz.
+`DEPLOY_PROFILE=edge`. `EDGE_NETWORK` var olan ağın adıdır. `API_HOST` ve `WEB_HOST` o ağdaki yönlendiricinin kullanacağı hostlardır. `TRAEFIK_ENABLE=true` iken `compose.edge.yml` router etiketlerini basar (`TRAEFIK_ENTRYPOINTS`, `TRAEFIK_CERTRESOLVER`). Traefik’i bu compose başlatmaz ve 80/443 açmaz. Dokploy aynı dış ağa ve bu etiketlere bağlanır.
 
 ## Localhost (mevcut Nginx)
 
-`DEPLOY_PROFILE=localhost`. API `127.0.0.1:3001`, web `127.0.0.1:3000`. Nginx’i sen yönlendirirsin. 80/443 bu dosyada yoktur.
+`DEPLOY_PROFILE=localhost`. API `127.0.0.1:3001`, web `127.0.0.1:3000`. `./ops/render-nginx.sh --env-file .env.production` snippet’i `ops/state/nginx` altına yazar ve `nginx -t` ile doğrular. Hostun `/etc/nginx` dosyasına yazmaz, 80/443 dinlemez. Mevcut siteye eklemeyi operatör yapar.
 
 ## Komutlar
 
@@ -24,19 +24,13 @@ cp .env.production.example .env.production
 ./ops/rollback.sh --env-file .env.production --to <ONAYLI_RELEASE>
 ```
 
-`deploy.sh` kilit alır, imajı bu commit ile etiketler, Postgres hazır olunca migration, sonra bootstrap, sonra API (`RUN_WORKER=false`), worker ve web. Hata kodu sıfırdan farklıdır. `compose down -v` yoktur.
+Hostta zorunlu araçlar: Docker, Docker Compose, `sh`, `git`. Uygulama `node_modules`, host `pnpm`, `aws` ve `psql` gerekmez; bunlar `yemesek-ops` imajındadır. `deploy.sh` kilit alır, imajı bu commit ile etiketler, migration ve bootstrap bitmeden uygulamayı açmaz, `up --wait` ve smoke geçmeden release kaydı yazmaz. Hata kodu sıfırdan farklıdır ve `ops/state/last-failure.txt` yalnız servis durumunu yazar. `compose down -v` yoktur.
 
-İlk yönetici daveti `INITIAL_ADMIN_SETUP_SECRET` özetiyle saklanır. Kurulum:
+`render-env` web kabına JWT, veritabanı, Brevo, R2, yedek ve kurulum sırrını koymaz. API ve worker yedek parolası ile ilk kurulum sırrını almaz. Compose secret dosyası tek host ele geçirilirse süreç ortamından okunur; bu, host kompromisini çözmez.
 
-```sh
-curl -fsS -X POST "$API_URL/auth/admin/setup" \
-  -H 'content-type: application/json' \
-  -d '{"email":"...","setupSecret":"...","password":"...","displayName":"..."}'
-```
+İlk yönetici daveti `INITIAL_ADMIN_SETUP_SECRET` özetiyle saklanır. Tarayıcı yolu `/yonetici-kurulum`. Sır adres çubuğuna yazılmaz. Sonra giriş ve `/iki-adim`. Eski oturum düşer. Yönetim, aynı oturumda TOTP doğrulanmadan açılmaz.
 
-Ardından giriş, `POST /auth/2fa/setup`, `POST /auth/2fa/confirm`. Eski oturum düşer. Yönetim, aynı oturumda TOTP doğrulanmadan açılmaz.
-
-`backup.sh` şifreli dump’ı uzak kovaya koyar. Anahtar dump’ın içinde değildir; kaybolursa dosya açılmaz. Aynı diskteki tek kopya başarı sayılmaz. `restore-test.sh` yalnız adında `restore` veya `disposable` geçen başka bir veritabanına açar. Geri yükleme R2 nesnelerini geri getirmez. `rollback.sh` imaj etiketini geri alır, migration down çalıştırmaz.
+`backup.sh` şifreli dump’ı uzak kovaya koyar ve yerel şifreli kopyayı tutar. Uzak kopya başarısızsa yerel dosyayı silmez. Anahtar dump’ın içinde değildir. `./ops/install-backup-timer.sh --env-file .env.production` birimleri `ops/state` altına yazar; `/etc` yalnız root `--install` ile değişir. `restore-test.sh --backup-id` uzak kimlikten indirir, sha256 bakar, adı `restore` veya `disposable` olan ayrı kullanıcıdaki veritabanına açar. Parola veya sorgu farkı aynı veritabanını güvenli yapmaz. Geri yükleme R2 nesnelerini geri getirmez. `rollback.sh` yalnız kayıtlı şemayla aynı imaja döner, migration down çalıştırmaz.
 
 GitHub koruması uygulanmış sayılmaz. Dosya `.github/rulesets/main.json`. Uygulamak için `GH_TOKEN` ile `./ops/github-protect.sh`. Uygulama sırlarına bu token yazılmaz.
 

@@ -1,14 +1,15 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { PrismaService } from '@yemesek/database';
+import { enqueueCleanup, PrismaService, processCleanupJobs, workerOwner } from '@yemesek/database';
 import { deleteObject, isObjectKey, photoUrlList } from '@yemesek/evidence';
 import { MailService } from '@yemesek/mail';
-
-const TICK_MS = 30_000;
 
 @Injectable()
 export class JobsService implements OnModuleInit, OnModuleDestroy {
   private timer: NodeJS.Timeout | null = null;
-  private running = false;
+  private tickPromise: Promise<void> | null = null;
+  private stopping = false;
+  private lastTickAt = 0;
+  private readonly bootedAt = Date.now();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -17,69 +18,52 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit(): void {
     if (process.env.NODE_ENV === 'test' || process.env.RUN_WORKER === 'false') return;
+    const tickMs = tickInterval();
     this.timer = setInterval(() => {
       void this.tick();
-    }, TICK_MS);
+    }, tickMs);
     this.timer.unref?.();
     void this.tick();
   }
 
-  onModuleDestroy(): void {
+  async onModuleDestroy(): Promise<void> {
+    this.stopping = true;
     if (this.timer) clearInterval(this.timer);
+    if (this.tickPromise) await this.tickPromise;
+  }
+
+  /** Fresh while the timer is running. An empty queue is still a tick. A stuck timer is not. */
+  heartbeatOk(): boolean {
+    if (process.env.RUN_WORKER === 'false' || process.env.NODE_ENV === 'test') return true;
+    if (this.lastTickAt > 0) return Date.now() - this.lastTickAt < tickInterval() * 3;
+    return Date.now() - this.bootedAt < 45_000;
   }
 
   async tick(): Promise<void> {
-    if (this.running) return;
-    this.running = true;
+    if (this.stopping || this.tickPromise) return;
+    this.tickPromise = this.runTick().finally(() => {
+      this.tickPromise = null;
+    });
+    await this.tickPromise;
+  }
+
+  private async runTick(): Promise<void> {
     try {
       await this.mail.processDue(10);
-      await this.cleanupObjects();
+      await processCleanupJobs(this.prisma, (key) => this.removeKey(key), workerOwner());
       await this.purgeDueEvidence();
       await this.dropStaleStaged();
     } catch (error) {
       const message = error instanceof Error ? error.name : 'job';
       console.error(`[jobs] ${message}`);
     } finally {
-      this.running = false;
+      this.lastTickAt = Date.now();
     }
   }
 
-  private async cleanupObjects(): Promise<void> {
-    const now = new Date();
-    const jobs = await this.prisma.cleanupJob.findMany({
-      where: { status: 'PENDING', nextAttemptAt: { lte: now }, attempts: { lt: 8 } },
-      orderBy: { createdAt: 'asc' },
-      take: 20,
-    });
-    for (const job of jobs) {
-      const lease = await this.prisma.cleanupJob.updateMany({
-        where: { id: job.id, status: 'PENDING' },
-        data: { status: 'RUNNING', attempts: { increment: 1 } },
-      });
-      if (lease.count !== 1) continue;
-      try {
-        if (!isObjectKey(job.objectKey)) throw new Error('bad key');
-        await deleteObject(job.objectKey);
-        await this.prisma.cleanupJob.update({
-          where: { id: job.id },
-          data: { status: 'DONE', lastError: null },
-        });
-        await this.prisma.evidenceObject.updateMany({
-          where: { objectKey: job.objectKey },
-          data: { status: 'DELETED', deletedAt: new Date() },
-        });
-      } catch {
-        const attempts = job.attempts + 1;
-        await this.prisma.cleanupJob.update({
-          where: { id: job.id },
-          data: {
-            status: attempts >= 8 ? 'FAILED' : 'PENDING',
-            nextAttemptAt: new Date(Date.now() + Math.min(60_000 * 2 ** attempts, 30 * 60_000)),
-            lastError: 'delete failed',
-          },
-        });
-      }
-    }
+  private async removeKey(key: string): Promise<'deleted' | 'missing'> {
+    if (!isObjectKey(key)) return 'missing';
+    return withTimeout(deleteObject(key), timeoutMs());
   }
 
   private async purgeDueEvidence(): Promise<void> {
@@ -94,14 +78,14 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
       let ok = true;
       for (const key of keys) {
         try {
-          await deleteObject(key);
+          await this.removeKey(key);
           await this.prisma.evidenceObject.updateMany({
             where: { objectKey: key },
             data: { status: 'DELETED', deletedAt: new Date() },
           });
         } catch {
           ok = false;
-          await this.prisma.cleanupJob.create({ data: { objectKey: key } });
+          await enqueueCleanup(this.prisma, key);
         }
       }
       if (ok) {
@@ -121,14 +105,42 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     });
     for (const row of stale) {
       try {
-        if (isObjectKey(row.objectKey)) await deleteObject(row.objectKey);
+        if (isObjectKey(row.objectKey)) await this.removeKey(row.objectKey);
         await this.prisma.evidenceObject.update({
           where: { id: row.id },
           data: { status: 'DELETED', deletedAt: new Date() },
         });
       } catch {
-        await this.prisma.cleanupJob.create({ data: { objectKey: row.objectKey } });
+        await enqueueCleanup(this.prisma, row.objectKey);
       }
     }
   }
+}
+
+function tickInterval(): number {
+  const raw = Number(process.env.JOB_TICK_MS ?? 30_000);
+  if (!Number.isInteger(raw) || raw < 500 || raw > 300_000) return 30_000;
+  return raw;
+}
+
+function timeoutMs(): number {
+  const raw = Number(process.env.DELETE_TIMEOUT_MS ?? 10_000);
+  if (!Number.isInteger(raw) || raw < 500 || raw > 60_000) return 10_000;
+  return raw;
+}
+
+function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    work.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
 }

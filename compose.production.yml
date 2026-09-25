@@ -10,7 +10,7 @@ x-log: &log
 x-api: &api
   image: yemesek-api:${RELEASE_TAG:-local}
   env_file:
-    - ${ENV_FILE:-.env.production}
+    - ops/state/env/api.env
   init: true
   restart: unless-stopped
   depends_on:
@@ -18,6 +18,9 @@ x-api: &api
       condition: service_healthy
   mem_limit: 768m
   cpus: 1.0
+  labels:
+    com.yemesek.project: yemesek
+    com.yemesek.release: ${RELEASE_TAG:-local}
   <<: *log
 
 services:
@@ -35,16 +38,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+      start_period: 10s
     restart: unless-stopped
     mem_limit: 512m
     cpus: 1.0
+    labels:
+      com.yemesek.project: yemesek
+      com.yemesek.release: ${RELEASE_TAG:-local}
     <<: *log
 
   migrate:
     profiles: ["ops"]
     image: yemesek-api:${RELEASE_TAG:-local}
     env_file:
-      - ${ENV_FILE:-.env.production}
+      - ops/state/env/migrate.env
     networks: [internal]
     depends_on:
       postgres:
@@ -52,13 +59,16 @@ services:
     restart: "no"
     user: node
     command: ["pnpm", "--filter", "@yemesek/database", "exec", "prisma", "migrate", "deploy"]
+    labels:
+      com.yemesek.project: yemesek
+      com.yemesek.release: ${RELEASE_TAG:-local}
     <<: *log
 
   bootstrap:
     profiles: ["ops"]
     image: yemesek-api:${RELEASE_TAG:-local}
     env_file:
-      - ${ENV_FILE:-.env.production}
+      - ops/state/env/bootstrap.env
     networks: [internal]
     depends_on:
       postgres:
@@ -66,6 +76,9 @@ services:
     restart: "no"
     user: node
     command: ["pnpm", "--filter", "@yemesek/database", "exec", "tsx", "src/bootstrap-cli.ts"]
+    labels:
+      com.yemesek.project: yemesek
+      com.yemesek.release: ${RELEASE_TAG:-local}
     <<: *log
 
   api:
@@ -75,11 +88,12 @@ services:
     environment:
       NODE_ENV: production
       RUN_WORKER: "false"
-    healthcheck:
+    healthcheck: &ready
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/ready').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 15s
+      interval: 10s
       timeout: 5s
-      retries: 8
+      retries: 12
+      start_period: 25s
 
   api-local:
     <<: *api
@@ -90,42 +104,48 @@ services:
       RUN_WORKER: "false"
     ports:
       - "127.0.0.1:${API_BIND_PORT:-3001}:3001"
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/ready').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 15s
-      timeout: 5s
-      retries: 8
+    healthcheck: *ready
 
   worker:
     <<: *api
     profiles: ["edge", "localhost"]
+    env_file:
+      - ops/state/env/worker.env
     networks: [internal]
     environment:
       NODE_ENV: production
       RUN_WORKER: "true"
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/ready').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 15s
-      timeout: 5s
-      retries: 8
+    healthcheck: *ready
 
   web:
     image: yemesek-web:${RELEASE_TAG:-local}
     profiles: ["edge"]
     env_file:
-      - ${ENV_FILE:-.env.production}
+      - ops/state/env/web.env
     networks: [internal]
     init: true
     restart: unless-stopped
     mem_limit: 512m
     cpus: 1.0
+    environment:
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+    labels:
+      com.yemesek.project: yemesek
+      com.yemesek.release: ${RELEASE_TAG:-local}
+    healthcheck: &webready
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 25s
     <<: *log
 
   web-local:
     image: yemesek-web:${RELEASE_TAG:-local}
     profiles: ["localhost"]
     env_file:
-      - ${ENV_FILE:-.env.production}
+      - ops/state/env/web.env
     networks: [internal]
     ports:
       - "127.0.0.1:${WEB_BIND_PORT:-3000}:3000"
@@ -133,6 +153,13 @@ services:
     restart: unless-stopped
     mem_limit: 512m
     cpus: 1.0
+    environment:
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+    labels:
+      com.yemesek.project: yemesek
+      com.yemesek.release: ${RELEASE_TAG:-local}
+    healthcheck: *webready
     <<: *log
 
 networks:
