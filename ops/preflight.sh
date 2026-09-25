@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 cd "$(dirname "$0")/.."
+# shellcheck disable=SC1091
+. ops/common.sh
 file=""
 live=0
 mail_to=""
@@ -61,7 +63,7 @@ docker run --rm --entrypoint openssl yemesek-ops:local version
 docker run --rm -w /opt/yemesek --entrypoint node yemesek-ops:local -e "require('@aws-sdk/client-s3'); process.stdout.write('ops-image s3 sdk ok\n')"
 
 mkdir -p ops/state/env
-docker run --rm -v "$PWD:/work" -w /work --entrypoint node yemesek-ops:local ops/render-env.mjs "$file" ops/state/env
+docker_as_invoker --rm -v "$PWD:/work" -w /work --entrypoint node yemesek-ops:local ops/render-env.mjs "$file" ops/state/env
 docker run --rm -v "$PWD:/work" -w /work --env-file "$file" --entrypoint node yemesek-ops:local --experimental-strip-types ops/preflight-inner.mjs
 echo "preflight: config ok. Gerçek R2/Brevo ağı yalnız --live ile denenir."
 if [ "$live" -eq 0 ]; then

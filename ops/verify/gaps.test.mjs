@@ -37,6 +37,18 @@ test('localhost smoke targets api-local and edge smoke targets api', () => {
   assert.equal(/listen\s+80\b/.test(edge), false);
 });
 
+test('workspace mode-600 files are written as the invoking user', () => {
+  const helper = read('ops/common.sh');
+  assert.match(helper, /docker run --user "\$\(id -u\):\$\(id -g\)"/);
+  for (const file of ['ops/preflight.sh', 'ops/backup.sh', 'ops/restore-test.sh']) {
+    const text = read(file);
+    assert.match(text, /docker_as_invoker[\s\S]*render-env\.mjs/);
+    assert.equal(/docker run --rm -v "\$PWD:\/work" -w \/work --entrypoint node yemesek-ops:local ops\/render-env\.mjs/.test(text), false);
+  }
+  assert.match(read('ops/backup.sh'), /docker_as_invoker[\s\S]*openssl yemesek-ops:local/);
+  assert.match(read('ops/restore-test.sh'), /docker_as_invoker[\s\S]*enc -d/);
+});
+
 test('runtime proof stays on a clean host and distributed images', () => {
   const text = read('ops/ci/runtime.sh');
   assert.match(text, /host psql present/);

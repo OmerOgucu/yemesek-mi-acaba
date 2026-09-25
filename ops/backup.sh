@@ -44,7 +44,7 @@ if [ -z "$file" ]; then
 fi
 load_env_file "$file"
 build_compose_args
-docker run --rm -v "$PWD:/work" -w /work --entrypoint node yemesek-ops:local ops/render-env.mjs "$file" ops/state/env
+docker_as_invoker --rm -v "$PWD:/work" -w /work --entrypoint node yemesek-ops:local ops/render-env.mjs "$file" ops/state/env
 if [ -z "${BACKUP_PASSPHRASE:-}" ] || printf '%s' "$BACKUP_PASSPHRASE" | grep -Eq 'FILL_ME|CHANGE_ME|change-me'; then
   echo "BACKUP_PASSPHRASE yok. Şifresiz yedek başarı sayılmaz." >&2
   exit 1
@@ -68,7 +68,7 @@ if [ ! -s "$raw" ]; then
   exit 1
 fi
 chmod 600 "$raw"
-docker run --rm -v "$PWD/ops/state/backups:/backups" -e BACKUP_PASSPHRASE --entrypoint openssl yemesek-ops:local \
+docker_as_invoker --rm -v "$PWD/ops/state/backups:/backups" -e BACKUP_PASSPHRASE --entrypoint openssl yemesek-ops:local \
   enc -aes-256-cbc -pbkdf2 -salt -pass env:BACKUP_PASSPHRASE \
   -in "/backups/.${stamp}.raw" -out "/backups/yemesek-${stamp}.dump.enc"
 if [ ! -s "$dump" ]; then

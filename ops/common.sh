@@ -37,3 +37,9 @@ run_ops_node() {
   fi
   docker run --rm -v "$PWD:/work" -w /work --entrypoint node yemesek-ops:local "$@"
 }
+
+# Mode 600 files must stay readable by the operator and by Compose.
+# A root container owns them, and the runner then gets "permission denied".
+docker_as_invoker() {
+  docker run --user "$(id -u):$(id -g)" "$@"
+}

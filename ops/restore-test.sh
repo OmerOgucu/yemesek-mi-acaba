@@ -32,7 +32,7 @@ load_env_file "$file"
 if [ -n "${BACKUP_ID:-}" ] && [ -z "$backup_id" ]; then
   backup_id="$BACKUP_ID"
 fi
-docker run --rm -v "$PWD:/work" -w /work --entrypoint node yemesek-ops:local ops/render-env.mjs "$file" ops/state/env
+docker_as_invoker --rm -v "$PWD:/work" -w /work --entrypoint node yemesek-ops:local ops/render-env.mjs "$file" ops/state/env
 docker run --rm -v "$PWD:/work" -w /work --env-file "$file" --entrypoint node yemesek-ops:local ops/restore-check.mjs
 
 if [ -n "$backup_id" ]; then
@@ -47,7 +47,7 @@ mkdir -p ops/state/restore
 src="${BACKUP_FILE:-}"
 prefix="${BACKUP_S3_PREFIX:-yemesek}"
 fetch_remote() {
-  docker run --rm \
+  docker_as_invoker --rm \
     -v "$PWD/ops/state/restore:/backups" \
     -v "$PWD/ops/backup-remote.mjs:/opt/yemesek/ops/backup-remote.mjs:ro" \
     --network yemesek_internal \
@@ -76,7 +76,7 @@ fi
 plain="ops/state/restore/plain.dump"
 rm -f "$plain"
 trap 'rm -f "$plain"' EXIT
-if ! docker run --rm -v "$PWD:/work" -w /work -e BACKUP_PASSPHRASE --entrypoint openssl yemesek-ops:local \
+if ! docker_as_invoker --rm -v "$PWD:/work" -w /work -e BACKUP_PASSPHRASE --entrypoint openssl yemesek-ops:local \
   enc -d -aes-256-cbc -pbkdf2 -pass env:BACKUP_PASSPHRASE -in "$src" -out "$plain"; then
   echo "şifre çözülemedi" >&2
   exit 1
