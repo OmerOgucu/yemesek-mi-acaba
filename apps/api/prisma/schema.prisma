@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Restaurant {
+  id          String   @id @default(cuid())
+  name        String
+  city        String
+  district    String?
+  addressHint String?
+  cuisine     String?
+  createdAt   DateTime @default(now())
+  reports     Report[]
+
+  @@index([city])
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category     ReportCategory
+  severity     Int
+  title        String
+  body         String
+  nickname     String       @default("anonim")
+  createdAt    DateTime     @default(now())
+  votes        Vote[]
+
+  @@index([restaurantId, createdAt])
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  reportId  String
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  voterKey  String
+  createdAt DateTime @default(now())
+
+  @@unique([reportId, voterKey])
+  @@index([reportId])
+}
+
+enum ReportCategory {
+  HYGIENE
+  FOOD_POISONING
+  SCAM_PRICING
+  RUDE_SERVICE
+  WRONG_OR_COLD
+  FALSE_ADS
+}
