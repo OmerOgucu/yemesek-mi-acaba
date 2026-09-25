@@ -7,7 +7,8 @@ import { EvidenceService } from '@yemesek/evidence';
 import { TEMPLATE_DEFAULTS, TEMPLATE_KEYS, isTemplateKey, MailService } from '@yemesek/mail';
 import { ModerationService } from '@yemesek/moderation';
 import { SettingsService } from '@yemesek/settings';
-import { contributionScore, normalizeCity } from '@yemesek/shared';
+import { findOrCreateLocation } from '@yemesek/restaurants';
+import { contributionScore, placeKey } from '@yemesek/shared';
 import { GrantBadgeDto, UpdateRestaurantDto, UpdateTemplateDto, UpdateUserDto, UpsertBadgeDto } from './dto/admin.dto';
 
 @Injectable()
@@ -161,15 +162,26 @@ export class AdminService {
       { value: dto.cuisine },
     ]);
     if (issues.length) throw new BadRequestException({ message: issues });
-    const city = dto.city ? normalizeCity(dto.city) : null;
-    if (city && city.city.length < 2) throw new BadRequestException('Şehir en az 2 karakter olmalı.');
+    const nextCity = dto.city ?? current.city;
+    const nextDistrict = dto.district !== undefined ? dto.district : current.district;
+    if (!nextDistrict || !nextDistrict.trim()) {
+      throw new BadRequestException('İlçe zorunlu.');
+    }
+    let location;
+    try {
+      location = await findOrCreateLocation(this.prisma, nextCity, nextDistrict);
+    } catch (error) {
+      throw new BadRequestException(error instanceof Error ? error.message : 'Konum kaydedilemedi.');
+    }
     const updated = await this.prisma.restaurant.update({
       where: { id },
       data: {
         name: dto.name ?? current.name,
-        city: city?.city ?? current.city,
-        cityKey: city?.cityKey ?? current.cityKey,
-        district: dto.district !== undefined ? dto.district || null : current.district,
+        city: location.city,
+        cityKey: location.cityKey,
+        cityId: location.cityId,
+        district: location.district,
+        districtId: location.districtId,
         cuisine: dto.cuisine !== undefined ? dto.cuisine || null : current.cuisine,
         addressHint: dto.addressHint !== undefined ? dto.addressHint || null : current.addressHint,
         hidden: dto.hidden ?? current.hidden,
@@ -374,6 +386,100 @@ export class AdminService {
 
   listSettings() {
     return this.settings.publicList();
+  }
+
+  async locations() {
+    const cities = await this.prisma.city.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        _count: { select: { restaurants: true } },
+        districts: {
+          orderBy: { name: 'asc' },
+          include: { _count: { select: { restaurants: true } } },
+        },
+      },
+    });
+    return cities.map((city) => ({
+      id: city.id,
+      name: city.name,
+      venueCount: city._count.restaurants,
+      districts: city.districts.map((district) => ({
+        id: district.id,
+        name: district.name,
+        venueCount: district._count.restaurants,
+      })),
+    }));
+  }
+
+  async renameCity(id: string, name: string) {
+    const current = await this.prisma.city.findUnique({ where: { id } });
+    if (!current) throw new NotFoundException('Şehir bulunamadı.');
+    const next = placeKey(name);
+    if (next.name.length < 2) throw new BadRequestException('Şehir en az 2 karakter olmalı.');
+    const clash = await this.prisma.city.findUnique({ where: { key: next.key } });
+    if (clash && clash.id !== id) {
+      throw new BadRequestException('Bu şehir zaten var. Konumlar ekranından birleştir.');
+    }
+    await this.prisma.city.update({ where: { id }, data: { name: next.name, key: next.key } });
+    await this.prisma.restaurant.updateMany({
+      where: { cityId: id },
+      data: { city: next.name, cityKey: next.key },
+    });
+    return { id, name: next.name };
+  }
+
+  async renameDistrict(id: string, name: string) {
+    const current = await this.prisma.district.findUnique({ where: { id } });
+    if (!current) throw new NotFoundException('İlçe bulunamadı.');
+    const next = placeKey(name);
+    if (next.name.length < 2) throw new BadRequestException('İlçe en az 2 karakter olmalı.');
+    const clash = await this.prisma.district.findUnique({
+      where: { cityId_key: { cityId: current.cityId, key: next.key } },
+    });
+    if (clash && clash.id !== id) {
+      throw new BadRequestException('Bu ilçe bu şehirde zaten var.');
+    }
+    await this.prisma.district.update({ where: { id }, data: { name: next.name, key: next.key } });
+    await this.prisma.restaurant.updateMany({
+      where: { districtId: id },
+      data: { district: next.name },
+    });
+    return { id, name: next.name };
+  }
+
+  async mergeCities(sourceId: string, intoCityId: string) {
+    if (sourceId === intoCityId) throw new BadRequestException('Şehir kendisiyle birleştirilemez.');
+    const source = await this.prisma.city.findUnique({ where: { id: sourceId }, include: { districts: true } });
+    const target = await this.prisma.city.findUnique({ where: { id: intoCityId }, include: { districts: true } });
+    if (!source || !target) throw new NotFoundException('Şehir bulunamadı.');
+    for (const district of source.districts) {
+      const existing = target.districts.find((item) => item.key === district.key);
+      if (existing) {
+        await this.prisma.restaurant.updateMany({
+          where: { districtId: district.id },
+          data: {
+            cityId: target.id,
+            city: target.name,
+            cityKey: target.key,
+            districtId: existing.id,
+            district: existing.name,
+          },
+        });
+        await this.prisma.district.delete({ where: { id: district.id } });
+      } else {
+        await this.prisma.district.update({ where: { id: district.id }, data: { cityId: target.id } });
+        await this.prisma.restaurant.updateMany({
+          where: { districtId: district.id },
+          data: { cityId: target.id, city: target.name, cityKey: target.key },
+        });
+      }
+    }
+    await this.prisma.restaurant.updateMany({
+      where: { cityId: source.id },
+      data: { cityId: target.id, city: target.name, cityKey: target.key },
+    });
+    await this.prisma.city.delete({ where: { id: source.id } });
+    return { ok: true, intoCityId: target.id };
   }
 
   setSetting(key: string, value: string) {

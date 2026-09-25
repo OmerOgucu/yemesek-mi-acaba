@@ -42,7 +42,7 @@ export function RestaurantForm() {
       const created = await postJson<{ id: string }>('/restaurants', {
         name: form.name,
         city: form.city,
-        district: form.district || undefined,
+        district: form.district,
         addressHint: form.addressHint || undefined,
         cuisine: form.cuisine || undefined,
       }, true);
@@ -117,13 +117,16 @@ export function RestaurantForm() {
           />
         </label>
         <label className="block text-sm font-medium" htmlFor="district">
-          İlçe <span className="font-normal text-muted">(isteğe bağlı)</span>
+          İlçe
           <input
             id="district"
             className="field mt-1"
             value={form.district}
             onChange={(event) => update('district', event.target.value)}
+            placeholder="İlçe adı"
+            minLength={2}
             maxLength={60}
+            required
           />
         </label>
       </div>

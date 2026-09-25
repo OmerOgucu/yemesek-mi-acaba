@@ -15,22 +15,32 @@ type Item = {
   reportCount: number;
 };
 
+type Location = { city: string; districts: string[] };
+
 export default function ListScreen() {
   const router = useRouter();
   const { setRestaurantId } = useSelection();
   const [items, setItems] = useState<Item[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [city, setCity] = useState('');
+  const [district, setDistrict] = useState('');
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     setError('');
     try {
-      const data = await getJson<{ items: Item[] }>('/restaurants');
+      const params = new URLSearchParams();
+      if (city) params.set('city', city);
+      if (district) params.set('district', district);
+      const query = params.toString();
+      const data = await getJson<{ items: Item[]; locations: Location[] }>(`/restaurants${query ? `?${query}` : ''}`);
       setItems(data.items);
+      setLocations(data.locations);
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Liste alınamadı.');
     }
-  }, []);
+  }, [city, district]);
 
   useFocusEffect(
     useCallback(() => {
@@ -60,6 +70,42 @@ export default function ListScreen() {
           <Pressable style={styles.add} onPress={() => router.push('/mekan-ekle')}>
             <Text style={styles.addText}>Mekan ekle</Text>
           </Pressable>
+          <View style={styles.filters}>
+            <Pressable
+              style={city ? styles.chip : styles.chipOn}
+              onPress={() => {
+                setCity('');
+                setDistrict('');
+              }}
+            >
+              <Text style={city ? styles.chipText : styles.chipOnText}>Tüm şehirler</Text>
+            </Pressable>
+            {locations.map((location) => (
+              <Pressable
+                key={location.city}
+                style={city === location.city ? styles.chipOn : styles.chip}
+                onPress={() => {
+                  setCity(location.city);
+                  setDistrict('');
+                }}
+              >
+                <Text style={city === location.city ? styles.chipOnText : styles.chipText}>{location.city}</Text>
+              </Pressable>
+            ))}
+          </View>
+          {city ? (
+            <View style={styles.filters}>
+              {(locations.find((location) => location.city === city)?.districts ?? []).map((name) => (
+                <Pressable
+                  key={name}
+                  style={district === name ? styles.chipOn : styles.chip}
+                  onPress={() => setDistrict(district === name ? '' : name)}
+                >
+                  <Text style={district === name ? styles.chipOnText : styles.chipText}>{name}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
         </View>
       }
       renderItem={({ item, index }) => (
@@ -95,6 +141,11 @@ const styles = StyleSheet.create({
   error: { color: colors.chili, marginTop: 8 },
   add: { marginTop: 12, alignSelf: 'flex-start', backgroundColor: colors.chili, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10 },
   addText: { color: colors.card, fontWeight: '700' },
+  filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+  chip: { borderWidth: 1, borderColor: colors.line, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  chipOn: { backgroundColor: colors.chili, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  chipText: { color: colors.ink, fontSize: 12 },
+  chipOnText: { color: colors.card, fontSize: 12 },
   card: {
     flexDirection: 'row',
     gap: 12,

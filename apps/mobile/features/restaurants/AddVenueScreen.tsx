@@ -41,7 +41,11 @@ export default function AddVenueScreen() {
   async function submit() {
     setError('');
     try {
-      await postJson('/restaurants', { name, city, district: district || undefined }, true);
+      if (city.trim().length < 2 || district.trim().length < 2) {
+        setError('Şehir ve ilçe zorunlu.');
+        return;
+      }
+      await postJson('/restaurants', { name, city, district }, true);
       router.replace('/');
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Mekan eklenemedi.');
@@ -51,10 +55,10 @@ export default function AddVenueScreen() {
   return (
     <View style={styles.page}>
       <Text style={styles.title}>Mekan ekle</Text>
-      <Text style={styles.hint}>Şehir, yazdığın haliyle listelere düşer. Sabit şehir listesi yok.</Text>
+      <Text style={styles.hint}>Şehir ve ilçe zorunlu. Aynı ikili yeniden yazılırsa mevcut konuma bağlanır.</Text>
       <TextInput style={styles.input} placeholder="Mekan adı" value={name} onChangeText={setName} />
       <TextInput style={styles.input} placeholder="Şehir" value={city} onChangeText={setCity} />
-      <TextInput style={styles.input} placeholder="İlçe (isteğe bağlı)" value={district} onChangeText={setDistrict} />
+      <TextInput style={styles.input} placeholder="İlçe" value={district} onChangeText={setDistrict} />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Pressable style={styles.primary} onPress={() => void submit()}>
         <Text style={styles.primaryText}>Kaydet</Text>

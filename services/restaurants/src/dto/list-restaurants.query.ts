@@ -19,4 +19,10 @@ export class ListRestaurantsQuery {
   @IsString({ message: 'Şehir metin olmalı.' })
   @MaxLength(60, { message: 'Şehir en fazla 60 karakter olmalı.' })
   city?: string;
+
+  @IsOptional()
+  @Transform(emptyToUndefined)
+  @IsString({ message: 'İlçe metin olmalı.' })
+  @MaxLength(60, { message: 'İlçe en fazla 60 karakter olmalı.' })
+  district?: string;
 }

@@ -1,6 +1,6 @@
 # Yemesek mi acaba?
 
-Kötü restoran deneyimlerini toplayan kara liste. Örnek veri belirli bir şehre kilitli değildir; şehir, mekan eklerken yazılan addan çıkar. Övgü değil, şikayet sıralanır: yüksek **kötülük skoru** daha kötü demektir.
+Kötü restoran deneyimlerini toplayan kara liste. Konum, mekan eklerken yazılan şehir ve ilçeden çıkar; ilk yazım kalıcıdır. Övgü değil, şikayet sıralanır: yüksek **kötülük skoru** daha kötü demektir.
 
 Şikayetler kullanıcı metnidir. Resmi tespit, laboratuvar sonucu veya mahkeme kararı değildir. Telefon, tam adres ve kimlik yazılmaz. Liste herkese açıktır. Giriş yapılabilir; mekan eklemek, şikayet ve yararlı oy e-posta doğrulaması ister. Şikayet ancak en az bir fotoğraf ve fiş/fatura görseliyle açılır.
 
@@ -113,7 +113,9 @@ pnpm build
 | GET | `/auth/dev/verification` | Yalnızca geliştirme, Brevo anahtarı yokken |
 | GET | `/admin/*` | Rol `ADMIN` |
 
-Şehir filtresi beyaz liste kullanmaz. Aynı şehir farklı yazılırsa (`Ankara` ve `ankara`) ilk kaydın yazımı listede kalır, gruplama kırpılmış ve küçük harfe indirgenmiş anahtarla yapılır.
+Şehir ve ilçe ikisi de zorunludur. Eşleşme: boşluklar kırpılır, art arda boşluk teke iner, Türkçe küçük harfe katlanır (`toLocaleLowerCase('tr-TR')`). Aynı anahtara düşen sonraki mekan yeni şehir veya ilçe açmaz; ilk kaydın yazımına bağlanır. Örnek: `Ankara` / `Çankaya` ile ` ankara ` / `çankaya` tek konumdur. Filtre bu tablodan şehir → ilçe listesi döner.
+
+Yönetim paneli ayrı bir mobil veritabanı değildir. Ayar, rozet, inceleme, e-posta şablonu ve mekan veya şikayet gizleme aynı API’ye yazılır. Web, Expo iOS ve Android aynı veriyi okur. Mobilde ayrı bir yönetim ekranı yoktur.
 
 Katkı puanı: şikayet × 10, alınan yararlı oy × 3, eklenen mekan × 8, verilen yararlı oy × 1. Rozetler bu sayaçların eşiğine göre otomatik verilir. Elle verilen veya geri alınan rozet `MANUAL` kalır ve otomatik hesap onu bozmaz.
 

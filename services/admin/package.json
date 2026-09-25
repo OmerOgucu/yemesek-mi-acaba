@@ -17,6 +17,7 @@
     "@yemesek/evidence": "workspace:*",
     "@yemesek/mail": "workspace:*",
     "@yemesek/moderation": "workspace:*",
+    "@yemesek/restaurants": "workspace:*",
     "@yemesek/settings": "workspace:*",
     "@yemesek/shared": "workspace:*",
     "class-transformer": "^0.5.1",

@@ -6,7 +6,9 @@ import {
   AdminReportQuery,
   AdminUserQuery,
   GrantBadgeDto,
+  MergeCityDto,
   ModerateReportDto,
+  RenameLocationDto,
   PreviewTemplateDto,
   UpdateRestaurantDto,
   UpdateSettingDto,
@@ -114,6 +116,26 @@ export class AdminController {
   @Post('email-templates/:key/preview')
   preview(@Param('key') key: string, @Body() dto: PreviewTemplateDto) {
     return this.admin.previewTemplate(key, dto);
+  }
+
+  @Get('locations')
+  locations() {
+    return this.admin.locations();
+  }
+
+  @Patch('locations/cities/:id')
+  renameCity(@Param('id') id: string, @Body() dto: RenameLocationDto) {
+    return this.admin.renameCity(id, dto.name);
+  }
+
+  @Post('locations/cities/:id/merge')
+  mergeCity(@Param('id') id: string, @Body() dto: MergeCityDto) {
+    return this.admin.mergeCities(id, dto.intoCityId);
+  }
+
+  @Patch('locations/districts/:id')
+  renameDistrict(@Param('id') id: string, @Body() dto: RenameLocationDto) {
+    return this.admin.renameDistrict(id, dto.name);
   }
 
   @Get('settings')

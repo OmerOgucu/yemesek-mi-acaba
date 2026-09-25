@@ -33,10 +33,12 @@ async function readError(response: Response): Promise<ApiError> {
 export async function getRestaurants(params: {
   q?: string;
   city?: string;
+  district?: string;
 }): Promise<RestaurantListResponse> {
   const url = new URL('/restaurants', apiBaseUrl());
   if (params.q) url.searchParams.set('q', params.q);
   if (params.city) url.searchParams.set('city', params.city);
+  if (params.district) url.searchParams.set('district', params.district);
   const response = await fetch(url, { cache: 'no-store' });
   if (!response.ok) throw await readError(response);
   return (await response.json()) as RestaurantListResponse;

@@ -7,6 +7,7 @@ type Place = {
   id: string;
   name: string;
   city: string;
+  district: string | null;
   hidden: boolean;
   reportCount: number;
 };
@@ -31,7 +32,8 @@ export function PlacesPanel() {
         {rows.map((place) => (
           <li key={place.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-card px-3 py-2 text-sm">
             <span>
-              {place.name} · {place.city} · {place.reportCount} şikayet {place.hidden ? '· gizli' : ''}
+              {place.name} · {place.city}
+              {place.district ? ` / ${place.district}` : ''} · {place.reportCount} şikayet {place.hidden ? '· gizli' : ''}
             </span>
             <span className="flex gap-2">
               <button

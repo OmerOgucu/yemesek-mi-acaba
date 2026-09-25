@@ -25,6 +25,8 @@ describe('Yemesek API', () => {
     await prisma.report.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.restaurant.deleteMany();
+    await prisma.district.deleteMany();
+    await prisma.city.deleteMany();
     await prisma.user.deleteMany();
     await prisma.badge.deleteMany();
     await prisma.emailTemplate.deleteMany();
@@ -265,14 +267,14 @@ describe('Yemesek API', () => {
     const extra = await request(app.getHttpServer())
       .post('/restaurants')
       .set('Authorization', `Bearer ${author.accessToken}`)
-      .send({ name: 'Yeni Yer', city: 'Ankara', ownerPhone: 'gizli' })
+      .send({ name: 'Yeni Yer', city: 'Ankara', district: 'Merkez', ownerPhone: 'gizli' })
       .expect(400);
     expect(extra.body.details.some((line: string) => line.includes('ownerPhone'))).toBe(true);
 
     await request(app.getHttpServer())
       .post('/restaurants')
       .set('Authorization', `Bearer ${author.accessToken}`)
-      .send({ name: 'Adres Kaçağı', city: 'Ankara', addressHint: 'Moda Cad. No: 12' })
+      .send({ name: 'Adres Kaçağı', city: 'Ankara', district: 'Merkez', addressHint: 'Moda Cad. No: 12' })
       .expect(400);
 
     await request(app.getHttpServer()).get('/restaurants/no-such-id').expect(404);

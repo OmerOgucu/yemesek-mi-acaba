@@ -1,4 +1,4 @@
-export { normalizeCity, foldTr } from './city';
+export { foldTr, normalizeCity, placeKey } from './city';
 export { contributionScore, type ContributionCounts } from './contribution';
 export { ApiErrorMessage } from './errors';
 export { MemoryRateLimiter } from './memory-rate-limiter';

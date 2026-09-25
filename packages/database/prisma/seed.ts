@@ -2,6 +2,7 @@ import { PrismaClient, type BadgeMetric } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import { syncUserBadges } from '../../../services/badges/src/sync-user-badges';
+import { findOrCreateLocation } from '../../../services/restaurants/src/location';
 import { writeSeedPlaceholders } from '../../../services/evidence/src/evidence-files';
 import { SEED_RESTAURANTS } from './seed-data';
 
@@ -9,10 +10,6 @@ export const DEMO_EMAIL = 'demo@yemesek.local';
 export const DEMO_PASSWORD = 'Demo1234!';
 export const ADMIN_EMAIL = 'admin@yemesek.local';
 export const ADMIN_PASSWORD = 'Admin1234!';
-
-function cityKey(city: string): string {
-  return city.trim().replace(/\s+/g, ' ').toLocaleLowerCase('tr-TR');
-}
 
 const BADGES: { slug: string; name: string; description: string; icon: string; metric: BadgeMetric; threshold: number; sortOrder: number }[] = [
   { slug: 'ilk-fis', name: 'İlk fiş', description: 'İlk şikayetini bıraktı.', icon: '🧾', metric: 'REPORTS_FILED', threshold: 1, sortOrder: 1 },
@@ -62,6 +59,8 @@ async function main(): Promise<void> {
   await prisma.report.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.restaurant.deleteMany();
+  await prisma.district.deleteMany();
+  await prisma.city.deleteMany();
   await prisma.user.deleteMany();
 
   const demo = await prisma.user.create({
@@ -110,12 +109,15 @@ async function main(): Promise<void> {
   const evidence = writeSeedPlaceholders();
 
   for (const restaurant of SEED_RESTAURANTS) {
+    const location = await findOrCreateLocation(prisma, restaurant.city, restaurant.district);
     await prisma.restaurant.create({
       data: {
         name: restaurant.name,
-        city: restaurant.city,
-        cityKey: cityKey(restaurant.city),
-        district: restaurant.district,
+        city: location.city,
+        cityKey: location.cityKey,
+        cityId: location.cityId,
+        district: location.district,
+        districtId: location.districtId,
         addressHint: restaurant.addressHint,
         cuisine: restaurant.cuisine,
         createdById: demo.id,

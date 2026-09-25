@@ -23,6 +23,7 @@ export type RestaurantListResponse = {
   items: RestaurantSummary[];
   total: number;
   cities: string[];
+  locations: { city: string; districts: string[] }[];
 };
 
 export type ReportView = {

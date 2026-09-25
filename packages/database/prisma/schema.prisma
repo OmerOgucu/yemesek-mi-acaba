@@ -39,21 +39,49 @@ model RefreshToken {
   @@index([userId])
 }
 
-model Restaurant {
-  id          String   @id @default(cuid())
+model City {
+  id          String       @id @default(cuid())
   name        String
-  city        String
-  cityKey     String
-  district    String?
-  addressHint String?
-  cuisine     String?
-  hidden      Boolean  @default(false)
-  createdById String?
-  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now())
-  reports     Report[]
+  key         String       @unique
+  createdAt   DateTime     @default(now())
+  districts   District[]
+  restaurants Restaurant[]
+}
+
+model District {
+  id          String       @id @default(cuid())
+  cityId      String
+  city        City         @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  name        String
+  key         String
+  createdAt   DateTime     @default(now())
+  restaurants Restaurant[]
+
+  @@unique([cityId, key])
+  @@index([cityId])
+}
+
+model Restaurant {
+  id            String    @id @default(cuid())
+  name          String
+  city          String
+  cityKey       String
+  cityId        String?
+  cityPlace     City?     @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  district      String?
+  districtId    String?
+  districtPlace District? @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  addressHint   String?
+  cuisine       String?
+  hidden        Boolean   @default(false)
+  createdById   String?
+  createdBy     User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  reports       Report[]
 
   @@index([cityKey])
+  @@index([cityId])
+  @@index([districtId])
   @@index([createdById])
 }
 

@@ -10,6 +10,7 @@ const LINKS = [
   ['/admin/rozetler', 'Rozetler'],
   ['/admin/moderasyon', 'İnceleme'],
   ['/admin/mekanlar', 'Mekanlar'],
+  ['/admin/konumlar', 'Konumlar'],
   ['/admin/eposta', 'E-posta'],
   ['/admin/ayarlar', 'Ayarlar'],
 ];

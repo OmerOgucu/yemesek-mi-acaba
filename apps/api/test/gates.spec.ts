@@ -26,6 +26,8 @@ describe('gates, mail, cities, badges, admin', () => {
     await prisma.report.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.restaurant.deleteMany();
+    await prisma.district.deleteMany();
+    await prisma.city.deleteMany();
     await prisma.user.deleteMany();
     await prisma.badge.deleteMany();
     await prisma.emailTemplate.deleteMany();
@@ -59,7 +61,7 @@ describe('gates, mail, cities, badges, admin', () => {
   it('blocks anonymous and unverified venue creation, then accepts a verified user', async () => {
     await request(app.getHttpServer())
       .post('/restaurants')
-      .send({ name: 'Kapısız', city: 'Ankara' })
+      .send({ name: 'Kapısız', city: 'Ankara', district: 'Çankaya' })
       .expect(401);
 
     const fresh = await registerRaw('misafir@example.com');
@@ -67,14 +69,21 @@ describe('gates, mail, cities, badges, admin', () => {
     await request(app.getHttpServer())
       .post('/restaurants')
       .set('Authorization', `Bearer ${fresh.accessToken}`)
-      .send({ name: 'Kapısız', city: 'Ankara' })
+      .send({ name: 'Kapısız', city: 'Ankara', district: 'Çankaya' })
       .expect(403);
 
     await verify('misafir@example.com', fresh.accessToken);
-    const created = await request(app.getHttpServer())
+    const missingDistrict = await request(app.getHttpServer())
       .post('/restaurants')
       .set('Authorization', `Bearer ${fresh.accessToken}`)
       .send({ name: 'Kapısız', city: 'Ankara' })
+      .expect(400);
+    expect(JSON.stringify(missingDistrict.body)).toContain('İlçe');
+
+    const created = await request(app.getHttpServer())
+      .post('/restaurants')
+      .set('Authorization', `Bearer ${fresh.accessToken}`)
+      .send({ name: 'Kapısız', city: 'Ankara', district: 'Çankaya' })
       .expect(201);
     expect(created.body.city).toBe('Ankara');
   });
@@ -143,20 +152,34 @@ describe('gates, mail, cities, badges, admin', () => {
   it('groups cities by normalized spelling and does not require a whitelist', async () => {
     const user = await registerRaw('sehir@example.com', 'Şehir');
     await verify('sehir@example.com', user.accessToken);
-    const send = (city: string, name: string) =>
+    const send = (city: string, district: string, name: string) =>
       request(app.getHttpServer())
         .post('/restaurants')
         .set('Authorization', `Bearer ${user.accessToken}`)
-        .send({ name, city })
+        .send({ name, city, district })
         .expect(201);
 
-    await send('Ankara', 'Birinci');
-    await send(' ankara ', 'İkinci');
-    await send('İzmir', 'Üçüncü');
+    const first = await send('Ankara', 'Çankaya', 'Birinci');
+    const second = await send(' ankara ', '  çankaya ', 'İkinci');
+    await send('İzmir', 'Konak', 'Üçüncü');
+    expect(second.body.city).toBe('Ankara');
+    expect(second.body.district).toBe('Çankaya');
+    expect(second.body.city).toBe(first.body.city);
+
+    const prisma = app.get(PrismaService);
+    expect(await prisma.city.count()).toBe(2);
+    expect(await prisma.district.count()).toBe(2);
 
     const list = await request(app.getHttpServer()).get('/restaurants').expect(200);
     expect(list.body.cities).toEqual(['Ankara', 'İzmir']);
-    const filtered = await request(app.getHttpServer()).get('/restaurants').query({ city: 'ANKARA' }).expect(200);
+    expect(list.body.locations).toEqual([
+      { city: 'Ankara', districts: ['Çankaya'] },
+      { city: 'İzmir', districts: ['Konak'] },
+    ]);
+    const filtered = await request(app.getHttpServer())
+      .get('/restaurants')
+      .query({ city: 'ANKARA', district: 'ÇANKAYA' })
+      .expect(200);
     expect(filtered.body.items).toHaveLength(2);
   });
 
@@ -179,7 +202,7 @@ describe('gates, mail, cities, badges, admin', () => {
     const venue = await request(app.getHttpServer())
       .post('/restaurants')
       .set('Authorization', `Bearer ${author.accessToken}`)
-      .send({ name: 'Rozet Lokantası', city: 'Bursa' })
+      .send({ name: 'Rozet Lokantası', city: 'Bursa', district: 'Nilüfer' })
       .expect(201);
 
     const before = await request(app.getHttpServer())
@@ -304,7 +327,7 @@ describe('gates, mail, cities, badges, admin', () => {
     const venue = await request(app.getHttpServer())
       .post('/restaurants')
       .set('Authorization', `Bearer ${user.accessToken}`)
-      .send({ name: 'Kanıt Lokantası', city: 'Eskişehir' })
+      .send({ name: 'Kanıt Lokantası', city: 'Eskişehir', district: 'Odunpazarı' })
       .expect(201);
     const missing = await request(app.getHttpServer())
       .post(`/restaurants/${venue.body.id}/reports`)

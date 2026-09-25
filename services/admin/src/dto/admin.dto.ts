@@ -130,6 +130,20 @@ export class GrantBadgeDto {
   badgeId!: string;
 }
 
+export class RenameLocationDto {
+  @IsString()
+  @MinLength(2)
+  @MaxLength(60)
+  name!: string;
+}
+
+export class MergeCityDto {
+  @IsString()
+  @MinLength(8)
+  @MaxLength(40)
+  intoCityId!: string;
+}
+
 export class UpdateSettingDto {
   @IsString()
   @MinLength(1)

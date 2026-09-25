@@ -1,17 +1,18 @@
-import Link from 'next/link';
 import type { RestaurantListResponse } from '@/lib/types/restaurant';
+import { LocationFilter } from '../LocationFilter/LocationFilter';
 import { RestaurantCard } from './RestaurantCard';
 
 export function Leaderboard({
   data,
   q,
   city,
+  district,
 }: {
   data: RestaurantListResponse;
   q?: string;
   city?: string;
+  district?: string;
 }) {
-  const filtering = Boolean(q || city);
   return (
     <div>
       <p className="text-[11px] tracking-[0.22em] text-chili uppercase">Anti-menü</p>
@@ -23,38 +24,7 @@ export function Leaderboard({
         soğuk tabak ve yanıltıcı reklam en kötüden başlar.
       </p>
 
-      <form action="/" className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label className="sr-only" htmlFor="city">
-          Şehir
-        </label>
-        <select id="city" name="city" defaultValue={city ?? ''} className="field sm:max-w-52">
-          <option value="">Tüm şehirler</option>
-          {data.cities.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-        <label className="sr-only" htmlFor="q">
-          Ara
-        </label>
-        <input
-          id="q"
-          name="q"
-          defaultValue={q ?? ''}
-          placeholder="Mekan, mutfak, semt"
-          maxLength={60}
-          className="field"
-        />
-        <button className="btn btn-primary" type="submit">
-          Süz
-        </button>
-        {filtering ? (
-          <Link href="/" className="text-sm underline decoration-chili underline-offset-4">
-            Süzgeci temizle
-          </Link>
-        ) : null}
-      </form>
+      <LocationFilter locations={data.locations ?? []} q={q} city={city} district={district} />
 
       {data.items.length === 0 ? (
         <p className="mt-10 rounded-2xl border border-dashed border-line bg-card px-5 py-8 text-muted">

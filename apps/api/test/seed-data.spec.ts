@@ -12,6 +12,7 @@ describe('seed data', () => {
       expect(city).not.toMatch(/Girne|Lefkoşa|Gazimağusa|İskele|KKTC/i);
     }
     for (const restaurant of SEED_RESTAURANTS) {
+      expect(restaurant.district.trim().length).toBeGreaterThanOrEqual(2);
       expect(restaurant.reports.length).toBeGreaterThan(0);
       for (const report of restaurant.reports) {
         expect(report.severity).toBeGreaterThanOrEqual(1);

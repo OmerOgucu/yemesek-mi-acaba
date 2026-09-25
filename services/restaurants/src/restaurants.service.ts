@@ -4,7 +4,8 @@ import { BadgesService } from '@yemesek/badges';
 import { PrismaService } from '@yemesek/database';
 import { ModerationService } from '@yemesek/moderation';
 import { SettingsService } from '@yemesek/settings';
-import { normalizeCity } from '@yemesek/shared';
+import { placeKey } from '@yemesek/shared';
+import { findOrCreateLocation } from './location';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { ListRestaurantsQuery } from './dto/list-restaurants.query';
 import {
@@ -42,26 +43,39 @@ export class RestaurantsService {
     items: RestaurantSummary[];
     total: number;
     cities: string[];
+    locations: { city: string; districts: string[] }[];
   }> {
     const reportWhere = await this.visibleReports();
+    const cityKey = query.city ? placeKey(query.city).key : undefined;
+    const districtKey = query.district ? placeKey(query.district).key : undefined;
     const restaurants = await this.prisma.restaurant.findMany({
-      where: { hidden: false },
+      where: {
+        hidden: false,
+        ...(cityKey ? { cityKey } : {}),
+        ...(districtKey
+          ? { districtPlace: { key: districtKey, ...(cityKey ? { city: { key: cityKey } } : {}) } }
+          : {}),
+      },
       orderBy: { createdAt: 'asc' },
       include: { reports: { where: reportWhere, select: reportCountSelect } },
     });
-    const cityByKey = new Map<string, string>();
-    for (const restaurant of restaurants) {
-      if (!cityByKey.has(restaurant.cityKey)) cityByKey.set(restaurant.cityKey, restaurant.city);
-    }
-    const cities = [...cityByKey.values()].sort((a, b) => a.localeCompare(b, 'tr'));
+    const locationRows = await this.prisma.city.findMany({
+      where: { restaurants: { some: { hidden: false } } },
+      orderBy: { name: 'asc' },
+      include: {
+        districts: {
+          where: { restaurants: { some: { hidden: false } } },
+          orderBy: { name: 'asc' },
+        },
+      },
+    });
+    const locations = locationRows
+      .filter((city) => city.districts.length > 0)
+      .map((city) => ({ city: city.name, districts: city.districts.map((district) => district.name) }));
+    const cities = locations.map((location) => location.city);
     const needle = query.q ? foldTr(query.q) : undefined;
-    const cityKey = query.city ? normalizeCity(query.city).cityKey : undefined;
 
     const items = restaurants
-      .filter((restaurant) => {
-        if (cityKey && restaurant.cityKey !== cityKey) return false;
-        return true;
-      })
       .map((restaurant) => toSummary(restaurant))
       .filter((restaurant) => {
         if (!needle) return true;
@@ -78,7 +92,7 @@ export class RestaurantsService {
           a.name.localeCompare(b.name, 'tr'),
       );
 
-    return { items, total: items.length, cities };
+    return { items, total: items.length, cities, locations };
   }
 
   async detail(id: string) {
@@ -105,16 +119,20 @@ export class RestaurantsService {
       throw new BadRequestException({ message: issues });
     }
 
-    const normalized = normalizeCity(dto.city);
-    if (normalized.city.length < 2) {
-      throw new BadRequestException({ message: ['Şehir en az 2 karakter olmalı.'] });
+    let location;
+    try {
+      location = await findOrCreateLocation(this.prisma, dto.city, dto.district);
+    } catch (error) {
+      throw new BadRequestException(error instanceof Error ? error.message : 'Konum kaydedilemedi.');
     }
     const created = await this.prisma.restaurant.create({
       data: {
         name: dto.name,
-        city: normalized.city,
-        cityKey: normalized.cityKey,
-        district: dto.district || null,
+        city: location.city,
+        cityKey: location.cityKey,
+        cityId: location.cityId,
+        district: location.district,
+        districtId: location.districtId,
         addressHint: dto.addressHint || null,
         cuisine: dto.cuisine || null,
         createdById: userId,

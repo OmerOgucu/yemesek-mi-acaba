@@ -23,12 +23,11 @@ export class CreateRestaurantDto {
   @MaxLength(60, { message: 'Şehir en fazla 60 karakter olmalı.' })
   city!: string;
 
-  @IsOptional()
   @Transform(trimString)
   @IsString({ message: 'İlçe metin olmalı.' })
   @MinLength(2, { message: 'İlçe en az 2 karakter olmalı.' })
   @MaxLength(60, { message: 'İlçe en fazla 60 karakter olmalı.' })
-  district?: string;
+  district!: string;
 
   @IsOptional()
   @Transform(trimString)
