@@ -38,7 +38,7 @@
     "build": "pnpm -r --if-present build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r --if-present lint",
-    "test": "pnpm -r --if-present test && node --test ops/lib/*.test.mjs",
+    "test": "pnpm -r --if-present test && node --test ops/lib/*.test.mjs ops/verify/*.test.mjs",
     "audit:deps": "pnpm audit --prod",
     "db:migrate": "pnpm --filter @yemesek/database db:migrate",
     "db:seed": "pnpm --filter @yemesek/database db:seed"

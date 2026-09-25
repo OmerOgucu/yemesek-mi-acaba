@@ -1,0 +1,126 @@
+name: release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: release-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  same-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      reuse: ${{ steps.decide.outputs.reuse }}
+      prior: ${{ steps.decide.outputs.prior }}
+    steps:
+      - uses: actions/github-script@v7
+        id: decide
+        with:
+          script: |
+            const sha = context.sha;
+            if (!/^[a-f0-9]{40}$/.test(sha)) {
+              core.setFailed('SHA geçersiz');
+              return;
+            }
+            const tag = context.payload.release && context.payload.release.tag_name;
+            if (!/^[A-Za-z0-9._-]{1,80}$/.test(tag || '')) {
+              core.setFailed('etiket geçersiz');
+              return;
+            }
+            const ref = await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `tags/${tag}`,
+            });
+            let tagged = ref.data.object.sha;
+            if (ref.data.object.type === 'tag') {
+              const peeled = await github.rest.git.getTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_sha: ref.data.object.sha,
+              });
+              tagged = peeled.data.object.sha;
+            }
+            if (tagged !== sha) {
+              core.setFailed('Yayın etiketi bu koşunun commit’i değil.');
+              return;
+            }
+            const runs = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: sha,
+              per_page: 30,
+            });
+            const prior = runs.data.workflow_runs.find((item) => {
+              return ['check', 'main'].includes(item.name) && item.conclusion === 'success' && item.head_sha === sha;
+            });
+            core.setOutput('reuse', prior ? 'true' : 'false');
+            core.setOutput('prior', prior ? prior.html_url : '');
+
+  release-check:
+    needs: same-commit
+    if: needs.same-commit.outputs.reuse != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: yemesek
+          POSTGRES_PASSWORD: yemesek
+          POSTGRES_DB: yemesek_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U yemesek -d yemesek_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://yemesek:yemesek@127.0.0.1:5432/yemesek_test
+      NEXT_PUBLIC_API_URL: https://api.yemesekmiacaba.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: ./.github/actions/source-verify
+
+  release-runtime:
+    needs: [same-commit, release-check]
+    if: needs.same-commit.outputs.reuse != 'true' && needs.release-check.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Compose runtime, restart, Playwright, backup
+        run: sh ops/ci/runtime.sh
+
+  release-report:
+    needs: [same-commit, release-check, release-runtime]
+    if: always() && needs.same-commit.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Türkçe doğrulama özeti
+        env:
+          CHECK_RESULT: ${{ needs.same-commit.outputs.reuse == 'true' && 'success' || needs.release-check.result }}
+          RUNTIME_RESULT: ${{ needs.same-commit.outputs.reuse == 'true' && 'success' || needs.release-runtime.result }}
+          PRIOR_RUN_URL: ${{ needs.same-commit.outputs.prior }}
+          VERIFY_TARGET: release
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: node ops/verify/write-summary.mjs

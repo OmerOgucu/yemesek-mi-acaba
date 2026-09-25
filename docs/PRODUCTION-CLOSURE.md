@@ -21,6 +21,8 @@ Yerel sütun bu çalışma ortamıdır. CI sütunu yalnız o commit’in kendi w
 
 Dört mevcut `ignoreGhsas` duruyor. Yeni yok sayma eklenmedi.
 
+Sürekli doğrulama `docs/VERIFY.md` içindedir. `7eda88e` için bot tetiklemeli check koşusu `36198945118` FAIL oldu (Android export yolu). O koşuda runtime NOT_RUN. Bu sonuç sonraki commit’e PASS olarak yazılmaz.
+
 ## Operatörde kalan
 
 - DNS, mevcut proxy onayı ve gerçek TLS. Bu repo 80/443 açmaz ve başka sitenin nginx dosyasını değiştirmez.
