@@ -61,6 +61,9 @@ docker run --rm -v "$PWD/ops/state/ci-certs:/certs" --entrypoint openssl yemesek
   -subj "/CN=yemesek.test" -addext "subjectAltName=DNS:web.yemesek.test,DNS:api.yemesek.test"
 sh ops/render-nginx.sh --env-file "$ENV_FILE"
 
+# Later compose commands must keep this tag. An empty RELEASE_TAG switches the
+# image and label to "local", recreates web, and the already-running proxy 502s.
+export RELEASE_TAG="$(git rev-parse --short HEAD 2>/dev/null || echo local)"
 sh ops/deploy.sh --env-file "$ENV_FILE"
 record_step "ops/smoke.sh::web kabında yasak anahtar"
 
