@@ -38,7 +38,7 @@
     "build": "pnpm -r --if-present build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r --if-present lint",
-    "test": "pnpm -r --if-present test && node --test ops/lib/*.test.mjs ops/verify/*.test.mjs",
+    "test": "mkdir -p ops/state && rm -f ops/state/node-tests.ndjson && (pnpm -r --if-present test && node --test --test-reporter=spec --test-reporter=./ops/verify/test-reporter.mjs --test-reporter-destination=stdout --test-reporter-destination=ops/state/node-tests.ndjson ops/lib/*.test.mjs ops/verify/*.test.mjs); ec=$?; node ops/verify/collect-evidence.mjs; exit $ec",
     "audit:deps": "pnpm audit --prod",
     "db:migrate": "pnpm --filter @yemesek/database db:migrate",
     "db:seed": "pnpm --filter @yemesek/database db:seed"

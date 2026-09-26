@@ -26,6 +26,8 @@ export async function createApp(): Promise<NestExpressApplication> {
   app.set('trust proxy', hops);
   app.use((_req: Request, res: Response, next: () => void) => {
     res.setHeader('X-Yemesek-Project', 'yemesek');
+    const release = process.env.RELEASE_TAG || '';
+    if (/^[A-Za-z0-9._-]{1,40}$/.test(release)) res.setHeader('X-Yemesek-Release', release);
     next();
   });
   app.use('/uploads', (_req: Request, res: Response) => {

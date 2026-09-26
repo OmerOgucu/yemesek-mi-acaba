@@ -5,6 +5,7 @@ on:
     branches: [main]
 
 permissions:
+  actions: read
   contents: read
 
 concurrency:
@@ -35,6 +36,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/source-verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidence-check
+          path: ops/state/evidence.json
+          if-no-files-found: ignore
 
   main-runtime:
     needs: main-check
@@ -44,6 +51,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Compose runtime, restart, Playwright, backup
         run: sh ops/ci/runtime.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidence-runtime
+          path: ops/state/runtime-evidence.json
+          if-no-files-found: ignore
 
   main-report:
     needs: [main-check, main-runtime]
@@ -55,6 +68,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Kanıt dosyalarını indir
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: evidence-*
+          path: ops/state
       - name: Türkçe doğrulama özeti
         env:
           CHECK_RESULT: ${{ needs.main-check.result }}

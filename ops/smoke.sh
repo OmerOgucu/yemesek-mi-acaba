@@ -48,6 +48,22 @@ if [ "$project" != "yemesek" ]; then
   echo "smoke: proje etiketi uyuşmuyor" >&2
   exit 1
 fi
+expect="${EXPECT_RELEASE:-${RELEASE_TAG:-}}"
+if [ -n "$expect" ]; then
+  release_label="$(docker inspect -f '{{index .Config.Labels "com.yemesek.release"}}' "$api_id")"
+  if [ "$release_label" != "$expect" ]; then
+    echo "smoke: release etiketi uyuşmuyor" >&2
+    exit 1
+  fi
+  if [ -f "ops/state/releases/${expect}" ]; then
+    recorded_api="$(awk -F= '/^api=/ {print $2}' "ops/state/releases/${expect}")"
+    running_api="$(docker inspect -f '{{.Image}}' "$api_id")"
+    if [ -z "$recorded_api" ] || [ "$running_api" != "$recorded_api" ]; then
+      echo "smoke: release imaj kimliği uyuşmuyor" >&2
+      exit 1
+    fi
+  fi
+fi
 
 curl_flags="--silent --show-error --max-time 10 --retry 5 --retry-delay 2 --retry-all-errors"
 if [ "${SMOKE_INSECURE:-}" = "1" ]; then
@@ -61,10 +77,18 @@ check_url() {
     echo "smoke: health sızıntı" >&2
     exit 1
   fi
-  header="$(curl $curl_flags -D - -o /dev/null "$1" | tr -d '\r' | awk 'BEGIN{IGNORECASE=1} /^x-yemesek-project:/ {print $2}')"
+  headers="$(curl $curl_flags -D - -o /dev/null "$1" | tr -d '\r')"
+  header="$(printf '%s\n' "$headers" | awk 'BEGIN{IGNORECASE=1} /^x-yemesek-project:/ {print $2}')"
   if [ "$header" != "yemesek" ]; then
     echo "smoke: proje başlığı yok" >&2
     exit 1
+  fi
+  if [ -n "$expect" ]; then
+    release_header="$(printf '%s\n' "$headers" | awk 'BEGIN{IGNORECASE=1} /^x-yemesek-release:/ {print $2}')"
+    if [ "$release_header" != "$expect" ]; then
+      echo "smoke: release başlığı uyuşmuyor" >&2
+      exit 1
+    fi
   fi
 }
 

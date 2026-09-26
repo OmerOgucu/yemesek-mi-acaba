@@ -7,10 +7,13 @@ const read = (file) => readFileSync(file, 'utf8');
 test('deploy records a release only after wait and smoke', () => {
   const text = read('ops/deploy.sh');
   const wait = text.indexOf('up -d --wait --wait-timeout 180');
-  const smoke = text.indexOf('sh ops/smoke.sh --env-file "$file"');
-  const record = text.indexOf('ops/state/releases/${tag}');
-  assert.ok(wait > 0 && smoke > wait && record > smoke);
+  const approve = text.indexOf('ops/approve-release.sh');
+  assert.ok(wait > 0 && approve > wait);
   assert.equal(/prisma migrate down|migrate down/.test(text), false);
+  const record = read('ops/approve-release.sh');
+  const smoke = record.indexOf('ops/smoke.sh');
+  const file = record.indexOf('ops/state/releases/');
+  assert.ok(smoke > 0 && file > smoke);
 });
 
 test('rollback refuses a newer schema and does not migrate down', () => {
@@ -21,6 +24,8 @@ test('rollback refuses a newer schema and does not migrate down', () => {
   assert.match(text, /Migration down çalıştırılmadı/);
   assert.equal(/prisma migrate down/.test(text), false);
   assert.match(text, /sh ops\/smoke\.sh/);
+  const identity = text.indexOf('rollback imaj kimliği kayıtla uyuşmuyor');
+  assert.ok(identity > 0 && identity < wait);
 });
 
 test('localhost smoke targets api-local and edge smoke targets api', () => {
@@ -58,7 +63,10 @@ test('workspace mode-600 files are written as the invoking user', () => {
   assert.match(ci, /chrislusf\/seaweedfs:4\.47/);
   assert.match(ci, /AWS_ACCESS_KEY_ID: \$\{S3_ACCESS_KEY_ID:\?\}/);
   assert.match(read('ops/backup-remote.mjs'), /requestChecksumCalculation: 'WHEN_REQUIRED'/);
-  assert.match(read('ops/restore-exec.sh'), /CASE WHEN to_regclass\('public\.\\"User\\"'\) IS NULL THEN 'missing' ELSE 'User' END/);
+  assert.match(read('ops/restore-exec.sh'), /--exit-on-error/);
+  assert.match(read('ops/restore-exec.sh'), /ELSE 'ok'/);
+  assert.match(read('ops/restore-test.sh'), /restore_code/);
+  assert.match(read('ops/restore-test.sh'), /kanonik hedef/);
   assert.equal(/image:\s*minio\/minio/.test(ci), false);
 });
 
@@ -76,9 +84,32 @@ test('runtime proof stays on a clean host and distributed images', () => {
   assert.match(crash, /holder already exited/);
   assert.equal(/^\s*docker compose\b.*\brun -d\b/m.test(crash), false);
   assert.match(read('ops/preflight.sh'), /\/opt\/yemesek\/\$\{script\}/);
+  assert.match(text, /prepare-disposable-db.sh/);
   assert.match(text, /smoke passed while api was stopped/);
   assert.match(text, /incompatible rollback was accepted/);
   assert.match(text, /wrong passphrase was accepted/);
+  assert.match(text, /restore failed while User already existed/);
+  assert.match(text, /partial restore was accepted/);
+  assert.match(text, /rollback returned the previous image/);
+  assert.match(text, /moved tag was accepted as the approved image/);
+  assert.match(text, /wrong release was accepted/);
+  assert.match(text, /web health was accepted as the api/);
+  assert.match(text, /unhealthy deploy wrote an approved release/);
+  assert.match(read('ops/lib/disposable-db.mjs'), /REVOKE CONNECT ON DATABASE \$\{appDb\} FROM \$\{restoreUser\}/);
+  assert.match(read('ops/prepare-disposable-db.sh'), /permission denied for database/);
+  assert.match(read('ops/image/package.json'), /"@aws-sdk\/client-s3": "3.1141.0"/);
+  assert.match(read('.github/workflows/ops-audit.yml'), /npm audit --omit=dev --audit-level=moderate/);
+  assert.equal(read('.github/workflows/ops-audit.yml').includes('continue-on-error'), false);
+  assert.match(read('ops/preflight.sh'), /eksik: flock/);
+  assert.match(read('ops/preflight.sh'), /eksik: curl/);
+  const rules = JSON.parse(read('.github/rulesets/main.json'));
+  const checks = rules.rules.find((rule) => rule.type === 'required_status_checks');
+  const contexts = checks.parameters.required_status_checks.map((item) => item.context).sort();
+  assert.deepEqual(contexts, ['audit', 'check', 'ops-audit', 'runtime']);
+  const pull = rules.rules.find((rule) => rule.type === 'pull_request');
+  assert.equal(pull.parameters.required_approving_review_count, 0);
+  assert.match(read('ops/github-protect.sh'), /NOT_APPLIED/);
+  assert.equal(read('ops/github-protect.sh').includes('echo "$GH_TOKEN"'), false);
   const notify = read('.github/workflows/notify.yml');
   assert.match(notify, /github.event.repository.default_branch/);
   assert.match(notify, /persist-credentials: false/);

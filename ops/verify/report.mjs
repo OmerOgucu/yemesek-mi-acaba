@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import path from 'path';
+import { lookupTest } from './evidence.mjs';
 
 export const FINDINGS = [
   {
@@ -49,6 +50,7 @@ export const FINDINGS = [
     anchors: [
       ['ops/ci/runtime.sh', 'smoke passed while api was stopped'],
       ['ops/ci/runtime.sh', 'incompatible rollback was accepted'],
+      ['ops/ci/runtime.sh', 'unhealthy deploy wrote an approved release'],
     ],
     impact: 'Health veya smoke düşerken release kaydı yazılırsa bozuk sürüm onaylı görünür.',
     fix: 'Kayıttan önce wait ve smoke. Uyumsuz şemada migrate down yok, çıkış sıfırdan farklı.',
@@ -63,13 +65,25 @@ export const FINDINGS = [
     fix: 'localhost api-local, edge ağ içindeki api. Proje başlığı olmadan smoke geçmesin.',
   },
   {
+    id: 'edge-profile',
+    title: 'Edge profili disposable koşuda ayrıca doğrulanır',
+    proof: 'edge',
+    important: false,
+    anchors: [],
+    impact: 'Localhost profilinin geçmesi, dış reverse proxy hedefini doğrulamaz.',
+    fix: 'Edge profili ayrı disposable koşuda çalışmadan PASS yazma.',
+  },
+  {
     id: 'restore-guard',
     title: 'Restore production veritabanına yazmaz',
     proof: 'check',
     important: true,
-    anchors: [['ops/lib/restore-target.test.mjs', 'rejects the production database under another spelling']],
-    impact: 'URL içinde disposable geçmesi veya parola farkı aynı veritabanını güvenli sanarsa --clean production verisini siler.',
-    fix: 'Host, port ve veritabanı adı ayrı ayrı. Ad alanında restore veya disposable. Kullanıcı production kullanıcısı olamaz.',
+    anchors: [
+      ['ops/lib/restore-target.test.mjs', 'rejects the production database under another spelling'],
+      ['ops/lib/restore-target.test.mjs', 'rejects libpq query parameters that change the target'],
+    ],
+    impact: 'URL içinde disposable geçmesi, parola farkı veya libpq sorgu parametresi aynı veritabanını güvenli sanarsa --clean production verisini siler.',
+    fix: 'Hedefi değiştiren sorgu parametresini reddet. Kanonik URL dışında bağlanma. Ayrı kullanıcı production veritabanına CONNECT almasın.',
   },
   {
     id: 'restore-roundtrip',
@@ -79,6 +93,33 @@ export const FINDINGS = [
     anchors: [['ops/ci/runtime.sh', 'wrong passphrase was accepted']],
     impact: 'Yalnız yerel dosya veya bütünlüğü bakılmamış kopya, uzak geri dönüşün kanıtı değildir.',
     fix: 'Kimlikle indir, sha256, yanlış parola ve bozuk dosyayı reddet. MinIO gerçek R2 PASS değildir.',
+  },
+  {
+    id: 'restore-integrity',
+    title: 'Bozuk veya eksik restore başarı sayılmaz',
+    proof: 'runtime',
+    important: true,
+    anchors: [
+      ['ops/ci/runtime.sh', 'restore failed while User already existed'],
+      ['ops/ci/runtime.sh', 'partial restore was accepted'],
+      ['ops/ci/runtime.sh', 'restore user reached production'],
+    ],
+    impact: 'User tablosu önceden varsa pg_restore hatası veya eksik kısıt yine de PASS görünebilir.',
+    fix: 'Sıfırdan farklı pg_restore çıkışı başarısızdır. Şema, kısıt ve örnek satır doğrulanır. Restore kullanıcısı production veritabanına bağlanamaz.',
+  },
+  {
+    id: 'release-identity',
+    title: 'Farklı release ve yanlış hedef onaylanmaz',
+    proof: 'runtime',
+    important: true,
+    anchors: [
+      ['ops/ci/runtime.sh', 'rollback returned the previous image'],
+      ['ops/ci/runtime.sh', 'moved tag was accepted as the approved image'],
+      ['ops/ci/runtime.sh', 'wrong release was accepted'],
+      ['ops/ci/runtime.sh', 'web health was accepted as the api'],
+    ],
+    impact: 'Aynı proje adıyla eski imaj, taşınmış etiket veya web sürecinin adresi onaylı release sanılabilir.',
+    fix: 'Onaylı kayıt imaj kimliğini taşır. Etiket başka imaja taşınınca rollback durur. Beden B iken A beklenirse smoke düşer.',
   },
   {
     id: 'clean-host',
@@ -92,6 +133,24 @@ export const FINDINGS = [
     ],
     impact: 'Hostta gizli pnpm veya psql varsa VPS akışı kanıtsız kalır. Tarayıcı akışı yalnız kaynak sunucuda koşarsa imaj kanıtı olmaz.',
     fix: 'runtime.sh host psql ve aws yokken imaj, Playwright ve yedek turunu koşar.',
+  },
+  {
+    id: 'dependency-audit',
+    title: 'Kök üretim bağımlılık denetimi',
+    proof: 'audit',
+    important: true,
+    anchors: [['.github/workflows/audit.yml', 'pnpm audit --prod']],
+    impact: 'Kök ağacındaki açık prod bağımlılığı birleşirse risk taşınır.',
+    fix: 'pnpm audit --prod çıktısını gider. Yeni ignore ekleme.',
+  },
+  {
+    id: 'ops-image-audit',
+    title: 'Ops imajı üretim npm denetimi',
+    proof: 'ops-audit',
+    important: true,
+    anchors: [['.github/workflows/ops-audit.yml', 'npm audit --omit=dev --audit-level=moderate']],
+    impact: 'Ops imajının kendi kilidi kök pnpm audit sonucunun dışındadır. Orta veya kritik bulgu imaj derlemesinde yeşil kalabilir.',
+    fix: 'Uyumlu yama ile ops/image kilidini güncelle. Orta ve üzeri bulgu ops-audit işini düşürür.',
   },
   {
     id: 'real-accounts',
@@ -118,25 +177,70 @@ export function locateAnchor(root, file, text) {
   return { file, line: index + 1 };
 }
 
-export function judgeFinding(finding, jobs, places) {
-  if (finding.proof === 'external') {
-    return { status: 'DOĞRULANMADI', result: 'BLOCKED_EXTERNAL' };
+export function judgeFinding(finding, jobs, places, evidence, sha) {
+  if (finding.proof === 'external') return { status: 'DOĞRULANMADI', result: 'BLOCKED_EXTERNAL' };
+  if (finding.proof === 'edge') {
+    if (jobs.edge === 'success' && evidence?.sha === sha && evidence.runId && evidence.runAttempt) {
+      return { status: 'ÇÖZÜLDÜ', result: 'PASS' };
+    }
+    return { status: 'DOĞRULANMADI', result: 'NOT_RUN' };
+  }
+  if (finding.proof === 'audit' || finding.proof === 'ops-audit') {
+    const job = jobs[finding.proof] || 'skipped';
+    if (job === 'success') return { status: 'ÇÖZÜLDÜ', result: 'PASS' };
+    if (job === 'failure') return { status: 'YENİ', result: 'FAIL' };
+    return { status: 'DOĞRULANMADI', result: 'NOT_RUN' };
   }
   if (finding.anchors.length && places.some((place) => !place)) {
-    return { status: 'YENİ', result: 'FAIL' };
+    return { status: 'DOĞRULANMADI', result: 'NOT_RUN' };
   }
   const job = jobs[finding.proof] || 'skipped';
-  if (job === 'success') return { status: 'ÇÖZÜLDÜ', result: 'PASS' };
-  if (job === 'failure') return { status: 'YENİ', result: 'FAIL' };
-  return { status: 'DOĞRULANMADI', result: 'NOT_RUN' };
+  if (job !== 'success' && job !== 'failure') return { status: 'DOĞRULANMADI', result: 'NOT_RUN' };
+  if (!evidence || evidence.sha !== sha || !evidence.runId || !evidence.runAttempt) {
+    return { status: 'DOĞRULANMADI', result: 'NOT_RUN' };
+  }
+  const results = finding.anchors.map(([file, title]) => lookupTest(evidence, file, title));
+  if (results.some((item) => item === 'fail')) return { status: 'YENİ', result: 'FAIL' };
+  if (results.some((item) => item !== 'pass')) return { status: 'DOĞRULANMADI', result: 'NOT_RUN' };
+  if (job !== 'success') return { status: 'DOĞRULANMADI', result: 'NOT_RUN' };
+  return { status: 'ÇÖZÜLDÜ', result: 'PASS' };
 }
 
-export function buildReport({ sha, target, pr, release, jobs, root, priorUrl, actor, event }) {
+export function renderState(findings) {
+  const payload = {
+    version: 1,
+    findings: findings.map((finding) => ({
+      id: finding.id,
+      status: finding.status,
+      result: finding.result,
+      important: Boolean(finding.important),
+    })),
+  };
+  return `<!-- yemesek-state v1\n${JSON.stringify(payload)}\n-->`;
+}
+
+export function extractState(body) {
+  const match = String(body || '').match(/<!-- yemesek-state v1\n([\s\S]*?)\n-->/);
+  if (!match) return null;
+  try {
+    const data = JSON.parse(match[1]);
+    if (data.version !== 1 || !Array.isArray(data.findings)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export function buildReport({ sha, target, pr, release, jobs, root, priorUrl, actor, event, evidence, runId, runAttempt, headSha }) {
   if (!/^[a-f0-9]{40}$/.test(sha || '')) throw new Error('SHA geçersiz');
   const evaluated = FINDINGS.map((finding) => {
     const places = finding.anchors.map(([file, text]) => locateAnchor(root, file, text));
-    const judged = judgeFinding(finding, jobs, places);
-    return { ...finding, ...judged, places: places.filter(Boolean) };
+    const judged = judgeFinding(finding, jobs || {}, places, evidence, sha);
+    const tests = finding.anchors.map(([file, title]) => {
+      const result = evidence ? lookupTest(evidence, file, title) || 'absent' : 'absent';
+      return `${file}::${title}=${result}`;
+    });
+    return { ...finding, ...judged, places: places.filter(Boolean), tests };
   });
   const lines = [
     '## Doğrulama özeti',
@@ -145,14 +249,21 @@ export function buildReport({ sha, target, pr, release, jobs, root, priorUrl, ac
     `Hedef: ${labelTarget(target, pr, release)}`,
     `Olay: ${event || 'bilinmiyor'}`,
     `Tetikleyen: ${actor || 'bilinmiyor'}`,
+    `Koşu: ${runId || 'yok'} deneme ${runAttempt || 'yok'}`,
+  ];
+  if (headSha && /^[a-f0-9]{40}$/.test(headSha) && headSha !== sha) lines.push(`PR başı: \`${headSha}\``);
+  lines.push(
     '',
     '### Kontroller',
     '',
-    `| Kontrol | Sonuç |`,
-    `| --- | --- |`,
-    `| kaynak (typecheck, test, imaj) | ${jobLabel(jobs.check)} |`,
-    `| runtime (Compose, restart, Playwright, yedek) | ${jobLabel(jobs.runtime)} |`,
-  ];
+    '| Kontrol | Sonuç |',
+    '| --- | --- |',
+    `| kaynak (typecheck, test, imaj) | ${jobLabel(jobs?.check)} |`,
+    `| runtime (Compose, restart, Playwright, yedek) | ${jobLabel(jobs?.runtime)} |`,
+    `| bağımlılık denetimi | ${jobLabel(jobs?.audit)} |`,
+    `| ops imaj denetimi | ${jobLabel(jobs?.['ops-audit'])} |`,
+    `| edge profili | ${jobLabel(jobs?.edge)} |`,
+  );
   if (priorUrl) lines.push('', `Aynı SHA için önceki başarılı koşu yeniden çalıştırılmadı: ${priorUrl}`);
   lines.push('', '### Bulgular', '');
   for (const finding of evaluated) {
@@ -160,12 +271,15 @@ export function buildReport({ sha, target, pr, release, jobs, root, priorUrl, ac
     lines.push(`- BULGU id=${finding.id} durum=${finding.status} sonuç=${finding.result}`);
     lines.push(`  - Başlık: ${finding.title}`);
     lines.push(`  - Yer: ${where}`);
+    if (finding.tests.length) lines.push(`  - Test: ${finding.tests.join('; ')}`);
+    lines.push(`  - Koşu: ${runId || 'yok'} deneme ${runAttempt || 'yok'} sha ${sha}`);
     lines.push(`  - Etki: ${finding.impact}`);
     lines.push(`  - Gerekli düzeltme: ${finding.fix}`);
   }
   lines.push(
     '',
     'BLOCKED_EXTERNAL ve NOT_RUN, PASS sayılmaz.',
+    'Bu özet tanımlı kontrollerin sonucudur. Yeni kodun tamamı için bağımsız bir inceleme değildir.',
     'Bu özet otomatik birleştirme veya production deploy yapmaz.',
   );
   return { text: sanitize(lines.join('\n')), findings: evaluated };

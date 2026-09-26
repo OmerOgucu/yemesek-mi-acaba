@@ -79,6 +79,17 @@ describe('Yemesek API', () => {
     const response = await request(app.getHttpServer()).get('/health').expect(200);
     expect(response.body.status).toBe('ok');
     expect(response.headers['x-yemesek-project']).toBe('yemesek');
+    expect(response.headers['x-yemesek-release']).toBeUndefined();
+    process.env.RELEASE_TAG = 'ci-a';
+    try {
+      const tagged = await request(app.getHttpServer()).get('/health').expect(200);
+      expect(tagged.headers['x-yemesek-release']).toBe('ci-a');
+      process.env.RELEASE_TAG = '../evil';
+      const rejected = await request(app.getHttpServer()).get('/health').expect(200);
+      expect(rejected.headers['x-yemesek-release']).toBeUndefined();
+    } finally {
+      delete process.env.RELEASE_TAG;
+    }
     expect(response.body.uptime).toEqual(expect.any(Number));
     process.env.RUN_WORKER = 'true';
     try {

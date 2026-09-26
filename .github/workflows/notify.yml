@@ -4,7 +4,7 @@ name: verify-notify
 # and does not execute scripts from the reviewed commit.
 on:
   workflow_run:
-    workflows: [check, main, release, dependency audit]
+    workflows: [check, main, release, dependency audit, ops audit]
     types: [completed]
 
 permissions:

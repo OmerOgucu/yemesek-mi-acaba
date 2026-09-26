@@ -50,9 +50,17 @@ if ! command -v git >/dev/null 2>&1; then
 else
   git --version
 fi
+if ! command -v flock >/dev/null 2>&1; then
+  echo "eksik: flock" >&2
+  missing=1
+fi
+if ! command -v curl >/dev/null 2>&1; then
+  echo "eksik: curl" >&2
+  missing=1
+fi
 echo "shell ok"
 if [ "$missing" -ne 0 ]; then
-  echo "host aracı eksik. Uygulama node_modules, host pnpm, aws ve psql gerekmez. Zorunlu olan docker, docker compose, sh ve git." >&2
+  echo "host aracı eksik. Uygulama node_modules, host pnpm, aws ve psql gerekmez. Zorunlu olan docker, docker compose, sh, git, flock ve curl." >&2
   exit 1
 fi
 

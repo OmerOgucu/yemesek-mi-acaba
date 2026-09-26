@@ -34,5 +34,5 @@ Sürekli doğrulama `docs/VERIFY.md` içindedir. `7eda88e` için bot tetiklemeli
 - `./ops/preflight.sh --live --mail-to` yalnız yetkili tek alıcı. Brevo kabulü teslim PASS değildir.
 - Play App Signing ve Apple team id. Boşken well-known 404.
 - İmzalı `eas build`. CI’deki Android JS bundle mağaza imzası değildir.
-- `GH_TOKEN` ile `./ops/github-protect.sh`. Uygulanmış sayılmaz.
+- `GH_TOKEN` ile `./ops/github-protect.sh`. Ruleset dosyası `check`, `runtime`, `audit` ve `ops-audit` ister. Token yokken sonuç `BLOCKED_EXTERNAL` / `NOT_APPLIED`dır. Dosyanın varlığı uygulama değildir.
 - Yedek parolasının ayrı saklanması. Uzak kova kanıt nesnelerini kapsamaz.

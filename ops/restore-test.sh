@@ -33,7 +33,20 @@ if [ -n "${BACKUP_ID:-}" ] && [ -z "$backup_id" ]; then
   backup_id="$BACKUP_ID"
 fi
 docker_as_invoker --rm -v "$PWD:/work" -w /work --entrypoint node yemesek-ops:local ops/render-env.mjs "$file" ops/state/env
-docker run --rm -v "$PWD:/work" -w /work --env-file "$file" --entrypoint node yemesek-ops:local ops/restore-check.mjs
+docker_as_invoker --rm -v "$PWD:/work" -w /work --env-file "$file" --entrypoint node yemesek-ops:local ops/restore-check.mjs
+if [ ! -f ops/state/restore/target.url ]; then
+  echo "kanonik hedef yok" >&2
+  exit 1
+fi
+RESTORE_DATABASE_URL="$(tr -d '\r\n' < ops/state/restore/target.url)"
+export RESTORE_DATABASE_URL
+case "$RESTORE_DATABASE_URL" in
+  postgresql://*|postgres://*) ;;
+  *)
+    echo "kanonik hedef geçersiz" >&2
+    exit 1
+    ;;
+esac
 
 if [ -n "$backup_id" ]; then
   case "$backup_id" in
@@ -73,9 +86,10 @@ if [ -z "$src" ] || [ ! -f "$src" ]; then
   echo "BACKUP_FILE veya --backup-id gerekli" >&2
   exit 1
 fi
-plain="ops/state/restore/plain.dump"
+plain="ops/state/restore/plain-$$.dump"
 rm -f "$plain"
 trap 'rm -f "$plain"' EXIT
+umask 077
 if ! docker_as_invoker --rm -v "$PWD:/work" -w /work -e BACKUP_PASSPHRASE --entrypoint openssl yemesek-ops:local \
   enc -d -aes-256-cbc -pbkdf2 -pass env:BACKUP_PASSPHRASE -in "$src" -out "$plain"; then
   echo "şifre çözülemedi" >&2
@@ -94,12 +108,16 @@ docker run --rm --network yemesek_internal \
   --entrypoint sh yemesek-ops:local /restore-exec.sh restore
 restore_code=$?
 set -e
+if [ "$restore_code" -ne 0 ]; then
+  echo "restore başarısız (${restore_code})" >&2
+  exit 1
+fi
 found="$(docker run --rm --network yemesek_internal \
   -v "$PWD/ops/restore-exec.sh:/restore-exec.sh:ro" \
   -e RESTORE_DATABASE_URL \
   --entrypoint sh yemesek-ops:local /restore-exec.sh smoke)"
-if [ "$found" != "User" ]; then
-  echo "restore sonrası şema yok (${restore_code}) bulunan=${found}" >&2
+if [ "$found" != "ok" ]; then
+  echo "restore sonrası bütünlük yok bulunan=${found}" >&2
   exit 1
 fi
 echo "restore-test: disposable database restored. R2 nesneleri bu işlemle geri gelmez."

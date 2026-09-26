@@ -98,30 +98,8 @@ if ! docker compose $COMPOSE_FILE_ARGS --env-file "$file" $profile_flags up -d -
   write_failure
   exit 1
 fi
-if ! sh ops/smoke.sh --env-file "$file"; then
+if ! sh ops/approve-release.sh --env-file "$file" --tag "$tag"; then
   write_failure
   exit 1
 fi
-
-migration="$(
-  # shellcheck disable=SC2086
-  docker compose $COMPOSE_FILE_ARGS --env-file "$file" exec -T postgres \
-    psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc \
-    "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY finished_at DESC LIMIT 1;"
-)"
-api_id="$(docker image inspect --format '{{.Id}}' "$api_image")"
-web_id="$(docker image inspect --format '{{.Id}}' "$web_image")"
-if [ -z "$migration" ]; then
-  write_failure
-  exit 1
-fi
-mkdir -p ops/state/releases
-umask 077
-cat > "ops/state/releases/${tag}" <<EOF
-tag=${tag}
-api=${api_id}
-web=${web_id}
-migration=${migration}
-EOF
-printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$tag" >> ops/state/releases.log
 echo "deploy: ${tag}"

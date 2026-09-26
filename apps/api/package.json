@@ -8,7 +8,7 @@
     "start": "sh scripts/with-db.sh node dist/apps/api/src/main.js",
     "typecheck": "pnpm --filter @yemesek/database exec prisma generate && tsc -p tsconfig.json --noEmit",
     "lint": "cd ../.. && eslint -c eslint.config.mjs apps/api/src apps/api/test services packages/database/src packages/database/prisma/seed.ts packages/database/prisma/seed-data.ts packages/shared/src packages/config/src",
-    "test": "pnpm --filter @yemesek/database exec prisma generate && sh scripts/with-db.sh jest --runInBand"
+    "test": "pnpm --filter @yemesek/database exec prisma generate && mkdir -p ../../ops/state && sh scripts/with-db.sh jest --runInBand --json --outputFile=../../ops/state/api-jest.json"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.888.0",

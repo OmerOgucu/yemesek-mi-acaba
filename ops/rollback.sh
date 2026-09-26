@@ -45,6 +45,14 @@ if ! docker image inspect "yemesek-api:${to}" >/dev/null 2>&1 || ! docker image 
   echo "rollback imajı yok" >&2
   exit 1
 fi
+recorded_api="$(awk -F= '/^api=/ {print $2}' "ops/state/releases/${to}")"
+recorded_web="$(awk -F= '/^web=/ {print $2}' "ops/state/releases/${to}")"
+live_api="$(docker image inspect --format '{{.Id}}' "yemesek-api:${to}")"
+live_web="$(docker image inspect --format '{{.Id}}' "yemesek-web:${to}")"
+if [ -z "$recorded_api" ] || [ -z "$recorded_web" ] || [ "$recorded_api" != "$live_api" ] || [ "$recorded_web" != "$live_web" ]; then
+  echo "rollback imaj kimliği kayıtla uyuşmuyor" >&2
+  exit 1
+fi
 # shellcheck disable=SC2086
 current="$(docker compose $COMPOSE_FILE_ARGS --env-file "$file" exec -T postgres \
   psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc \

@@ -12,7 +12,7 @@ PR, main ve yayın ayrı workflow kullanır. Aynı olayda test iki kez koşmaz. 
 
 PR içindeki `report` job’u Türkçe özeti Actions adım özetine yazar. Yazma yetkisi yoktur. `@OmerOgucu` bildirimi yalnız önemli yeni FAIL veya kapanan önemli bulgu için, aynı SHA ve aynı bulgu ikinci kez yazılmaz. `verify-notify` default branch’te durduğu için bu PR birleşmeden canlı yorumu çalıştıramaz. Karar mantığı `ops/verify/report.test.mjs` içindedir.
 
-Durumlar: YENİ, DEVAM EDİYOR, ÇÖZÜLDÜ, DOĞRULANMADI. ÇÖZÜLDÜ yalnız ilgili job PASS ve koruma testi duruyorsa. NOT_RUN ve BLOCKED_EXTERNAL PASS sayılmaz. Otomatik birleştirme ve production deploy yok.
+Durumlar: YENİ, DEVAM EDİYOR, ÇÖZÜLDÜ, DOĞRULANMADI. ÇÖZÜLDÜ, ilgili test kimliğinin aynı SHA, aynı `run_id` ve `run_attempt` içinde `pass` olmasına ve kanıt işinin success olmasına bağlıdır. Job’un yeşil olması tek başına ÇÖZÜLDÜ değildir. Atlanan veya silinen test NOT_RUN’dır. NOT_RUN ve BLOCKED_EXTERNAL PASS sayılmaz. Durum, güvenilen bot yorumundaki `yemesek-state v1` JSON kaydından taşınır. Otomatik birleştirme ve production deploy yok.
 
 `7eda88e` üzerinde `cursor[bot]`, `pull_request` ile check koşusunu başlattı: https://github.com/OmerOgucu/yemesek-mi-acaba/actions/runs/36198945118 Sonuç FAIL. Android export proje dışına yazdı, `runtime` skipped. Düzeltme `dist/android`.
 
