@@ -1,0 +1,239 @@
+export type LegalSection = {
+  heading: string;
+  paragraphs: string[];
+};
+
+export type LegalDocument = {
+  slug: LegalSlug;
+  title: string;
+  summary: string;
+  updated: string;
+  sections: LegalSection[];
+};
+
+export const LEGAL_SLUGS = ['kvkk', 'gizlilik', 'kullanim-kosullari', 'cerez-politikasi'] as const;
+
+export type LegalSlug = (typeof LEGAL_SLUGS)[number];
+
+export { ONBOARDING_STEPS, ONBOARDING_STORAGE_KEY } from './onboarding';
+export type { OnboardingStep } from './onboarding';
+
+const PROJECT = 'Yemesek mi acaba';
+const LEGAL_EMAIL = 'hukuk@yemesekmiacaba.com';
+const PRESS_EMAIL = 'basin@yemesekmiacaba.com';
+
+export const DOCUMENTS: LegalDocument[] = [
+  {
+    slug: 'kvkk',
+    title: 'KVKK aydınlatma metni',
+    summary: '6698 sayılı Kanun madde 10 kapsamındaki aydınlatma. Şu an tüzel kişilik yok; gönüllü proje.',
+    updated: '25 Eylül 2026',
+    sections: [
+      {
+        heading: 'Veri sorumlusu',
+        paragraphs: [
+          `${PROJECT} şu an bir şirket değildir. Tüzel kişilik, ticari unvan ve şube yoktur. Gönüllü bir topluluk projesidir.`,
+          'Veri sorumlusu, projeyi yürüten gerçek kişidir. Unvan ve adres tescil edilene kadar metinde “proje yürütücüsü” yer tutucusu kullanılır. Sahte bir limited şirket adı yazılmaz.',
+          `Kişisel veri talepleri hukuk adresine yazılır: ${LEGAL_EMAIL}. Basın iletişimi: ${PRESS_EMAIL}. Bu adresler yönetim ayarlarındaki hukuk ve basın alanlarıdır. Sitedeki basın sayfası güncel adresi gösterir; oradaki adres bu paragraftaki yer tutucudan farklıysa sayfadaki adres geçerlidir.`,
+          'Metin bir avukat görüşü değildir. Tüzel kişilik kurulursa unvan, adres ve işleyenler bu metne ayrıca yazılır.',
+        ],
+      },
+      {
+        heading: 'İşlenen veriler',
+        paragraphs: [
+          'Hesap: e-posta, görünen ad, parola özeti (düz parola saklanmaz), kayıt zamanı.',
+          'Rıza kayıtları: KVKK aydınlatma kabul zamanı, kullanım koşulları kabul zamanı, varsa pazarlama açık rızasının verilme veya geri alınma zamanı.',
+          'İçerik: yazdığınız şikayet başlığı ve metni, takma ad, yararlı oy. Şikayet herkese açıktır; e-postanız şikayetin yanında gösterilmez.',
+          'Kanıt: en az bir yemek veya mekan fotoğrafı ve fiş/fatura görseli. İncelemeden geçen mekan fotoğrafı herkese gösterilebilir. Fiş herkese açık değildir; yalnızca şikayeti yazan kişi ve görevliler görür. Fişte ad, telefon veya kart numarası bırakmayın; mümkünse karalayın.',
+          'Oturum: kısa ömürlü erişim jetonu ve sunucuda yalnızca özeti tutulan yenileme jetonu.',
+          'Güvenlik: hız sınırı sayacı, pencere süresi boyunca veritabanında tutulur. Sayaç sıfırlanınca aynı satırın üzerine yazılır. Tam istek günlüğü tutulmaz.',
+          'İstemediğimiz veriler: telefon, T.C. kimlik numarası, tam açık adres, ödeme bilgisi, konum.',
+        ],
+      },
+      {
+        heading: 'Amaçlar',
+        paragraphs: [
+          'Hesap açmak, girişi doğrulamak ve şikayet ile oyu size bağlamak.',
+          'Kötülük skorunu hesaplamak ve liderlik tablosunu herkese açık göstermek.',
+          'Hakaret, tehdit, kişisel veri ve kötüye kullanımı engellemek; hız sınırını uygulamak.',
+          'Pazarlama iletisi yalnızca ayrıca ve isteğe bağlı verdiğiniz açık rıza varsa gönderilebilir. Bu gönüllü aşamada pazarlama postası gönderilmez. İleride bir tüzel kişilik kurulursa pazarlama ancak ayrıca açıklanır.',
+        ],
+      },
+      {
+        heading: 'Hukuki sebepler',
+        paragraphs: [
+          'Hesabın kurulması ve şikayetin yayımlanması: sözleşmenin kurulması ve ifası (KVKK m.5/2-c).',
+          'Kötüye kullanımın önlenmesi ve hizmetin güvenliği: meşru menfaat (KVKK m.5/2-f). Bu menfaat, ölçülü hız sınırı ve içerik denetimiyle sınırlıdır.',
+          'Pazarlama: açık rıza (KVKK m.5/1). Rıza vermeden kayıt olabilirsiniz. Verdiyseniz profil ekranından geri alabilirsiniz.',
+          'Aydınlatma metnini okuduğunuzu kayıt altına alırız. Aydınlatma, açık rızanın yerine geçmez; pazarlama için ayrı kutu vardır.',
+        ],
+      },
+      {
+        heading: 'Aktarım ve işleyenler',
+        paragraphs: [
+          'Şikayet metni siteyi açan herkese açıktır. Bunu aktarım değil, sizin yayımladığınız içerik sayın.',
+          'Yer tutucu işleyenler, anahtarlar bağlanınca devreye girer: e-posta için Brevo, dosya deposu için S3 veya uyumlu kova, uygulamanın çalıştığı barındırıcı. İsimler ve ülkeler sözleşme imzalanınca bu metne yazılır. Şu an bu sözleşmeler imzalı bir şirket adına değil, proje adına yer tutucudur.',
+          'Kişisel veri ihlalinde proje içi prosedür işletilir. Bu metin hukuk görüşü değildir ve iç kontrol listesini yayımlamaz.',
+        ],
+      },
+      {
+        heading: 'Saklama',
+        paragraphs: [
+          'Hesap verisi, siz hesabı silene kadar durur. Silince hesap, şikayetler, yüklediğiniz kanıt dosyaları, oylar ve yenileme jetonları silinir.',
+          'Şikayetin konusu olan mekan kaydı, başkalarının şikayetleri duruyorsa kalabilir. Yalnızca sizin yazdığınız kayıtlar silinir.',
+        ],
+      },
+      {
+        heading: 'Haklarınız',
+        paragraphs: [
+          'KVKK madde 11: verinizin işlenip işlenmediğini öğrenme, düzeltilmesini isteme, silinmesini isteme, işlenen veriyi öğrenme.',
+          'Uygulama: profil ekranında görünen adı güncelleyebilir, pazarlama rızasını kapatabilir, “Verilerimi indir” ile kendi kaydınızı JSON alabilir ve hesabınızı parolanızla silebilirsiniz. Diğer talepler için ' +
+            LEGAL_EMAIL +
+            ' adresine e-posta yazın. Kimliğinizi doğrulamamız gerekebilir.',
+          'Yanıt süresi Kanundaki otuz gündür. Başvurunuz reddedilirse veya süresinde cevap alamazsanız Kişisel Verileri Koruma Kuruluna şikayet hakkınız vardır.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'gizlilik',
+    title: 'Gizlilik politikası',
+    summary: 'Hangi veriyi aldığımız, hangisini almadığımız ve şikayetin nasıl göründüğü.',
+    updated: '25 Eylül 2026',
+    sections: [
+      {
+        heading: 'Kısa hali',
+        paragraphs: [
+          `${PROJECT} gönüllü bir topluluk hizmetidir, şirket değildir. Kanıtlı kötü mekan deneyimlerini paylaşmak içindir. Listeyi herkes okur. Şikayet yazmak ve yararlı oy vermek için hesap gerekir.`,
+          'E-postanız ve parolanız yayımlanmaz. Şikayetin yanında görünen ad, sizin yazdığınız takma addır; boş bırakırsanız görünen adınız kullanılır.',
+        ],
+      },
+      {
+        heading: 'Parola',
+        paragraphs: [
+          'Parola bcrypt ile özetlenir. Düz metin parola veritabanında, günlükte veya istemci kodunda durmaz.',
+          'Erişim jetonu kısadır. Yenileme jetonunun kendisi değil, özeti saklanır. Çıkışta veya yeniden girişte eski yenileme jetonu iptal edilir.',
+        ],
+      },
+      {
+        heading: 'Şikayet',
+        paragraphs: [
+          'Şikayet bir iddiadır, resmi tespit değildir. Yayımlanması için en az bir fotoğraf ve fiş veya fatura görseli gerekir. Telefon, e-posta, kimlik numarası, kapı numarası ve tehdit içeren metin reddedilir.',
+          'Kanıt dosyaları şikayetle birlikte görünür. İnceleme bayrağı varsayılan olarak kapalıdır; yükleme, bir moderatörün doğruladığı anlamına gelmez.',
+          'Başka bir kişinin özel hayatını ifşa etmek kullanım koşullarına aykırıdır. Böyle bir metin yayından kaldırılabilir.',
+        ],
+      },
+      {
+        heading: 'Çocuklar',
+        paragraphs: [
+          'Hizmet 18 yaşından küçüklere yönelik değildir. Bilerek çocuklardan veri toplamayız.',
+        ],
+      },
+      {
+        heading: 'Güvenlik sınırı',
+        paragraphs: [
+          'Yerel MVP HTTP üzerinde çalışır. Herkese açık bir sunucuya alınırken TLS zorunlu olmalıdır. Jetonlar webde tarayıcı deposunda, mobilde cihazın güvenli deposunda tutulur.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'kullanim-kosullari',
+    title: 'Kullanım koşulları',
+    summary: 'Hesabı ve şikayeti hangi kurallarla kullanacağınız.',
+    updated: '25 Eylül 2026',
+    sections: [
+      {
+        heading: 'Hizmet',
+        paragraphs: [
+          `${PROJECT}, gönüllülerin yürüttüğü bir şikayet tahtasıdır. Restoranlar hakkında kullanıcıların anlattığı, fotoğraf ve fişle desteklenen deneyimleri listeler ve bunlardan bir kötülük skoru üretir. Skor bir mahkeme kararı, hijyen denetimi veya sağlık raporu değildir. İnceleme gönüllüdür.`,
+          'Listeyi okumak için hesap gerekmez. Mekan eklemek herkese açıktır. Şikayet ve yararlı oy için kayıt ve giriş gerekir.',
+        ],
+      },
+      {
+        heading: 'Hesap',
+        paragraphs: [
+          'Kayıtta KVKK aydınlatma metnini ve bu koşulları kabul etmeniz gerekir. Pazarlama kutusu isteğe bağlıdır ve kaydı engellemez.',
+          'Hesap size aittir. Parolayı paylaşmayın. Demo hesap yalnızca yerel deneme içindir.',
+        ],
+      },
+      {
+        heading: 'İçerik lisansı',
+        paragraphs: [
+          'Şikayet, fotoğraf ve fiş üzerindeki hak sizde kalır. Yayımlayınca projeye, bu hizmette göstermek, sıralamak ve gönüllü moderasyon için saklamak üzere dünya çapında, münhasır olmayan, bedelsiz bir lisans verirsiniz. Bu lisans bir şirkete devir değildir.',
+          'Lisans, içeriği geri çekmeniz veya hesabı silmenizle yeni gösterimler için sona erer. Daha önce indirilmiş kopyalar ve yasal saklama yükümlülüğü bu cümlenin dışındadır.',
+        ],
+      },
+      {
+        heading: 'İçerik kuralları',
+        paragraphs: [
+          'Yaşadığınızı anlatın. Kişi adı, telefon, tam adres, kimlik numarası yazmayın. Hakaret, nefret söylemi ve tehdit yasaktır.',
+          'Fotoğrafsız veya fişsiz şikayet kabul edilmez. Fiş görselinde kendi adınızı, telefonunuzu ve kart numaranızı karalayın. Başkasının yüzünü gereksiz yere göstermeyin.',
+          'Uydurma zehirlenme iddiası veya bir işletmeyi haksız yere itibarsızlaştırma sizin sorumluluğunuzdadır. Gerçeğe aykırı içerikten doğan taleplerde yazan kişi muhataptır.',
+          'Kendi şikayetinize yararlı oyu veremezsiniz.',
+        ],
+      },
+      {
+        heading: 'Kaldırma ve hesap silme',
+        paragraphs: [
+          'Kurallara uymayan içeriği yayından kaldırabiliriz. Hesabınızı profil ekranından silerseniz şikayetleriniz ve oylarınız da silinir.',
+          'Silinen skor, kalan şikayetlere göre yeniden hesaplanır.',
+        ],
+      },
+      {
+        heading: 'Sorumluluk',
+        paragraphs: [
+          'Hizmet olduğu gibi, gönüllü olarak sunulur. Listenin eksiksiz, güncel veya bir işletme hakkında kesin doğru olduğu taahhüt edilmez.',
+          'Bu MVP koşulları Türkiye Cumhuriyeti hukukuna göre yorumlanır. Yetkili mahkeme yayın öncesi ayrıca yazılacaktır.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'cerez-politikasi',
+    title: 'Çerez bildirimi',
+    summary: 'Reklam çerezi yok. Gönüllü proje; ticari izleme yok. Oturum tarayıcıda yerel depoda tutulur.',
+    updated: '25 Eylül 2026',
+    sections: [
+      {
+        heading: 'Çerez kullanmıyoruz',
+        paragraphs: [
+          `${PROJECT} reklam, analiz veya üçüncü taraf takip çerezi yazmaz. Zorunlu bir çerez de bırakmayız. Şu an ticari bir yayın yoktur.`,
+          'Web arayüzü oturum jetonunu ve çerez bildirimini kapattığınızı tarayıcının localStorage alanına yazar. Bu bir çerez değildir; aynı cihazda, aynı tarayıcıda durur ve sunucuya kendiliğinden gitmez.',
+        ],
+      },
+      {
+        heading: 'Neler durur',
+        paragraphs: [
+          'yemesek.access: kısa ömürlü erişim jetonu.',
+          'yemesek.refresh: yenileme jetonu. Çıkışta silinir.',
+          'yemesek.user: e-posta ve görünen ad gibi sizin gördüğünüz profil özeti.',
+          'yemesek.notice: eski bildirim anahtarı.',
+          'yemesek.cookies: zorunlu depolama her zaman açık kalır. Analiz ve pazarlama tercihleri bu anahtarda, yalnızca bu tarayıcıda durur. “Yalnızca gerekli” seçilince analiz ve pazarlama kapalı yazılır. Şu an analiz veya pazarlama betiği yüklenmez.',
+          'yemesek.intro: ilk tanıtımın kapatıldığı. Zorunlu arayüz kaydıdır, analiz değildir. “Yalnızca gerekli” bunu silmez.',
+        ],
+      },
+      {
+        heading: 'Mobil',
+        paragraphs: [
+          'Mobil uygulama jetonu cihazın güvenli deposunda (SecureStore) tutar. Aynı depoda yemesek.intro anahtarı tanıtımın görüldüğünü tutar. Reklam kimliği veya konum izni istemez.',
+        ],
+      },
+      {
+        heading: 'Nasıl silinir',
+        paragraphs: [
+          'Çıkış yapmak jetonları siler. Tarayıcıda site verisini temizlemek yerel kopyayı da siler. Hesabı silmek sunucudaki yenileme kayıtlarını siler.',
+          'Pazarlama rızası bir çerez değildir; hesap kaydında durur ve profilden kapatılır.',
+        ],
+      },
+    ],
+  },
+];
+
+export function getDocument(slug: string): LegalDocument | undefined {
+  return DOCUMENTS.find((document) => document.slug === slug);
+}
+
+export function isLegalSlug(slug: string): slug is LegalSlug {
+  return (LEGAL_SLUGS as readonly string[]).includes(slug);
+}

@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: var(--font-fraunces), "Times New Roman", serif;
+  --font-sans: var(--font-outfit), "Segoe UI", sans-serif;
+  --color-paper: #f9f4ea;
+  --color-ink: #2e2e2e;
+  --color-chili: #8b1e1e;
+  --color-chili-dark: #6e1616;
+  --color-amber: #c9a962;
+  --color-amber-ink: #5c471c;
+  --color-moss: #2f6b45;
+  --color-card: #fffcf7;
+  --color-line: #e7dcc8;
+  --color-muted: #6a635a;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-paper);
+  background-image:
+    radial-gradient(ellipse at top, rgba(139, 30, 30, 0.07), transparent 46%),
+    linear-gradient(180deg, rgba(28, 25, 21, 0.035), transparent 220px);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-chili);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #ead7b0;
+}
+
+.field {
+  width: 100%;
+  border-radius: 0.7rem;
+  border: 1px solid var(--color-line);
+  background: white;
+  padding: 0.7rem 0.85rem;
+  color: var(--color-ink);
+  outline: none;
+}
+
+.field:focus {
+  border-color: var(--color-chili);
+  box-shadow: 0 0 0 3px rgba(139, 30, 30, 0.16);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.7rem 1.15rem;
+  font-weight: 650;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-primary {
+  background: var(--color-chili);
+  color: #fffcf7;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-chili-dark);
+}
+
+.btn-ghost {
+  border: 1px solid var(--color-ink);
+  background: transparent;
+  color: var(--color-ink);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}

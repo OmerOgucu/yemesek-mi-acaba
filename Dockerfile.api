@@ -1,0 +1,30 @@
+FROM node:22-bookworm-slim AS build
+WORKDIR /app
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+RUN corepack enable && corepack prepare pnpm@10.33.3 --activate
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY apps ./apps
+COPY packages ./packages
+COPY services ./services
+RUN pnpm install --frozen-lockfile
+ENV DATABASE_URL=postgresql://placeholder:placeholder@127.0.0.1:5432/placeholder
+RUN pnpm --filter @yemesek/database exec prisma generate \
+  && pnpm --filter @yemesek/api build \
+  && node -e "const {createRequire}=require('module'); const path=require('path'); const file=path.resolve('apps/api/dist/services/evidence/src/object-storage.js'); const req=createRequire(file); req.resolve('@aws-sdk/client-s3'); req.resolve('sharp');"
+
+FROM node:22-bookworm-slim
+WORKDIR /app
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/* \
+  && corepack enable && corepack prepare pnpm@10.33.3 --activate
+COPY --from=build /app /app
+RUN chown -R node:node /app
+USER node
+ENV NODE_ENV=production
+ENV RUN_WORKER=false
+ENV PORT=3001
+EXPOSE 3001
+CMD ["node", "apps/api/dist/apps/api/src/main.js"]

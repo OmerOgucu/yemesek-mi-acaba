@@ -1,0 +1,84 @@
+name: check
+
+on:
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: yemesek
+          POSTGRES_PASSWORD: yemesek
+          POSTGRES_DB: yemesek_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U yemesek -d yemesek_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://yemesek:yemesek@127.0.0.1:5432/yemesek_test
+      NEXT_PUBLIC_API_URL: https://api.yemesekmiacaba.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/source-verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidence-check
+          path: ops/state/evidence.json
+          if-no-files-found: ignore
+
+  runtime:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compose runtime, restart, Playwright, backup
+        run: sh ops/ci/runtime.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidence-runtime
+          path: ops/state/runtime-evidence.json
+          if-no-files-found: ignore
+
+  report:
+    needs: [check, runtime]
+    if: always() && needs.check.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Kanıt dosyalarını indir
+        # Eksik kanıt NOT_RUN'dır. Bu adım audit kapısı değildir.
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: evidence-*
+          path: ops/state
+      - name: Türkçe doğrulama özeti
+        env:
+          CHECK_RESULT: ${{ needs.check.result }}
+          RUNTIME_RESULT: ${{ needs.runtime.result }}
+          VERIFY_TARGET: pull_request
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node ops/verify/write-summary.mjs

@@ -1,0 +1,476 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String              @id @default(cuid())
+  email               String              @unique
+  passwordHash        String
+  displayName         String
+  role                UserRole            @default(USER)
+  emailVerifiedAt     DateTime?
+  disabledAt          DateTime?
+  kvkkAcceptedAt      DateTime
+  termsAcceptedAt     DateTime
+  marketingAcceptedAt DateTime?
+  marketingWithdrawnAt DateTime?
+  ageConfirmedAt      DateTime?
+  totpSecret          String?
+  totpEnabledAt       DateTime?
+  sessionsRevokedAt   DateTime?
+  tokenVersion        Int                 @default(0)
+  deletedAt           DateTime?
+  mustSetupPassword   Boolean             @default(false)
+  createdAt           DateTime            @default(now())
+  reports             Report[]
+  votes               Vote[]
+  restaurants         Restaurant[]
+  refreshTokens       RefreshToken[]
+  emailVerifications  EmailVerification[]
+  badges              UserBadge[]
+  passwordResets      PasswordReset[]
+  recoveryCodes       RecoveryCode[]
+  claims              RestaurantClaim[]
+  appeals             Appeal[]
+  flags               ContentFlag[]
+  pushTokens          PushToken[]
+  auditLogs           AuditLog[]
+  replies             ReportReply[]
+  blocksMade          UserBlock[]         @relation("blocksMade")
+  blocksReceived      UserBlock[]         @relation("blocksReceived")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model City {
+  id          String       @id @default(cuid())
+  name        String
+  key         String       @unique
+  createdAt   DateTime     @default(now())
+  districts   District[]
+  restaurants Restaurant[]
+}
+
+model District {
+  id          String       @id @default(cuid())
+  cityId      String
+  city        City         @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  name        String
+  key         String
+  createdAt   DateTime     @default(now())
+  restaurants Restaurant[]
+
+  @@unique([cityId, key])
+  @@index([cityId])
+}
+
+model Restaurant {
+  id            String    @id @default(cuid())
+  name          String
+  city          String
+  cityKey       String
+  cityId        String?
+  cityPlace     City?     @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  district      String?
+  districtId    String?
+  districtPlace District? @relation(fields: [districtId], references: [id], onDelete: SetNull)
+  addressHint   String?
+  cuisine           String?
+  nameKey           String       @default("")
+  brandName         String?
+  status            VenueStatus  @default(OPEN)
+  venueReply        String?
+  venueReplyAt      DateTime?
+  venueReplyOnBehalf Boolean     @default(false)
+  hidden            Boolean      @default(false)
+  createdById       String?
+  createdBy         User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime     @default(now())
+  reports           Report[]
+  claims            RestaurantClaim[]
+  flags             ContentFlag[]
+
+  @@index([cityKey])
+  @@index([nameKey, cityKey])
+  @@index([cityId])
+  @@index([districtId])
+  @@index([createdById])
+}
+
+model Report {
+  id           String         @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category     ReportCategory
+  severity     Int
+  title              String
+  body               String
+  nickname           String         @default("anonim")
+  photoUrls          Json
+  receiptUrl         String
+  evidenceVerified   Boolean            @default(false)
+  moderationStatus   ModerationStatus   @default(PENDING)
+  hidden             Boolean            @default(false)
+  moderationNote     String?
+  withdrawnAt        DateTime?
+  evidencePurgeAfter DateTime?
+  threat             Boolean            @default(false)
+  threatAt           DateTime?
+  createdAt          DateTime           @default(now())
+  votes              Vote[]
+  replies            ReportReply[]
+  flags              ContentFlag[]
+  appeals            Appeal[]
+
+  @@index([restaurantId, createdAt])
+  @@index([authorId])
+  @@index([evidencePurgeAfter])
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  reportId  String
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([reportId, userId])
+  @@index([reportId])
+}
+
+model EmailVerification {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash   String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([codeHash])
+}
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model EmailTemplate {
+  key       String   @id
+  subject   String
+  htmlBody  String
+  textBody  String
+  updatedAt DateTime @updatedAt
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  description String
+  icon        String
+  metric      BadgeMetric
+  threshold   Int
+  sortOrder   Int         @default(0)
+  enabled     Boolean     @default(true)
+  awards      UserBadge[]
+}
+
+model UserBadge {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge            @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  source    BadgeAwardSource @default(AUTO)
+  awardedAt DateTime         @default(now())
+  revokedAt DateTime?
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+model PasswordReset {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model RecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String    @unique
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model RestaurantClaim {
+  id           String      @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note         String?
+  status       ClaimStatus @default(PENDING)
+  createdAt    DateTime    @default(now())
+  reviewedAt   DateTime?
+
+  @@index([restaurantId, status])
+  @@index([userId])
+}
+
+model ReportReply {
+  id        String   @id @default(cuid())
+  reportId  String
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  onBehalf  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([reportId])
+}
+
+model ContentFlag {
+  id           String      @id @default(cuid())
+  reportId     String?
+  report       Report?     @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  restaurantId String?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason       String
+  createdAt    DateTime    @default(now())
+  resolvedAt   DateTime?
+
+  @@index([reportId])
+  @@index([restaurantId])
+}
+
+model Appeal {
+  id           String       @id @default(cuid())
+  reportId     String
+  report       Report       @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body         String
+  status       AppealStatus @default(OPEN)
+  resolution   String?
+  createdAt    DateTime     @default(now())
+  resolvedAt   DateTime?
+
+  @@index([reportId])
+  @@index([status])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String
+  summary    String
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+}
+
+model SupportTicket {
+  id        String       @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  body      String
+  status    TicketStatus @default(OPEN)
+  createdAt DateTime     @default(now())
+
+  @@index([status, createdAt])
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model SiteContent {
+  key       String   @id
+  body      String
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum VenueStatus {
+  OPEN
+  CLOSED
+  MOVED
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AppealStatus {
+  OPEN
+  RESOLVED
+  REJECTED
+}
+
+enum TicketStatus {
+  OPEN
+  CLOSED
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BadgeMetric {
+  REPORTS_FILED
+  HELPFUL_VOTES_RECEIVED
+  VENUES_ADDED
+  HELPFUL_VOTES_GIVEN
+}
+
+enum BadgeAwardSource {
+  AUTO
+  MANUAL
+}
+
+model EvidenceObject {
+  id          String    @id @default(cuid())
+  objectKey   String    @unique
+  kind        String
+  contentType String
+  byteSize    Int
+  ownerId     String
+  reportId    String?
+  status      String    @default("STAGED")
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  @@index([reportId])
+  @@index([status, createdAt])
+}
+
+model MailJob {
+  id            String    @id @default(cuid())
+  dedupeKey     String    @unique
+  toEmail       String
+  subject       String
+  textBody      String
+  htmlBody      String
+  status        String    @default("PENDING")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  leaseUntil    DateTime?
+  leaseOwner    String?
+  lastError     String?
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+  sentAt        DateTime?
+
+  @@index([status, nextAttemptAt])
+}
+
+model RateBucket {
+  key         String   @id
+  hits        Int      @default(0)
+  windowStart DateTime
+  updatedAt   DateTime @updatedAt
+}
+
+model AdminInvite {
+  id         String    @id @default(cuid())
+  email      String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email])
+}
+
+model UserBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blocker   User     @relation("blocksMade", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   User     @relation("blocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+}
+
+model CleanupJob {
+  id            String    @id @default(cuid())
+  objectKey     String
+  status        String    @default("PENDING")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  leaseUntil    DateTime?
+  leaseOwner    String?
+  lastError     String?
+  createdAt     DateTime  @default(now())
+
+  @@index([status, nextAttemptAt])
+  @@index([objectKey])
+}
+
+enum ReportCategory {
+  HYGIENE
+  FOOD_POISONING
+  SCAM_PRICING
+  RUDE_SERVICE
+  WRONG_OR_COLD
+  FALSE_ADS
+}

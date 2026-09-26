@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Yemesek mi acaba?",
+    "slug": "yemesek",
+    "version": "1.0.0",
+    "scheme": "yemesek",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/brand/icon.png",
+    "splash": {
+      "image": "./assets/brand/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F9F4EA"
+    },
+    "newArchEnabled": false,
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Şikayete yemek, mekan ve fiş fotoğrafı eklemek için galeri izni gerekir."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "ios": {
+      "bundleIdentifier": "com.yemesek.app",
+      "buildNumber": "1",
+      "associatedDomains": ["applinks:yemesekmiacaba.com"]
+    },
+    "android": {
+      "package": "com.yemesek.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/icon.png",
+        "backgroundColor": "#8B1E1E"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "yemesekmiacaba.com", "pathPrefix": "/dogrula" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    }
+  }
+}

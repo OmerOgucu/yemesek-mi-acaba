@@ -1,0 +1,82 @@
+name: main
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: main-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  main-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: yemesek
+          POSTGRES_PASSWORD: yemesek
+          POSTGRES_DB: yemesek_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U yemesek -d yemesek_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://yemesek:yemesek@127.0.0.1:5432/yemesek_test
+      NEXT_PUBLIC_API_URL: https://api.yemesekmiacaba.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/source-verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidence-check
+          path: ops/state/evidence.json
+          if-no-files-found: ignore
+
+  main-runtime:
+    needs: main-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compose runtime, restart, Playwright, backup
+        run: sh ops/ci/runtime.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidence-runtime
+          path: ops/state/runtime-evidence.json
+          if-no-files-found: ignore
+
+  main-report:
+    needs: [main-check, main-runtime]
+    if: always() && needs.main-check.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Kanıt dosyalarını indir
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: evidence-*
+          path: ops/state
+      - name: Türkçe doğrulama özeti
+        env:
+          CHECK_RESULT: ${{ needs.main-check.result }}
+          RUNTIME_RESULT: ${{ needs.main-runtime.result }}
+          VERIFY_TARGET: main
+        run: node ops/verify/write-summary.mjs
