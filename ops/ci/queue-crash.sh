@@ -16,7 +16,7 @@ docker compose $COMPOSE_FILE_ARGS --env-file "$ENV_FILE" exec -T postgres \
 docker rm -f yemesek-hold >/dev/null 2>&1 || true
 # shellcheck disable=SC2086
 docker compose $COMPOSE_FILE_ARGS --env-file "$ENV_FILE" --profile localhost run -d --name yemesek-hold --no-deps -w /app/apps/api api-local \
-  node -e "process.on('SIGHUP',()=>{}); process.on('SIGINT',()=>{}); const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); const key=process.argv[1]; p.cleanupJob.create({data:{objectKey:key,status:'RUNNING',attempts:1,leaseOwner:'victim',leaseUntil:new Date(Date.now()+3000)}}).then(()=>new Promise(()=>{})).catch((error)=>{console.error(error&&error.name); process.exit(1);});" \
+  node -e "for (const signal of ['SIGHUP','SIGINT','SIGTERM']) process.on(signal,()=>{}); const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); const key=process.argv[1]; p.cleanupJob.create({data:{objectKey:key,status:'RUNNING',attempts:1,leaseOwner:'victim',leaseUntil:new Date(Date.now()+3000)}}).then(()=>new Promise(()=>{})).catch((error)=>{console.error(error&&error.name); process.exit(1);});" \
   "$key"
 deadline=$(( $(date +%s) + 20 ))
 status=""
