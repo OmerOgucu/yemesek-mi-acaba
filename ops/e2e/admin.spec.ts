@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { PNG, codeFrom, waitMail } from './mail';
+import { acceptRegister } from './register';
 import { totpCode } from './totp';
 
 const ids = JSON.parse(readFileSync('ops/state/e2e-ids.json', 'utf8')) as {
@@ -18,9 +19,7 @@ test('admin invite, totp, moderation, closed city, and account delete', async ({
   await page.locator('#displayName').fill('Uye B');
   await page.locator('#email').fill(other);
   await page.locator('#password').fill('Sifre1234');
-  await page.getByText('18 yaşından büyüğüm.').click();
-  await page.getByText('okudum.').click();
-  await page.getByText('kabul ediyorum.').click();
+  await acceptRegister(page);
   await page.getByRole('button', { name: 'Hesap aç' }).click();
   await expect(page.locator('#code')).toBeVisible();
   const verification = await waitMail(other, 'doğrulama');

@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { PNG, codeFrom, tokenFrom, waitMail } from './mail';
+import { acceptRegister } from './register';
 
 const email = `uye-${Date.now()}@yemesek.test`;
 const password = 'YeniSifre123';
@@ -10,9 +11,7 @@ test('register, verify, reset, and file a report', async ({ page }) => {
   await page.locator('#displayName').fill('Uye A');
   await page.locator('#email').fill(email);
   await page.locator('#password').fill('Sifre1234');
-  await page.getByText('18 yaşından büyüğüm.').click();
-  await page.getByText('okudum.').click();
-  await page.getByText('kabul ediyorum.').click();
+  await acceptRegister(page);
   await page.getByRole('button', { name: 'Hesap aç' }).click();
   await expect(page.getByRole('heading', { name: 'E-postanı doğrula' })).toBeVisible();
 
