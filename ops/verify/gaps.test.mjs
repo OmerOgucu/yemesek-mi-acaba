@@ -58,6 +58,7 @@ test('workspace mode-600 files are written as the invoking user', () => {
   assert.match(ci, /chrislusf\/seaweedfs:4\.47/);
   assert.match(ci, /AWS_ACCESS_KEY_ID: \$\{S3_ACCESS_KEY_ID:\?\}/);
   assert.match(read('ops/backup-remote.mjs'), /requestChecksumCalculation: 'WHEN_REQUIRED'/);
+  assert.match(read('ops/restore-exec.sh'), /CASE WHEN to_regclass\('public\.\\"User\\"'\) IS NULL THEN 'missing' ELSE 'User' END/);
   assert.equal(/image:\s*minio\/minio/.test(ci), false);
 });
 

@@ -99,7 +99,7 @@ found="$(docker run --rm --network yemesek_internal \
   -e RESTORE_DATABASE_URL \
   --entrypoint sh yemesek-ops:local /restore-exec.sh smoke)"
 if [ "$found" != "User" ]; then
-  echo "restore sonrası şema yok (${restore_code})" >&2
+  echo "restore sonrası şema yok (${restore_code}) bulunan=${found}" >&2
   exit 1
 fi
 echo "restore-test: disposable database restored. R2 nesneleri bu işlemle geri gelmez."
