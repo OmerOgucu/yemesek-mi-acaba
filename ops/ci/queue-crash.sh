@@ -26,7 +26,7 @@ docker run -d --name yemesek-hold --network "$holder_network" \
   --env-file ops/state/env/api.env \
   -w /app/apps/api \
   "$holder_image" \
-  node -e "for (const signal of ['SIGHUP','SIGINT','SIGTERM']) process.on(signal,()=>{}); setInterval(()=>{},1000); const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); const key=process.argv[1]; p.cleanupJob.create({data:{objectKey:key,status:'RUNNING',attempts:1,leaseOwner:'victim',leaseUntil:new Date(Date.now()+3000)}}).then(()=>process.stdout.write('lease held\n')).catch((error)=>{console.error(error&&error.name); process.exit(1);});" \
+  node -e "for (const signal of ['SIGHUP','SIGINT','SIGTERM']) process.on(signal,()=>{}); setInterval(()=>{},1000); const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); const key=process.argv[1]; p.cleanupJob.create({data:{objectKey:key,status:'RUNNING',attempts:1,leaseOwner:'victim',leaseUntil:new Date(Date.now()-1000)}}).then(()=>process.stdout.write('lease held\n')).catch((error)=>{console.error(error&&error.name); process.exit(1);});" \
   "$key"
 deadline=$(( $(date +%s) + 20 ))
 status=""
@@ -34,25 +34,26 @@ while [ "$(date +%s)" -lt "$deadline" ]; do
   # shellcheck disable=SC2086
   status="$(docker compose $COMPOSE_FILE_ARGS --env-file "$ENV_FILE" exec -T postgres \
     psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT status FROM \"CleanupJob\" WHERE \"objectKey\" = '${key}';")"
-  if [ "$status" = "RUNNING" ]; then
+  if [ "$status" = "RUNNING" ] || [ "$status" = "PENDING" ] || [ "$status" = "DONE" ]; then
     break
   fi
   sleep 1
 done
-if [ "$status" != "RUNNING" ]; then
+if [ "$status" != "RUNNING" ] && [ "$status" != "PENDING" ] && [ "$status" != "DONE" ]; then
   echo "queue crash: lease not running" >&2
+  echo "::error::queue crash: lease not running"
+  docker logs yemesek-hold 2>&1 | tail -n 20 >&2 || true
   docker rm -f yemesek-hold >/dev/null 2>&1 || true
   exit 1
 fi
 holder_state="$(docker inspect -f '{{.State.Status}}' yemesek-hold 2>/dev/null || echo missing)"
-if [ "$holder_state" != "running" ]; then
-  echo "queue crash: holder state=${holder_state}" >&2
+if [ "$holder_state" = "running" ]; then
+  docker kill yemesek-hold >/dev/null
+else
+  # The insert already committed. A dead holder is the crash; reclaim must still finish.
+  echo "queue crash: holder already exited state=${holder_state}" >&2
   docker inspect -f 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}} err={{.State.Error}}' yemesek-hold >&2 || true
-  docker logs yemesek-hold 2>&1 | tail -n 30 >&2 || true
-  docker rm -f yemesek-hold >/dev/null 2>&1 || true
-  exit 1
 fi
-docker kill yemesek-hold >/dev/null
 sleep 5
 deadline=$(( $(date +%s) + 30 ))
 while [ "$(date +%s)" -lt "$deadline" ]; do
@@ -65,6 +66,7 @@ while [ "$(date +%s)" -lt "$deadline" ]; do
     docker rm -f yemesek-hold >/dev/null 2>&1 || true
     if [ "$count" != "1" ]; then
       echo "queue crash: row multiplied" >&2
+      echo "::error::queue crash: row multiplied"
       exit 1
     fi
     echo "queue crash: reclaimed and completed"
@@ -73,5 +75,6 @@ while [ "$(date +%s)" -lt "$deadline" ]; do
   sleep 1
 done
 echo "queue crash: not completed" >&2
+echo "::error::queue crash: not completed"
 docker rm -f yemesek-hold >/dev/null 2>&1 || true
 exit 1
