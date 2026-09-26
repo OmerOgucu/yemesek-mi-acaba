@@ -8,20 +8,23 @@ Worker aynı API imajında `RUN_WORKER=true` ile çalışır. API kabında worke
 
 ## Kabul matrisi
 
-Yerel sütun bu çalışma ortamıdır. CI sütunu yalnız o commit’in kendi workflow koşusudur. `a46f89b` imaj derlemesi GitHub Actions run `36194772998` / job `108267995293` içinde API ve web imajı SUCCESS’tir. O sonuç aşağıdaki yeni commit’e yazılmaz. O koşuda Compose, restart, rollback ve Playwright yoktu.
+Yerel sütun bu çalışma ortamıdır. CI sütunu yalnız yazılan koşunun kendi SHA’sıdır. `a46f89b` imaj derlemesi GitHub Actions run `36194772998` / job `108267995293` içinde API ve web imajı SUCCESS’tir. O sonuç sonraki commit’e yazılmaz. O koşuda Compose, restart, rollback ve Playwright yoktu.
+
+PR başı `05a2df05caef7744508c2f50cf0193e8dfb34a17`. `pull_request` checkout’u merge commit `54268a900ca8e7185ae3edc96a46a4f3561f7119` (`05a2df0` + `main` `6452448`). Raporun incelediği SHA budur. Koşu: https://github.com/OmerOgucu/yemesek-mi-acaba/actions/runs/36218164866 Olay `pull_request`, tetikleyen `cursor[bot]`. `check`, `runtime` ve `report` PASS. Audit ayrı koşu `36218164829` PASS. `main`, `release` ve `verify-notify` bu olayda çalışmadı.
 
 | # | Kontrol | Yerel | CI | Kanıt |
 | --- | --- | --- | --- | --- |
-| 1 | Typecheck, lint, ops birim | PASS | bu commit’in `check` işi | `pnpm typecheck`, `pnpm lint`, `node --test ops/lib/*.test.mjs` 6/6 |
-| 2 | API ve kuyruk toparlanması | PASS | bu commit’in `check` işi | `pnpm --filter @yemesek/api test`, `yemesek_test`. İş öldürme, tavan, tek satır, 5. posta denemesi |
-| 3 | İmaj derlemesi | NOT_RUN | `a46f89b` için PASS, bu commit için kendi `check` işi | Yerelde `docker` yok. Eski run `36194772998` yalnız `a46f89b` |
-| 4 | Compose, restart, rollback, Playwright, yedek turu | NOT_RUN | bu commit’in `runtime` işi | `ops/ci/runtime.sh`. MinIO ve posta yakalayıcı gerçek R2/Brevo değildir |
-| 5 | Gerçek R2 / Brevo teslim / DNS / mağaza imzası | BLOCKED_EXTERNAL | BLOCKED_EXTERNAL | Anahtar, DNS onayı ve imza yok. `r2_app_read` ve `brevo_delivery` bu yüzden PASS yazılmaz |
+| 1 | Typecheck, lint, ops birim | PASS | PASS | Koşu `36218164866` job `check`. Yerel: `pnpm typecheck`, `pnpm lint`, `node --test ops/lib/*.test.mjs` |
+| 2 | API ve kuyruk toparlanması | PASS | PASS | Aynı `check` işi. `queue-recovery.spec.ts`: iş öldürme, tavan, tek satır, 5. posta denemesi |
+| 3 | İmaj derlemesi | NOT_RUN | PASS | `a46f89b` run `36194772998` ayrı durur. `05a2df0` merge’inde imaj, `check` içindeki `ops/ci/verify-source.sh` |
+| 4 | Compose, restart, rollback, Playwright, yedek turu | NOT_RUN | PASS | Aynı koşunun `runtime` işi, `05a2df0` merge SHA `54268a9`. SeaweedFS ve posta yakalayıcı gerçek R2/Brevo değildir |
+| 5 | Gerçek R2 / Brevo teslim / DNS / mağaza imzası | BLOCKED_EXTERNAL | BLOCKED_EXTERNAL | Anahtar, DNS onayı ve imza yok. `r2_app_read` ve `brevo_delivery` PASS yazılmaz |
 | 6 | Android emülatör / imzalı mağaza | NOT_RUN | emülatör SDK yoksa çıkış 2, imza BLOCKED_EXTERNAL | `ops/android-emulator.sh`. Sürüm tahmini yok |
+| 7 | Canlı `@OmerOgucu` yorumu | DOĞRULANMADI | DOĞRULANMADI | `verify-notify` yalnız `main` üzerindeki `workflow_run` ile çalışır. Bu PR birleşmeden yorum atılmaz. Karar testi `ops/verify/report.test.mjs`, `check` içinde PASS |
 
 Dört mevcut `ignoreGhsas` duruyor. Yeni yok sayma eklenmedi.
 
-Sürekli doğrulama `docs/VERIFY.md` içindedir. `7eda88e` için bot tetiklemeli check koşusu `36198945118` FAIL oldu (Android export yolu). O koşuda runtime NOT_RUN. Bu sonuç sonraki commit’e PASS olarak yazılmaz.
+Sürekli doğrulama `docs/VERIFY.md` içindedir. `7eda88e` için bot tetiklemeli check koşusu `36198945118` FAIL oldu (Android export yolu). O koşuda runtime NOT_RUN. Bu sonuç `05a2df0` PASS’ına yazılmaz. `05a2df0` öncesi runtime FAIL koşuları da PASS sayılmaz.
 
 ## Operatörde kalan
 

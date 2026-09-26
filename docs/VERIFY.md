@@ -15,3 +15,5 @@ PR içindeki `report` job’u Türkçe özeti Actions adım özetine yazar. Yazm
 Durumlar: YENİ, DEVAM EDİYOR, ÇÖZÜLDÜ, DOĞRULANMADI. ÇÖZÜLDÜ yalnız ilgili job PASS ve koruma testi duruyorsa. NOT_RUN ve BLOCKED_EXTERNAL PASS sayılmaz. Otomatik birleştirme ve production deploy yok.
 
 `7eda88e` üzerinde `cursor[bot]`, `pull_request` ile check koşusunu başlattı: https://github.com/OmerOgucu/yemesek-mi-acaba/actions/runs/36198945118 Sonuç FAIL. Android export proje dışına yazdı, `runtime` skipped. Düzeltme `dist/android`.
+
+PR başı `05a2df05caef7744508c2f50cf0193e8dfb34a17` için aynı bot ve `pull_request` olayı check koşusunu tamamladı: https://github.com/OmerOgucu/yemesek-mi-acaba/actions/runs/36218164866 `check`, `runtime`, `report` PASS. Audit: https://github.com/OmerOgucu/yemesek-mi-acaba/actions/runs/36218164829 PASS. Checkout edilen ve rapora yazılan SHA merge commit `54268a900ca8e7185ae3edc96a46a4f3561f7119`. `main`, `release` ve `verify-notify` bu PR güncellemesinde çalışmadı. Türkçe özet report job çıktısıdır; `@OmerOgucu` yorumu bu birleşme öncesi DOĞRULANMADI. Örnek şablon `docs/VERIFY-SAMPLE.md` runtime’ı NOT_RUN bırakır ve PASS değildir.
