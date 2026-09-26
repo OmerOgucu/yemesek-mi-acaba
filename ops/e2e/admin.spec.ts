@@ -53,6 +53,7 @@ test('admin invite, totp, moderation, closed city, and account delete', async ({
   await page.locator('#email').fill(adminEmail);
   await page.locator('#password').fill('Admin1234a');
   await page.getByRole('button', { name: 'Giriş yap' }).click();
+  await page.waitForURL((url) => url.pathname !== '/giris');
   await page.goto('/iki-adim');
   await page.getByRole('button', { name: 'Kurulumu başlat' }).click();
   const secret = (await page.getByTestId('totp-secret').textContent())?.trim() ?? '';
@@ -67,6 +68,7 @@ test('admin invite, totp, moderation, closed city, and account delete', async ({
   await page.getByRole('button', { name: 'Giriş yap' }).click();
   await page.locator('#mfa-code').fill(totpCode(secret));
   await page.getByRole('button', { name: 'Doğrula' }).click();
+  await page.waitForURL((url) => url.pathname !== '/giris');
   await page.goto('/admin/moderasyon');
   await expect(page.getByText('Tezgah kirliydi')).toBeVisible();
   await page.getByRole('button', { name: 'Onayla' }).first().click();
