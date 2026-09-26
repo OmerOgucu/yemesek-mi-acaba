@@ -1,4 +1,4 @@
-const PLACEHOLDER = /\{\{\s*(code|verifyUrl|displayName|appName)\s*\}\}/g;
+const PLACEHOLDER = /\{\{\s*(code|verifyUrl|resetUrl|displayName|appName)\s*\}\}/g;
 
 function escapeHtml(value: string): string {
   return value

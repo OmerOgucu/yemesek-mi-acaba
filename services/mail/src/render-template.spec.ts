@@ -8,4 +8,9 @@ describe('renderTemplate', () => {
     );
     expect(renderTemplate(source, { displayName: 'Ada', code: '123456' }, false)).toBe('Merhaba Ada 123456');
   });
+
+  it('inserts the password reset url into text', () => {
+    const text = renderTemplate('bağlantın: {{resetUrl}}', { resetUrl: 'https://web.yemesek.test/sifre-sifirla?token=abc' }, false);
+    expect(text).toContain('token=abc');
+  });
 });
