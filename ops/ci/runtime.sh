@@ -98,7 +98,7 @@ playwright() {
 }
 
 export ADMIN_EMAIL="$INITIAL_ADMIN_EMAIL"
-export ADMIN_SETUP_SECRET
+export ADMIN_SETUP_SECRET="${INITIAL_ADMIN_SETUP_SECRET}"
 playwright user.spec.ts
 # shellcheck disable=SC2086
 docker compose $COMPOSE_FILE_ARGS --env-file "$ENV_FILE" --profile localhost restart api-local

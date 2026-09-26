@@ -65,6 +65,7 @@ test('runtime proof stays on a clean host and distributed images', () => {
   assert.match(text, /host aws present/);
   assert.match(text, /\/opt\/yemesek\/ops\/ci\/prepare-minio\.mjs/);
   assert.equal(text.includes('/prepare.mjs'), false);
+  assert.match(text, /ADMIN_SETUP_SECRET="\$\{INITIAL_ADMIN_SETUP_SECRET\}"/);
   assert.match(text, /playwright/);
   assert.match(read('ops/preflight.sh'), /\/opt\/yemesek\/\$\{script\}/);
   assert.match(text, /smoke passed while api was stopped/);
