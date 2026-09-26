@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Yemesek mi acaba?",
+    "name": "Yemesek Mi",
     "slug": "yemesek",
     "version": "1.0.0",
     "scheme": "yemesek",
@@ -29,7 +29,7 @@
     "ios": {
       "bundleIdentifier": "com.yemesek.app",
       "buildNumber": "1",
-      "associatedDomains": ["applinks:yemesekmiacaba.com"]
+      "associatedDomains": ["applinks:yemesekmi.com"]
     },
     "android": {
       "package": "com.yemesek.app",
@@ -42,7 +42,7 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "yemesekmiacaba.com", "pathPrefix": "/dogrula" }],
+          "data": [{ "scheme": "https", "host": "yemesekmi.com", "pathPrefix": "/dogrula" }],
           "category": ["BROWSABLE", "DEFAULT"]
         }
       ]

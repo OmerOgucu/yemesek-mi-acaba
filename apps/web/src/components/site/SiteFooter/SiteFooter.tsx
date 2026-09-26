@@ -18,9 +18,9 @@ export function SiteFooter() {
   return (
     <footer className="mt-16 border-t border-ink/15">
       <div className="mx-auto max-w-5xl px-4 py-8 text-sm leading-relaxed text-muted">
-        <p className="font-display text-xl text-ink">Yemesek Mi Acaba?</p>
+        <p className="font-display text-xl text-ink">Yemesek Mi</p>
         <p className="mt-1 text-ink">Mekanları keşfet — kararını kolaylaştır</p>
-        <p className="text-xs tracking-wide">yemesekmiacaba.com</p>
+        <p className="text-xs tracking-wide">yemesekmi.com</p>
         <p className="mt-4 text-ink">
           Gönüllü bir topluluk hizmetidir. Şirket değildir. Kanıtlı kötü mekan deneyimlerini paylaşmak içindir.
         </p>

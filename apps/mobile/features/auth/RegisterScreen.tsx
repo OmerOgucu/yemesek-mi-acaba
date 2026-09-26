@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import logo from '../../assets/brand/logo.png';
+import mark from '../../assets/brand/mark.png';
 import { colors } from '../theme/theme';
 import { ApiError, postJson } from '../api/client';
 import type { Session } from './session';
@@ -40,7 +40,14 @@ export default function RegisterScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
-      <Image source={logo} style={styles.logo} resizeMode="contain" accessibilityLabel="Yemesek Mi Acaba?" />
+      <View style={styles.brand} accessibilityLabel="Yemesek Mi">
+        <Image source={mark} style={styles.brandMark} resizeMode="contain" />
+        <View>
+          <Text style={styles.brandName}>Yemesek</Text>
+          <Text style={styles.brandMi}>Mi</Text>
+          <Text style={styles.brandDomain}>yemesekmi.com</Text>
+        </View>
+      </View>
       <Text style={styles.tagline}>Şikayet yazmak için hesap gerekir. Liste herkese açık kalır.</Text>
       <TextInput style={styles.input} placeholder="Görünen ad" value={displayName} onChangeText={setDisplayName} />
       <TextInput style={styles.input} autoCapitalize="none" keyboardType="email-address" placeholder="E-posta" value={email} onChangeText={setEmail} />
@@ -78,7 +85,11 @@ function Check({ label, checked, onPress }: { label: string; checked: boolean; o
 
 const styles = StyleSheet.create({
   page: { padding: 16, gap: 10 },
-  logo: { width: 220, height: 72, alignSelf: 'center' },
+  brand: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, alignSelf: 'center' },
+  brandMark: { width: 62, height: 74 },
+  brandName: { color: colors.ink, fontSize: 30, lineHeight: 30, fontWeight: '800' },
+  brandMi: { color: colors.chili, fontSize: 24, lineHeight: 25, fontWeight: '800' },
+  brandDomain: { color: colors.muted, fontSize: 10, letterSpacing: 1.5 },
   tagline: { color: colors.muted, textAlign: 'center' },
   input: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, borderRadius: 12, padding: 12 },
   check: { flexDirection: 'row', gap: 8, alignItems: 'center' },

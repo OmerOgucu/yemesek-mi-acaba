@@ -11,9 +11,9 @@ Süreç `NODE_ENV=production` iken açılmaz, şu dördü gerçek olana kadar: `
 3. `JWT_ACCESS_SECRET` üret: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. Örnek `change-me-to-a-long-random-string` production’da reddedilir.
 4. Postgres bağlantısını `DATABASE_URL`e yaz. SQLite’ı yayına taşıma.
 5. `pnpm db:migrate` (deploy). `pnpm db:seed` çalıştırma. Production’da demo seed hiç çalışmaz; `ALLOW_PRODUCTION_SEED` bu yasağı açmaz. İlk yönetici `pnpm --filter @yemesek/database db:bootstrap` ve `POST /auth/admin/setup` ile kurulur.
-6. DNS: `yemesekmiacaba.com` web’e, API’nin hostu `APP_PUBLIC_URL` ve `NEXT_PUBLIC_API_URL` / `EXPO_PUBLIC_API_URL` ile aynı ailede. TLS zorunlu.
+6. DNS: `yemesekmi.com` web’e, API’nin hostu `APP_PUBLIC_URL` ve `NEXT_PUBLIC_API_URL` / `EXPO_PUBLIC_API_URL` ile aynı ailede. TLS zorunlu.
 7. Brevo: anahtar yalnızca API ortamında. SPF, DKIM, DMARC: `docs/email-dns.md`. `BREVO_SENDER_EMAIL` doğrulanmış gönderen olsun.
-8. `CORS_ORIGINS=https://yemesekmiacaba.com`. www varsa virgülle ekle. Boş bırakılırsa süreç açılmaz.
+8. `CORS_ORIGINS=https://yemesekmi.com`. www varsa virgülle ekle. Boş bırakılırsa süreç açılmaz.
 9. `STORAGE_DRIVER=s3` ve R2/S3 alanları. Kova listelemesi kapalı. `local` ile süreç açılır ama kanıtlar diske düşer; günlük uyarı yazar.
 10. `indexPublicReports` kapalı kalsın. `allowedCities` dolu başlasın. `admin2faRequired` açık olsun.
 11. Duman: `GET /health` yalnızca `ok` ve süre. Giriş, kayıt, şikayet, yönetim. Bakım açıkken ziyaretçi “Bakımdayız.” görür. `/durum` ve `/ihlal` yoktur.
@@ -27,7 +27,7 @@ Ayrıntı: `docs/deploy.md`. Yüzey: `docs/public-surface.md`.
 | --- | --- | --- |
 | `DATABASE_URL` | API | Postgres. `file:` production’da yasak. |
 | `JWT_ACCESS_SECRET` | API | 32+ rastgele. Örnek metin yasak. |
-| `APP_PUBLIC_URL` | API | `https://yemesekmiacaba.com` |
+| `APP_PUBLIC_URL` | API | `https://yemesekmi.com` |
 | `CORS_ORIGINS` | API | Aynı köken, virgüllü liste. |
 | `BREVO_API_KEY` | API | Boşsa e-posta yalnızca günlüğe düşer. |
 | `BREVO_SENDER_EMAIL` | API | Doğrulanmış gönderen. |

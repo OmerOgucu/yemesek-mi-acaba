@@ -4,7 +4,7 @@ import { IntroDone } from '@/components/site/Onboarding/IntroDone';
 
 export const metadata: Metadata = {
   title: 'Nasıl çalışır?',
-  description: 'Yemesek mi acaba neden var, liste nasıl okunur, şikayet nasıl yazılır.',
+  description: 'Yemesek Mi neden var, liste nasıl okunur, şikayet nasıl yazılır.',
 };
 
 export default function HowItWorksPage() {

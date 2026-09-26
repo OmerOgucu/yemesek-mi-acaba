@@ -1,10 +1,10 @@
-# Yemesek mi acaba?
+# Yemesek Mi
 
 Gönüllü bir topluluk hizmetidir. Şirket değildir. Kanıtlı kötü mekan deneyimlerini paylaşmak içindir. Konum, mekan eklerken yazılan şehir ve ilçeden çıkar; ilk yazım kalıcıdır. Övgü değil, şikayet sıralanır: yüksek **kötülük skoru** daha kötü demektir.
 
 Şikayetler kullanıcı metnidir. Gönüllü inceleme resmi tespit, laboratuvar sonucu veya mahkeme kararı değildir. Telefon, tam adres ve kimlik yazılmaz. Liste herkese açıktır. Giriş yapılabilir; mekan eklemek, şikayet ve yararlı oy e-posta doğrulaması ister. Şikayet ancak en az bir fotoğraf ve fiş/fatura görseliyle açılır.
 
-Herkese açık adres: https://yemesekmiacaba.com
+Herkese açık adres: https://yemesekmi.com
 
 Marka dosyaları `apps/web/public/brand` ve `apps/mobile/assets/brand` altındadır (kelime işareti, iğne, uygulama ikonu, favicon ve paylaşım görseli). Renkler: ana `#8B1E1E`, vurgu `#C9A962`, metin `#2E2E2E`, zemin `#F9F4EA`. Web bunları CSS değişkeni olarak, mobil `apps/mobile/features/theme/theme.ts` içinde kullanır.
 

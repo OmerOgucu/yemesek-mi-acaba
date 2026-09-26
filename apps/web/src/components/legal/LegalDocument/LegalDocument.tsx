@@ -2,8 +2,8 @@ import type { LegalDocument as LegalDocumentData } from '@yemesek/legal';
 import { apiBaseUrl } from '@/lib/api/client';
 
 export async function LegalDocument({ document }: { document: LegalDocumentData }) {
-  let legalEmail = 'hukuk@yemesekmiacaba.com';
-  let pressEmail = 'basin@yemesekmiacaba.com';
+  let legalEmail = 'hukuk@yemesekmi.com';
+  let pressEmail = 'basin@yemesekmi.com';
   let controllerName: string | null = null;
   let contactAddress: string | null = null;
   try {

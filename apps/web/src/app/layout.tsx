@@ -19,17 +19,17 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://yemesekmiacaba.com'),
+  metadataBase: new URL('https://yemesekmi.com'),
   title: {
-    default: 'Yemesek Mi Acaba?',
-    template: '%s · Yemesek Mi Acaba?',
+    default: 'Yemesek Mi',
+    template: '%s · Yemesek Mi',
   },
   description: 'Gönüllü topluluk hizmeti. Kanıtlı kötü mekan deneyimlerini oku, şüpheli yerlerden uzak dur.',
   openGraph: {
-    title: 'Yemesek Mi Acaba?',
+    title: 'Yemesek Mi',
     description: 'Gönüllü topluluk hizmeti. Kötülük skoru yüksek mekanlar. Kanıtlı şikayet, resmi tespit değil.',
-    url: 'https://yemesekmiacaba.com',
-    siteName: 'Yemesek Mi Acaba?',
+    url: 'https://yemesekmi.com',
+    siteName: 'Yemesek Mi',
     locale: 'tr_TR',
     type: 'website',
   },

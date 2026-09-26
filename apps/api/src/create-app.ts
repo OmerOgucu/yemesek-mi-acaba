@@ -17,7 +17,7 @@ export async function createApp(): Promise<NestExpressApplication> {
   const config = readConfig();
   const origins = resolveCorsOrigins();
   if (config.isProduction && !process.env.CORS_ORIGINS?.trim()) {
-    console.warn('CORS_ORIGINS boş. Production için https://yemesekmiacaba.com yazılmalı. Şu an yalnızca localhost kabul edilir.');
+    console.warn('CORS_ORIGINS boş. Production için https://yemesekmi.com yazılmalı. Şu an yalnızca localhost kabul edilir.');
   }
   const hops = Number(process.env.TRUST_PROXY_HOPS ?? '0');
   if (!Number.isInteger(hops) || hops < 0 || hops > 5) {

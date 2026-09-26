@@ -18,9 +18,9 @@ export type LegalSlug = (typeof LEGAL_SLUGS)[number];
 export { ONBOARDING_STEPS, ONBOARDING_STORAGE_KEY } from './onboarding';
 export type { OnboardingStep } from './onboarding';
 
-const PROJECT = 'Yemesek mi acaba';
-const LEGAL_EMAIL = 'hukuk@yemesekmiacaba.com';
-const PRESS_EMAIL = 'basin@yemesekmiacaba.com';
+const PROJECT = 'Yemesek Mi';
+const LEGAL_EMAIL = 'hukuk@yemesekmi.com';
+const PRESS_EMAIL = 'basin@yemesekmi.com';
 
 export const DOCUMENTS: LegalDocument[] = [
   {

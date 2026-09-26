@@ -9,7 +9,7 @@ export default function LegalScreen() {
   const params = useLocalSearchParams<{ slug: string }>();
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   const document = slug ? getDocument(slug) : undefined;
-  const [contact, setContact] = useState('hukuk@yemesekmiacaba.com');
+  const [contact, setContact] = useState('hukuk@yemesekmi.com');
 
   useEffect(() => {
     void getJson<{ legalEmail?: string }>('/press')

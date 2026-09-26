@@ -13,7 +13,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStep[] = [
     kicker: 'Neden var',
     title: 'Bu tahta neden duruyor?',
     paragraphs: [
-      'Yemesek mi acaba, gönüllü bir topluluk hizmetidir. Şirket değildir; tüzel kişilik yoktur. Yasal metinlerde veri sorumlusu “proje yürütücüsü” diye durur.',
+      'Yemesek Mi, gönüllü bir topluluk hizmetidir. Şirket değildir; tüzel kişilik yoktur. Yasal metinlerde veri sorumlusu “proje yürütücüsü” diye durur.',
       'Burası övgü sitesi değil. Kanıtlı kötü mekan deneyimi yazılır. Yüksek kötülük skoru daha kötü demektir.',
     ],
   },

@@ -52,7 +52,7 @@ export function readConfig(): AppConfig {
     uploadsDir: uploadsDir(),
     brevoApiKey,
     brevoSenderEmail: process.env.BREVO_SENDER_EMAIL?.trim() || 'noreply@yemesek.local',
-    brevoSenderName: process.env.BREVO_SENDER_NAME?.trim() || 'Yemesek mi acaba',
+    brevoSenderName: process.env.BREVO_SENDER_NAME?.trim() || 'Yemesek Mi',
     appPublicUrl: (process.env.APP_PUBLIC_URL?.trim() || 'http://localhost:3000').replace(/\/$/, ''),
     emailVerificationTtlMinutes,
     controllerName: publicIdentity(process.env.PROJECT_CONTROLLER_NAME),

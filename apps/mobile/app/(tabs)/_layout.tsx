@@ -13,7 +13,7 @@ function BrandTitle() {
       source={logo}
       style={{ width: 168, height: 46 }}
       resizeMode="contain"
-      accessibilityLabel="Yemesek Mi Acaba?"
+      accessibilityLabel="Yemesek Mi"
     />
   );
 }

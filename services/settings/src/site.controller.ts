@@ -5,7 +5,7 @@ import { PrismaService } from '@yemesek/database';
 import { ModerationService } from '@yemesek/moderation';
 import { SettingsService } from './settings.service';
 
-const DEFAULT_GUIDELINES = `Yemesek mi acaba, gönüllü bir topluluk hizmetidir. Şirket değildir. Kanıtlı kötü mekan deneyimlerini paylaşmak içindir. Mahkeme değildir.
+const DEFAULT_GUIDELINES = `Yemesek Mi, gönüllü bir topluluk hizmetidir. Şirket değildir. Kanıtlı kötü mekan deneyimlerini paylaşmak içindir. Mahkeme değildir.
 
 - Hakaret, tehdit ve kişisel veri yazma.
 - Fotoğraf ve fiş olmadan şikayet açılmaz.

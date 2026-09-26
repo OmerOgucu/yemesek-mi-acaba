@@ -1,6 +1,6 @@
 # Para ve çıkar çatışması
 
-Şu anki aşama ticari değildir. Yemesek mi acaba gönüllü bir topluluk hizmetidir. Tüzel kişilik yoktur.
+Şu anki aşama ticari değildir. Yemesek Mi gönüllü bir topluluk hizmetidir. Tüzel kişilik yoktur.
 
 Reklam, öne çıkarma veya “skoru düşür” satışı bu aşamada yoktur. Yönetim panelinde ileride kullanılmak üzere duran reklam veya öne çıkarma ayarları varsayılan olarak kapalı ve etkisiz kalır. Bu ayarlar silinmez. Açılmaları, ancak bir tüzel kişilik kurulur ve uygulama içinde açıkça yazılırsa gündeme gelir.
 

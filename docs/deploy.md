@@ -17,7 +17,7 @@ API `apps/api/.env.example` içindeki değişkenleri okur. Gizli değerleri depo
 | `BREVO_API_KEY` | Boşsa e-posta günlük ve yerel doğrulama ucuna düşer. Doluysa Brevo SMTP API kullanılır. |
 | `BREVO_SENDER_EMAIL` | Doğrulanmış gönderen adresi. |
 | `BREVO_SENDER_NAME` | Gönderen adı. |
-| `APP_PUBLIC_URL` | Sihirli bağlantının kökü. Örnek: `https://yemesekmiacaba.com`. |
+| `APP_PUBLIC_URL` | Sihirli bağlantının kökü. Örnek: `https://yemesekmi.com`. |
 | `EMAIL_VERIFICATION_TTL_MINUTES` | Kod, doğrulama ve parola sıfırlama ömrü. 5–1440, varsayılan 30. |
 | `CAPTCHA_PROVIDER` | `none`, `turnstile` veya `hcaptcha`. |
 | `STORAGE_DRIVER` | `local` veya `s3`. |
@@ -38,15 +38,15 @@ Anahtar yokken API kodu ve bağlantıyı süreç günlüğüne yazar. `GET /auth
 
 ## Alan adı ve DNS
 
-Herkese açık adres: `yemesekmiacaba.com`.
+Herkese açık adres: `yemesekmi.com`.
 
 | Kayıt | Hedef |
 | --- | --- |
-| `yemesekmiacaba.com` | Web (öneri: Vercel) |
-| `api.yemesekmiacaba.com` | API (öneri: Railway veya Fly.io) |
+| `yemesekmi.com` | Web (öneri: Vercel) |
+| `api.yemesekmi.com` | API (öneri: Railway veya Fly.io) |
 | MX | E-posta sağlayıcısı, Brevo gönderen doğrulaması istediğinde |
 
-`APP_PUBLIC_URL=https://yemesekmiacaba.com` ve web’de `NEXT_PUBLIC_API_URL=https://api.yemesekmiacaba.com`.
+`APP_PUBLIC_URL=https://yemesekmi.com` ve web’de `NEXT_PUBLIC_API_URL=https://api.yemesekmi.com`.
 
 ## Önerilen parçalar
 
@@ -76,4 +76,4 @@ Brevo ücretsiz kotası doğrulama ve sıfırlama postası için yetmeyebilir. D
 5. Şikayet sayfaları noindex. Ayrıntı `docs/indexing.md`.
 6. Staging `docs/staging.md`. Mağaza notu `docs/store-checklist.md`.
 
-CORS: `CORS_ORIGINS` virgüllü liste. Boşsa yalnızca localhost:3000 ve localhost:8081. Production’da `https://yemesekmiacaba.com` yazılmadan tarayıcı API’ye ulaşamaz. Kaynak haritası Next ayarında kapalıdır.
+CORS: `CORS_ORIGINS` virgüllü liste. Boşsa yalnızca localhost:3000 ve localhost:8081. Production’da `https://yemesekmi.com` yazılmadan tarayıcı API’ye ulaşamaz. Kaynak haritası Next ayarında kapalıdır.

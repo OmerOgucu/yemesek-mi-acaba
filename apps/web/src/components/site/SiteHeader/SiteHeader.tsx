@@ -9,7 +9,7 @@ export function SiteHeader() {
         <Link href="/" className="block">
           <Image
             src="/brand/logo.png"
-            alt="Yemesek Mi Acaba?"
+            alt="Yemesek Mi"
             width={661}
             height={268}
             priority
