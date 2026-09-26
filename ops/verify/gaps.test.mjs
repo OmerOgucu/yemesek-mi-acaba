@@ -67,6 +67,8 @@ test('workspace mode-600 files are written as the invoking user', () => {
   assert.match(read('ops/restore-exec.sh'), /ELSE 'ok'/);
   assert.match(read('ops/restore-test.sh'), /restore_code/);
   assert.match(read('ops/restore-test.sh'), /kanonik hedef/);
+  assert.match(read('ops/restore-test.sh'), /\$PWD\/\$plain:\/dump:ro/);
+  assert.equal(/plain\.dump:\/dump/.test(read('ops/restore-test.sh')), false);
   assert.equal(/image:\s*minio\/minio/.test(ci), false);
 });
 

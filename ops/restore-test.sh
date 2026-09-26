@@ -102,7 +102,7 @@ fi
 chmod 600 "$plain"
 set +e
 docker run --rm --network yemesek_internal \
-  -v "$PWD/ops/state/restore/plain.dump:/dump:ro" \
+  -v "$PWD/$plain:/dump:ro" \
   -v "$PWD/ops/restore-exec.sh:/restore-exec.sh:ro" \
   -e RESTORE_DATABASE_URL \
   --entrypoint sh yemesek-ops:local /restore-exec.sh restore
