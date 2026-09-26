@@ -26,7 +26,7 @@ docker run -d --name yemesek-hold --network "$holder_network" \
   --env-file ops/state/env/api.env \
   -w /app/apps/api \
   "$holder_image" \
-  node -e "for (const signal of ['SIGHUP','SIGINT','SIGTERM']) process.on(signal,()=>{}); const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); const key=process.argv[1]; p.cleanupJob.create({data:{objectKey:key,status:'RUNNING',attempts:1,leaseOwner:'victim',leaseUntil:new Date(Date.now()+3000)}}).then(()=>new Promise(()=>{})).catch((error)=>{console.error(error&&error.name); process.exit(1);});" \
+  node -e "for (const signal of ['SIGHUP','SIGINT','SIGTERM']) process.on(signal,()=>{}); setInterval(()=>{},1000); const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); const key=process.argv[1]; p.cleanupJob.create({data:{objectKey:key,status:'RUNNING',attempts:1,leaseOwner:'victim',leaseUntil:new Date(Date.now()+3000)}}).then(()=>process.stdout.write('lease held\n')).catch((error)=>{console.error(error&&error.name); process.exit(1);});" \
   "$key"
 deadline=$(( $(date +%s) + 20 ))
 status=""

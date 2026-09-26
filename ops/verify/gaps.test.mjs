@@ -69,6 +69,7 @@ test('runtime proof stays on a clean host and distributed images', () => {
   assert.match(text, /playwright/);
   const crash = read('ops/ci/queue-crash.sh');
   assert.match(crash, /docker run -d --name yemesek-hold/);
+  assert.match(crash, /setInterval\(\(\)=>\{\},1000\)/);
   assert.equal(/^\s*docker compose\b.*\brun -d\b/m.test(crash), false);
   assert.match(read('ops/preflight.sh'), /\/opt\/yemesek\/\$\{script\}/);
   assert.match(text, /smoke passed while api was stopped/);
