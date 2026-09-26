@@ -65,6 +65,8 @@ test('workspace mode-600 files are written as the invoking user', () => {
   assert.match(read('ops/backup-remote.mjs'), /requestChecksumCalculation: 'WHEN_REQUIRED'/);
   assert.match(read('ops/restore-exec.sh'), /--exit-on-error/);
   assert.match(read('ops/restore-exec.sh'), /ELSE 'ok'/);
+  assert.match(read('ops/restore-exec.sh'), /RefreshToken/);
+  assert.equal(/"Session"/.test(read('ops/restore-exec.sh')), false);
   assert.match(read('ops/restore-test.sh'), /restore_code/);
   assert.match(read('ops/restore-test.sh'), /kanonik hedef/);
   assert.match(read('ops/restore-test.sh'), /\$PWD\/\$plain:\/dump:ro/);

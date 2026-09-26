@@ -149,7 +149,7 @@ partial="$(docker run --rm --network yemesek_internal \
   --entrypoint sh yemesek-ops:local /restore-exec.sh smoke)"
 unset restore_url
 case "$partial" in
-  missing-user|missing-session|missing-report|missing-constraint|missing-row) ;;
+  missing-user|missing-refresh|missing-report|missing-constraint|missing-row) ;;
   *)
     echo "partial restore was accepted" >&2
     exit 1
