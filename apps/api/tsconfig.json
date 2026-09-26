@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "../..",
+    "outDir": "./dist",
+    "incremental": true,
+    "removeComments": true
+  },
+  "include": [
+    "src/**/*",
+    "test/**/*",
+    "../../services/*/src/**/*",
+    "../../packages/database/src/**/*",
+    "../../packages/database/prisma/seed.ts",
+    "../../packages/database/prisma/seed-data.ts",
+    "../../packages/shared/src/**/*",
+    "../../packages/config/src/**/*"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

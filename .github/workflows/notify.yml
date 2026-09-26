@@ -1,0 +1,36 @@
+name: verify-notify
+
+# Runs from the default branch only. It does not checkout the pull request head
+# and does not execute scripts from the reviewed commit.
+on:
+  workflow_run:
+    workflows: [check, main, release, dependency audit, ops audit]
+    types: [completed]
+
+permissions:
+  actions: read
+  checks: read
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: verify-notify-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    if: github.event.workflow_run.conclusion != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Güvenilen ağaçtan Türkçe rapor
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node ops/verify/post-from-event.mjs

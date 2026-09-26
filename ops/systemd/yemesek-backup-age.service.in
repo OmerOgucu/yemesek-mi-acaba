@@ -1,0 +1,7 @@
+[Unit]
+Description=Yemesek backup age check
+
+[Service]
+Type=oneshot
+WorkingDirectory=@ROOT@
+ExecStart=@ROOT@/ops/backup-age.sh --env-file @ENV@

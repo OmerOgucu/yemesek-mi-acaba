@@ -1,0 +1,10 @@
+[Unit]
+Description=Yemesek backup age check
+
+[Timer]
+OnCalendar=*-*-* 00,06,12,18:15:00 UTC
+Persistent=true
+Unit=yemesek-backup-age.service
+
+[Install]
+WantedBy=timers.target

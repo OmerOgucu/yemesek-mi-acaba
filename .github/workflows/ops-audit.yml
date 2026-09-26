@@ -1,0 +1,29 @@
+name: ops audit
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ops-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ops-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Ops imajı üretim bağımlılıkları
+        working-directory: ops/image
+        run: npm ci --omit=dev
+      - name: Ops imajı npm audit
+        working-directory: ops/image
+        run: npm audit --omit=dev --audit-level=moderate
