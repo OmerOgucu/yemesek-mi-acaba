@@ -18,7 +18,7 @@ test('register, verify, reset, and file a report', async ({ page }) => {
   const verification = await waitMail(email, 'doğrulama');
   await page.locator('#code').fill(codeFrom(verification.text));
   await page.getByRole('button', { name: 'Doğrula' }).click();
-  await expect(page.getByText('E-posta doğrulandı.')).toBeVisible();
+  await page.waitForURL((url) => url.pathname === '/');
 
   await page.goto('/sifre-sifirla');
   await page.getByPlaceholder('E-posta').fill(email);

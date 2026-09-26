@@ -25,7 +25,7 @@ test('admin invite, totp, moderation, closed city, and account delete', async ({
   const verification = await waitMail(other, 'doğrulama');
   await page.locator('#code').fill(codeFrom(verification.text));
   await page.getByRole('button', { name: 'Doğrula' }).click();
-  await expect(page.getByText('E-posta doğrulandı.')).toBeVisible();
+  await page.waitForURL((url) => url.pathname === '/');
 
   const token = await page.evaluate(() => window.localStorage.getItem('yemesek.access'));
   const denied = await page.request.get(`https://api.yemesek.test:8444/media/receipts/${ids.reportId}`, {
