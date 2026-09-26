@@ -40,8 +40,8 @@ test('register, verify, reset, and file a report', async ({ page }) => {
   await page.locator('#city').fill('İstanbul');
   await page.locator('#district').fill('Kadikoy');
   await page.getByRole('button', { name: 'Mekanı ekle' }).click();
-  await page.waitForURL(/\/restoran\/.+/);
-  const venueId = page.url().split('/').pop() ?? '';
+  await page.waitForURL((url) => /^\/restoran\/(?!yeni$)[^/]+$/.test(url.pathname));
+  const venueId = new URL(page.url()).pathname.split('/').pop() ?? '';
   expect(venueId.length).toBeGreaterThan(4);
 
   const created = page.waitForResponse((response) => response.url().includes('/reports') && response.request().method() === 'POST');
