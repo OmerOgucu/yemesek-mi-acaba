@@ -67,6 +67,9 @@ test('runtime proof stays on a clean host and distributed images', () => {
   assert.equal(text.includes('/prepare.mjs'), false);
   assert.match(text, /ADMIN_SETUP_SECRET="\$\{INITIAL_ADMIN_SETUP_SECRET\}"/);
   assert.match(text, /playwright/);
+  const crash = read('ops/ci/queue-crash.sh');
+  assert.match(crash, /docker run -d --name yemesek-hold/);
+  assert.equal(/^\s*docker compose\b.*\brun -d\b/m.test(crash), false);
   assert.match(read('ops/preflight.sh'), /\/opt\/yemesek\/\$\{script\}/);
   assert.match(text, /smoke passed while api was stopped/);
   assert.match(text, /incompatible rollback was accepted/);

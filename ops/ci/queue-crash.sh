@@ -14,8 +14,18 @@ key="$(docker run --rm --entrypoint node yemesek-ops:local -e "process.stdout.wr
 docker compose $COMPOSE_FILE_ARGS --env-file "$ENV_FILE" exec -T postgres \
   psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DELETE FROM \"CleanupJob\" WHERE \"objectKey\" = '${key}';" >/dev/null
 docker rm -f yemesek-hold >/dev/null 2>&1 || true
-# shellcheck disable=SC2086
-docker compose $COMPOSE_FILE_ARGS --env-file "$ENV_FILE" --profile localhost run -d --name yemesek-hold --no-deps -w /app/apps/api api-local \
+# compose run -d stops the one-off when its client exits, so the lease holder
+# is already gone by the time we try to kill it. docker run -d leaves it up.
+holder_image="$(docker inspect yemesek-api-local-1 --format '{{.Config.Image}}')"
+holder_network="$(docker inspect yemesek-api-local-1 --format '{{range $name, $v := .NetworkSettings.Networks}}{{println $name}}{{end}}' | head -n 1)"
+if [ -z "$holder_image" ] || [ -z "$holder_network" ]; then
+  echo "queue crash: api image or network missing" >&2
+  exit 1
+fi
+docker run -d --name yemesek-hold --network "$holder_network" \
+  --env-file ops/state/env/api.env \
+  -w /app/apps/api \
+  "$holder_image" \
   node -e "for (const signal of ['SIGHUP','SIGINT','SIGTERM']) process.on(signal,()=>{}); const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); const key=process.argv[1]; p.cleanupJob.create({data:{objectKey:key,status:'RUNNING',attempts:1,leaseOwner:'victim',leaseUntil:new Date(Date.now()+3000)}}).then(()=>new Promise(()=>{})).catch((error)=>{console.error(error&&error.name); process.exit(1);});" \
   "$key"
 deadline=$(( $(date +%s) + 20 ))
@@ -34,12 +44,15 @@ if [ "$status" != "RUNNING" ]; then
   docker rm -f yemesek-hold >/dev/null 2>&1 || true
   exit 1
 fi
-if ! docker kill yemesek-hold >/dev/null 2>&1; then
-  echo "queue crash: holder was not running" >&2
+holder_state="$(docker inspect -f '{{.State.Status}}' yemesek-hold 2>/dev/null || echo missing)"
+if [ "$holder_state" != "running" ]; then
+  echo "queue crash: holder state=${holder_state}" >&2
+  docker inspect -f 'exit={{.State.ExitCode}} oom={{.State.OOMKilled}} err={{.State.Error}}' yemesek-hold >&2 || true
   docker logs yemesek-hold 2>&1 | tail -n 30 >&2 || true
   docker rm -f yemesek-hold >/dev/null 2>&1 || true
   exit 1
 fi
+docker kill yemesek-hold >/dev/null
 sleep 5
 deadline=$(( $(date +%s) + 30 ))
 while [ "$(date +%s)" -lt "$deadline" ]; do
