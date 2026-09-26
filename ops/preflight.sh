@@ -73,4 +73,6 @@ set -- ops/live-probe.mjs
 if [ -n "$mail_to" ]; then
   set -- "$@" --mail-to "$mail_to"
 fi
-docker run --rm -v "$PWD:/work" -w /work -e NODE_PATH=/opt/yemesek/node_modules --env-file "$file" --entrypoint node yemesek-ops:local "$@"
+script="$1"
+shift
+docker run --rm --env-file "$file" --entrypoint node yemesek-ops:local "/opt/yemesek/${script}" "$@"

@@ -57,11 +57,10 @@ sh ops/render-nginx.sh --env-file "$ENV_FILE"
 
 sh ops/deploy.sh --env-file "$ENV_FILE"
 
+# ESM does not use NODE_PATH. The script must sit under /opt/yemesek so Node finds the image's node_modules.
 docker run --rm --network yemesek_internal \
-  -e NODE_PATH=/opt/yemesek/node_modules \
   --env-file ops/state/env/api.env \
-  -v "$PWD/ops/ci/prepare-minio.mjs:/prepare.mjs:ro" \
-  --entrypoint node yemesek-ops:local /prepare.mjs
+  --entrypoint node yemesek-ops:local /opt/yemesek/ops/ci/prepare-minio.mjs
 
 # shellcheck disable=SC1091
 . ops/common.sh

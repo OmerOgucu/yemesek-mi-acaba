@@ -63,7 +63,10 @@ test('runtime proof stays on a clean host and distributed images', () => {
   const text = read('ops/ci/runtime.sh');
   assert.match(text, /host psql present/);
   assert.match(text, /host aws present/);
+  assert.match(text, /\/opt\/yemesek\/ops\/ci\/prepare-minio\.mjs/);
+  assert.equal(text.includes('/prepare.mjs'), false);
   assert.match(text, /playwright/);
+  assert.match(read('ops/preflight.sh'), /\/opt\/yemesek\/\$\{script\}/);
   assert.match(text, /smoke passed while api was stopped/);
   assert.match(text, /incompatible rollback was accepted/);
   assert.match(text, /wrong passphrase was accepted/);
