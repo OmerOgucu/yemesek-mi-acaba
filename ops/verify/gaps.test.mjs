@@ -56,6 +56,8 @@ test('workspace mode-600 files are written as the invoking user', () => {
   assert.match(read('Dockerfile.api'), /req\.resolve\('@aws-sdk\/client-s3'\)/);
   const ci = read('compose.ci.yml');
   assert.match(ci, /chrislusf\/seaweedfs:4\.47/);
+  assert.match(ci, /AWS_ACCESS_KEY_ID: \$\{S3_ACCESS_KEY_ID:\?\}/);
+  assert.match(read('ops/backup-remote.mjs'), /requestChecksumCalculation: 'WHEN_REQUIRED'/);
   assert.equal(/image:\s*minio\/minio/.test(ci), false);
 });
 

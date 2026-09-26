@@ -12,6 +12,9 @@ const client = new S3Client({
     secretAccessKey: required('BACKUP_S3_SECRET_ACCESS_KEY'),
   },
   forcePathStyle: true,
+  // SeaweedFS rejects the SDK's default streamed checksum as InvalidAccessKeyId.
+  requestChecksumCalculation: 'WHEN_REQUIRED',
+  responseChecksumValidation: 'WHEN_REQUIRED',
 });
 
 if (action === 'put') {
