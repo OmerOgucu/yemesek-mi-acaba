@@ -15,8 +15,15 @@ const setupSecret = process.env.ADMIN_SETUP_SECRET || '';
 test('admin invite, totp, moderation, closed city, and account delete', async ({ browser, page }) => {
   if (setupSecret.length < 16) throw new Error('ADMIN_SETUP_SECRET missing');
   const other = `uye-b-${Date.now()}@yemesek.test`;
-  await page.goto('/kayit');
-  await page.locator('#displayName').fill('Uye B');
+  const response = await page.goto('/kayit', { timeout: 20_000 });
+  const form = page.locator('#displayName');
+  try {
+    await form.waitFor({ state: 'visible', timeout: 15_000 });
+  } catch {
+    const text = await page.locator('body').innerText().catch(() => '');
+    throw new Error(`kayit formu yok status=${response?.status() ?? 'none'} metin=${text.slice(0, 400)}`);
+  }
+  await form.fill('Uye B');
   await page.locator('#email').fill(other);
   await page.locator('#password').fill('Sifre1234');
   await acceptRegister(page);
