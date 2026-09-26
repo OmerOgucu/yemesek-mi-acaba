@@ -16,7 +16,7 @@ docker compose $COMPOSE_FILE_ARGS --env-file "$ENV_FILE" exec -T postgres \
 docker rm -f yemesek-hold >/dev/null 2>&1 || true
 # shellcheck disable=SC2086
 docker compose $COMPOSE_FILE_ARGS --env-file "$ENV_FILE" --profile localhost run -d --name yemesek-hold --no-deps -w /app/apps/api api-local \
-  node -e "const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); const key=process.argv[1]; p.cleanupJob.create({data:{objectKey:key,status:'RUNNING',attempts:1,leaseOwner:'victim',leaseUntil:new Date(Date.now()+3000)}}).then(()=>new Promise(()=>{})).catch(()=>process.exit(1));" \
+  node -e "process.on('SIGHUP',()=>{}); process.on('SIGINT',()=>{}); const {PrismaClient}=require('@prisma/client'); const p=new PrismaClient(); const key=process.argv[1]; p.cleanupJob.create({data:{objectKey:key,status:'RUNNING',attempts:1,leaseOwner:'victim',leaseUntil:new Date(Date.now()+3000)}}).then(()=>new Promise(()=>{})).catch((error)=>{console.error(error&&error.name); process.exit(1);});" \
   "$key"
 deadline=$(( $(date +%s) + 20 ))
 status=""
@@ -34,7 +34,12 @@ if [ "$status" != "RUNNING" ]; then
   docker rm -f yemesek-hold >/dev/null 2>&1 || true
   exit 1
 fi
-docker kill yemesek-hold >/dev/null
+if ! docker kill yemesek-hold >/dev/null 2>&1; then
+  echo "queue crash: holder was not running" >&2
+  docker logs yemesek-hold 2>&1 | tail -n 30 >&2 || true
+  docker rm -f yemesek-hold >/dev/null 2>&1 || true
+  exit 1
+fi
 sleep 5
 deadline=$(( $(date +%s) + 30 ))
 while [ "$(date +%s)" -lt "$deadline" ]; do
