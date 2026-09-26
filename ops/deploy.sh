@@ -54,6 +54,7 @@ write_failure() {
     # shellcheck disable=SC2086
     docker compose $COMPOSE_FILE_ARGS --env-file "$file" $profile_flags ps --format '{{.Service}} {{.Status}}' 2>/dev/null || true
   } > ops/state/last-failure.txt
+  print_service_diagnostics || true
 }
 
 sh ops/preflight.sh --env-file "$file"

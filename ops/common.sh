@@ -43,3 +43,22 @@ run_ops_node() {
 docker_as_invoker() {
   docker run --user "$(id -u):$(id -g)" "$@"
 }
+
+redact_stream() {
+  sed -E \
+    -e 's#(postgres(ql)?://)[^@[:space:]]+@#\1redacted@#g' \
+    -e 's#(SECRET|PASSWORD|TOKEN|PASSPHRASE|API_KEY)[=:][^[:space:]]+#\1=redacted#gI'
+}
+
+# Failed deploy output is status plus redacted logs. Values are not kept in the state file.
+print_service_diagnostics() {
+  echo "diagnostics: container status and redacted logs" >&2
+  # shellcheck disable=SC2086
+  docker compose $COMPOSE_FILE_ARGS --env-file "$file" ps --format '{{.Service}} {{.Status}}' >&2 || true
+  # shellcheck disable=SC2086
+  ids="$(docker compose $COMPOSE_FILE_ARGS --env-file "$file" ps -aq 2>/dev/null || true)"
+  for id in $ids; do
+    docker inspect -f '{{.Name}} status={{.State.Status}} exit={{.State.ExitCode}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$id" >&2 || true
+    docker logs --tail 40 "$id" 2>&1 | redact_stream >&2 || true
+  done
+}

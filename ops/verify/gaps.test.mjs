@@ -47,6 +47,13 @@ test('workspace mode-600 files are written as the invoking user', () => {
   }
   assert.match(read('ops/backup.sh'), /docker_as_invoker[\s\S]*openssl yemesek-ops:local/);
   assert.match(read('ops/restore-test.sh'), /docker_as_invoker[\s\S]*enc -d/);
+  assert.match(read('ops/deploy.sh'), /print_service_diagnostics/);
+  assert.match(read('ops/rollback.sh'), /print_service_diagnostics/);
+  assert.match(read('ops/common.sh'), /redact_stream/);
+  const apiPkg = read('apps/api/package.json');
+  assert.match(apiPkg, /"@aws-sdk\/client-s3"/);
+  assert.match(apiPkg, /"sharp"/);
+  assert.match(read('Dockerfile.api'), /req\.resolve\('@aws-sdk\/client-s3'\)/);
   const ci = read('compose.ci.yml');
   assert.match(ci, /chrislusf\/seaweedfs:4\.47/);
   assert.equal(/image:\s*minio\/minio/.test(ci), false);

@@ -64,6 +64,7 @@ if ! docker compose $COMPOSE_FILE_ARGS --env-file "$file" --profile "$profile" u
     # shellcheck disable=SC2086
     docker compose $COMPOSE_FILE_ARGS --env-file "$file" --profile "$profile" ps --format '{{.Service}} {{.Status}}' 2>/dev/null || true
   } > ops/state/last-failure.txt
+  print_service_diagnostics || true
   exit 1
 fi
 if ! sh ops/smoke.sh --env-file "$file"; then

@@ -11,6 +11,7 @@
     "test": "pnpm --filter @yemesek/database exec prisma generate && sh scripts/with-db.sh jest --runInBand"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.888.0",
     "@nestjs/common": "^11.1.6",
     "@sentry/node": "^10.15.0",
     "@yemesek/auth": "workspace:*",
@@ -33,7 +34,8 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
